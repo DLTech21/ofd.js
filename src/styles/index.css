@@ -1,0 +1,28 @@
+@font-face {
+  font-family: "Courier New";
+  src: url("../assets/cour.ttf");
+}
+
+@font-face {
+  font-family: "黑体";
+  src: url("../assets/simhei.ttf");
+}
+
+@font-face {
+  font-family: "楷体";
+  src: url("../assets/simkai.ttf");
+}
+
+@font-face {
+  font-family: "KaiTi";
+  src: url("../assets/simkai.ttf");
+}
+
+@font-face {
+  font-family: "宋体";
+  src: url("../assets/simsun.ttf");
+}
+
+.hidden{
+  display: none !important;
+}
