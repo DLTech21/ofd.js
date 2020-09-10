@@ -16,7 +16,8 @@
     "jszip": "^3.5.0",
     "jszip-utils": "^0.1.0",
     "vue": "^2.6.11",
-    "xml-js": "^1.6.11"
+    "xml-js": "^1.6.11",
+    "web-streams-polyfill": "^2.1.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",

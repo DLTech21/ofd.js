@@ -15,6 +15,7 @@
 
 <script>
 import JsZip from 'jszip'
+import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
 import { converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/point_cal_util"
 let parser = require('fast-xml-parser');
@@ -138,28 +139,60 @@ export default {
     drawImageObject(imageObject, pageId) {
       const boundary = this.parseStBox(imageObject['@_Boundary']);
       const resId = imageObject['@_ResourceID'];
-      let div = document.createElement('div');
-      div.style.width = boundary.w;
-      div.style.height = boundary.h;
-      let img = document.createElement('img');
-      img.src = this.multiMediaResObj[resId];
-      img.setAttribute('width', boundary.w);
-      img.setAttribute('height', boundary.h);
-      div.appendChild(img);
-      var mycanvas = document.getElementById(pageId)
-      var a = setInterval(() => {
-        mycanvas = document.getElementById(pageId)
-        if (!mycanvas) {
-          return false
-        } else {
-          clearInterval(a)
-          div.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px`)
-          div.style.left =  boundary.x;
-          div.style.top =  boundary.y;
-          div.style.position = 'absolute';
-          mycanvas.appendChild(div);
+      if (this.multiMediaResObj[resId].format === 'gbig2') {
+        const img = this.multiMediaResObj[resId].img;
+        const width = this.multiMediaResObj[resId].width;
+        const height = this.multiMediaResObj[resId].height;
+        const arr = new Uint8ClampedArray(4*width*height);
+        for(var i = 0; i < img.length; i++) {
+          arr[4*i] = img[i];
+          arr[4*i + 1] = img[i];
+          arr[4*i + 2] = img[i];
+          arr[4*i + 3] = 255;
         }
-      }, 1)
+        let imageData = new ImageData(arr, width, height);
+        let canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        let context = canvas.getContext('2d');
+        context.putImageData(imageData, 0, 0);
+        var mycanvas = document.getElementById(pageId)
+        var a = setInterval(() => {
+          mycanvas = document.getElementById(pageId)
+          if (!mycanvas) {
+            return false
+          } else {
+            clearInterval(a)
+            canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px`)
+            canvas.style.position = 'absolute';
+            mycanvas.appendChild(canvas);
+          }
+        }, 1)
+      } else {
+        let div = document.createElement('div');
+        div.style.width = boundary.w;
+        div.style.height = boundary.h;
+        let img = document.createElement('img');
+        img.src = this.multiMediaResObj[resId].img;
+        img.setAttribute('width', boundary.w);
+        img.setAttribute('height', boundary.h);
+        div.appendChild(img);
+        var mycanvas = document.getElementById(pageId)
+        var a = setInterval(() => {
+          mycanvas = document.getElementById(pageId)
+          if (!mycanvas) {
+            return false
+          } else {
+            clearInterval(a)
+            div.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px`)
+            div.style.left =  boundary.x;
+            div.style.top =  boundary.y;
+            div.style.position = 'absolute';
+            mycanvas.appendChild(div);
+          }
+        }, 1)
+      }
+
     },
 
     drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, stampAnnotBoundary) {
@@ -472,8 +505,13 @@ export default {
               file = `${this.doc}/${file}`
             }
             if (item['@_Type'].toLowerCase() === 'image') {
-              const img = await this.getImageFromZip(file);
-              this.multiMediaResObj[item['@_ID']] = img;
+              if (item['@_Format'].toLowerCase() === 'gbig2') {
+                const jbig2 = await this.getImageArrayFromZip(file);
+                this.multiMediaResObj[item['@_ID']] = jbig2;
+              } else {
+                const img = await this.getImageFromZip(file);
+                this.multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
+              }
             } else {
               this.multiMediaResObj[item['@_ID']] = file;
             }
@@ -527,6 +565,19 @@ export default {
           let jsonObj = parser.parse(content, ops);
           let result = {'xml': content, 'json': jsonObj};
           resolve(result);
+        }, function error(e) {
+          reject(e);
+        })
+      });
+    },
+
+    async getImageArrayFromZip(name) {
+      let that = this;
+      return new Promise((resolve, reject) => {
+        that.zipObj.files[name].async('uint8array').then(function (bytes) {
+          let jbig2 = new Jbig2Image();
+          const img = jbig2.parse(bytes);
+          resolve({img, width: jbig2.width, height: jbig2.height, format: 'gbig2'});
         }, function error(e) {
           reject(e);
         })
