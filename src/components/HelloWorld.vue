@@ -561,6 +561,7 @@ export default {
           let ops = {
             attributeNamePrefix: "@_",
             ignoreAttributes: false,
+            parseNodeValue: false,
           };
           let jsonObj = parser.parse(content, ops);
           let result = {'xml': content, 'json': jsonObj};
