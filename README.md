@@ -1,6 +1,6 @@
 # ofd.js
 
-![-](https://img.shields.io/badge/language-java-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
 目前方案采用：svg及canvas渲染实现，百分百纯前端渲染
 
