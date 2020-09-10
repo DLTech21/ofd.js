@@ -128,14 +128,17 @@ export const calTextPoint = function (textCode) {
         if (textCode['@_DeltaY'] && textCode['@_DeltaY'].length > 0) {
             deltaYList = deltaFormatter(textCode['@_DeltaY']);
         }
-        for (let i = 0; i < (textCode['#text']+'').length; i++) {
+        let textStr = textCode['#text']+'';
+        textStr = textStr.replaceAll('&gt;','>');
+        textStr = textStr.replaceAll('&lt;','<');
+        for (let i = 0; i < textStr.length; i++) {
             if (i > 0 && deltaXList.length > 0) {
                 x += deltaXList[(i - 1)];
             }
             if (i > 0 && deltaYList.length > 0) {
                 y += deltaYList[(i - 1)];
             }
-            let text = (textCode['#text']+'').substring(i, i + 1);
+            let text = textStr.substring(i, i + 1);
             let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
             textCodePointList.push(textCodePoint);
         }
