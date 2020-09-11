@@ -182,7 +182,12 @@ export default {
             return false
           } else {
             clearInterval(a)
-            div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${boundary.w>mycanvas.style.width?mycanvas.style.width:boundary.w}px; height: ${boundary.h>mycanvas.style.height?mycanvas.style.height:boundary.h}`)
+            const pw = parseFloat(mycanvas.style.width.replace('px',''));
+            const ph = parseFloat(mycanvas.style.height.replace('px',''));
+            const w = boundary.w > pw ? pw: boundary.w;
+            const h = boundary.h > ph ? ph :boundary.h;
+            console.log(w);
+            div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px`)
             mycanvas.appendChild(div);
           }
         }, 1)
