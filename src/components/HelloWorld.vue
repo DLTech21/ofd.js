@@ -679,7 +679,6 @@ export default {
     unzipSeal(stampAnnot) {
       let that = this;
       if (stampAnnot.sealObj && Object.keys(stampAnnot.sealObj).length > 0) {
-        console.log(stampAnnot)
         if (stampAnnot.sealObj.type === 'ofd') {
           JsZip.loadAsync(stampAnnot.sealObj.ofdArray)
               .then(function (zip) {
@@ -690,7 +689,14 @@ export default {
               });
         } else if (stampAnnot.sealObj.type === 'png') {
           let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stampAnnot.sealObj.ofdArray));
-          this.drawImageOnDiv(img, stampAnnot.stampAnnot['@_PageRef'], this.parseStBox(stampAnnot.stampAnnot['@_Boundary']));
+          let stampArray = [];
+          stampArray = stampArray.concat(stampAnnot.stampAnnot);
+          for (const annot of stampArray) {
+            if (annot) {
+              console.log(annot)
+              this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']));
+            }
+          }
         }
       }
     },
