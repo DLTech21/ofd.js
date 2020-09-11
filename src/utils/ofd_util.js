@@ -74,7 +74,7 @@ const millimetersToPixel = function (mm, dpi) {
 }
 
 export const converterDpi = function (width) {
-    return millimetersToPixel(width, 3.78*25.4);
+    return millimetersToPixel(width, 5*25.4);
 }
 
 export const deltaFormatter = function (delta) {
@@ -128,18 +128,21 @@ export const calTextPoint = function (textCode) {
         if (textCode['@_DeltaY'] && textCode['@_DeltaY'].length > 0) {
             deltaYList = deltaFormatter(textCode['@_DeltaY']);
         }
-        let textStr = textCode['#text']+'';
-        textStr = decodeHtml(textStr);
-        for (let i = 0; i < textStr.length; i++) {
-            if (i > 0 && deltaXList.length > 0) {
-                x += deltaXList[(i - 1)];
+        let textStr = textCode['#text'];
+        if (textStr) {
+            textStr += '';
+            textStr = decodeHtml(textStr);
+            for (let i = 0; i < textStr.length; i++) {
+                if (i > 0 && deltaXList.length > 0) {
+                    x += deltaXList[(i - 1)];
+                }
+                if (i > 0 && deltaYList.length > 0) {
+                    y += deltaYList[(i - 1)];
+                }
+                let text = textStr.substring(i, i + 1);
+                let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
+                textCodePointList.push(textCodePoint);
             }
-            if (i > 0 && deltaYList.length > 0) {
-                y += deltaYList[(i - 1)];
-            }
-            let text = textStr.substring(i, i + 1);
-            let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
-            textCodePointList.push(textCodePoint);
         }
     // }
     return textCodePointList;
@@ -171,7 +174,7 @@ let HTML_DECODE = {
     "&nbsp;": " ",
     "&quot;": "\"",
     "&copy;": "",
-    "&apos;": "'"
+    "&apos;": "'",
     // Add more
 };
 

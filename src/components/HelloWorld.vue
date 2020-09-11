@@ -267,11 +267,11 @@ export default {
       let d = '';
       for (const point of points) {
         if (point.type === 'M') {
-          d += `M${point.x} ${point.y}`;
+          d += `M${point.x} ${point.y} `;
         } else if (point.type === 'L') {
-          d += `L${point.x} ${point.y}`;
+          d += `L${point.x} ${point.y} `;
         } else if (point.type === 'B') {
-          d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3}`;
+          d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3} `;
         }
       }
       path.setAttribute('d', d);
