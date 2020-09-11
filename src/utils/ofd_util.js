@@ -194,4 +194,18 @@ export const decodeHtml = function(s){
             });
 };
 
+let FONT_FAMILY = {
+    '楷体': '楷体, KaiTi, Kai',
+    'KaiTi': '楷体, KaiTi, Kai',
+    'Kai': '楷体, KaiTi, Kai',
+    '宋体': 'SimSun, Songti SC',
+};
+
+export const getFontFamily = function (font) {
+    if (FONT_FAMILY[font]) {
+        font = FONT_FAMILY[font];
+    }
+    return font;
+}
+
 

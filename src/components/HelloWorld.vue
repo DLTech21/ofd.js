@@ -17,7 +17,7 @@
 import JsZip from 'jszip'
 import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
-import {getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
+import {getFontFamily, getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -221,7 +221,7 @@ export default {
           }
           text.setAttribute('fill', defaultStrokeColor);
           text.setAttribute('fill', defaultFillColor);
-          text.setAttribute('style', `font-size:${size}px;font-family: ${this.fontResObj[font]};`)
+          text.setAttribute('style', `font-size:${size}px;font-family: ${getFontFamily(this.fontResObj[font])};`)
           svg.appendChild(text);
         }
 
@@ -689,11 +689,15 @@ export default {
   font-weight: 500;
   font-size: 1rem;
   color: white;
-  font-family: "楷体";
+  font-family: "Kai, KaiTi";
 }
 
 .mycanvas {
   border: 1px solid rgb(199, 198, 198);
+}
+
+.hidden{
+  display: none !important;
 }
 
 
