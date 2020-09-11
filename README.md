@@ -7,6 +7,8 @@
 效果： 
 ![示例](./ofd.jpg)
 
+[体验地址](https://51shouzu.xyz/ofd/)
+
 ## 愿景
 希望能做到pdf.js的高度
 
