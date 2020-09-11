@@ -146,4 +146,13 @@ export const calTextPoint = function (textCode) {
     return textCodePointList;
 }
 
+export const replaceFirstSlash = function (str) {
+    if (str) {
+        if (str.indexOf('/') === 0) {
+            str = str.replace('/', '');
+        }
+    }
+    return str;
+}
+
 

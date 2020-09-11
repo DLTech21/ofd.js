@@ -17,7 +17,7 @@
 import JsZip from 'jszip'
 import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
-import { converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/point_cal_util"
+import {replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/point_cal_util"
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -144,6 +144,7 @@ export default {
         const width = this.multiMediaResObj[resId].width;
         const height = this.multiMediaResObj[resId].height;
         const arr = new Uint8ClampedArray(4*width*height);
+        var mycanvas = document.getElementById(pageId)
         for(var i = 0; i < img.length; i++) {
           arr[4*i] = img[i];
           arr[4*i + 1] = img[i];
@@ -156,7 +157,6 @@ export default {
         canvas.height = height;
         let context = canvas.getContext('2d');
         context.putImageData(imageData, 0, 0);
-        var mycanvas = document.getElementById(pageId)
         var a = setInterval(() => {
           mycanvas = document.getElementById(pageId)
           if (!mycanvas) {
@@ -177,7 +177,6 @@ export default {
         img.setAttribute('width', boundary.w);
         img.setAttribute('height', boundary.h);
         div.appendChild(img);
-        var mycanvas = document.getElementById(pageId)
         var a = setInterval(() => {
           mycanvas = document.getElementById(pageId)
           if (!mycanvas) {
@@ -529,18 +528,28 @@ export default {
     async getDocRoot() {
       const data = await this.getJsonFromXmlContent('OFD.xml');
       const docRoot = data['json']['ofd:OFD']['ofd:DocBody']['ofd:DocRoot'];
+      this.doc = docRoot.split('/')[0];
       this.signatures = data['json']['ofd:OFD']['ofd:DocBody']['ofd:Signatures'];
       const stampAnnot = await this.getSignature();
-      this.doc = docRoot.split('/')[0];
       return [docRoot, stampAnnot];
     },
 
     async getSignature() {
       let stampAnnot = null;
       if (this.signatures) {
+        this.signatures = replaceFirstSlash(this.signatures);
+        if (this.signatures.indexOf(this.doc) === -1) {
+          this.signatures = `${this.doc}/${this.signatures}`
+        }
         let data = await this.getJsonFromXmlContent(this.signatures);
-        let signature = (data['json']['ofd:Signatures']['ofd:Signature']['@_BaseLoc']);
-        signature = signature.toString().replace('/', '');
+        let signature = data['json']['ofd:Signatures']['ofd:Signature']['@_BaseLoc'];
+        signature = replaceFirstSlash(signature);
+        if (signature.indexOf('Signs') === -1) {
+          signature = `Signs/${signature}`
+        }
+        if (signature.indexOf(this.doc) === -1) {
+          signature = `${this.doc}/${signature}`
+        }
         stampAnnot = await this.getSignatureData(signature);
       }
       return stampAnnot;
@@ -556,6 +565,7 @@ export default {
 
     async getJsonFromXmlContent(xmlName) {
       let that = this;
+      console.log(xmlName)
       return new Promise((resolve, reject) => {
         that.zipObj.files[xmlName].async('string').then(function (content) {
           let ops = {
