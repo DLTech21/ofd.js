@@ -227,7 +227,7 @@ export default {
         }
 
       }
-      var mycanvas = document.getElementById(pageId)
+      var mycanvas = document.getElementById(pageId);
       var a = setInterval(() => {
         mycanvas = document.getElementById(pageId)
         if (!mycanvas) {
