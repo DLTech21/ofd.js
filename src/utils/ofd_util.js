@@ -132,6 +132,7 @@ export const calTextPoint = function (textCode) {
         if (textStr) {
             textStr += '';
             textStr = decodeHtml(textStr);
+            textStr = textStr.replaceAll('&#x20;', ' ');
             for (let i = 0; i < textStr.length; i++) {
                 if (i > 0 && deltaXList.length > 0) {
                     x += deltaXList[(i - 1)];

@@ -186,7 +186,6 @@ export default {
             const ph = parseFloat(mycanvas.style.height.replace('px',''));
             const w = boundary.w > pw ? pw: boundary.w;
             const h = boundary.h > ph ? ph :boundary.h;
-            console.log(w);
             div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px`)
             mycanvas.appendChild(div);
           }
