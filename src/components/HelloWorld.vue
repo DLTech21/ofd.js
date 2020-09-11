@@ -170,12 +170,11 @@ export default {
         }, 1)
       } else {
         let div = document.createElement('div');
-        div.style.width = boundary.w;
-        div.style.height = boundary.h;
+
         let img = document.createElement('img');
         img.src = this.multiMediaResObj[resId].img;
-        img.setAttribute('width', boundary.w);
-        img.setAttribute('height', boundary.h);
+        img.setAttribute('width', '100%');
+        img.setAttribute('height', '100%');
         div.appendChild(img);
         var a = setInterval(() => {
           mycanvas = document.getElementById(pageId)
@@ -183,10 +182,7 @@ export default {
             return false
           } else {
             clearInterval(a)
-            div.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px`)
-            div.style.left =  boundary.x;
-            div.style.top =  boundary.y;
-            div.style.position = 'absolute';
+            div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${boundary.w>mycanvas.style.width?mycanvas.style.width:boundary.w}px; height: ${boundary.h>mycanvas.style.height?mycanvas.style.height:boundary.h}`)
             mycanvas.appendChild(div);
           }
         }, 1)
