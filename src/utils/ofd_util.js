@@ -129,8 +129,7 @@ export const calTextPoint = function (textCode) {
             deltaYList = deltaFormatter(textCode['@_DeltaY']);
         }
         let textStr = textCode['#text']+'';
-        textStr = textStr.replaceAll('&gt;','>');
-        textStr = textStr.replaceAll('&lt;','<');
+        textStr = decodeHtml(textStr);
         for (let i = 0; i < textStr.length; i++) {
             if (i > 0 && deltaXList.length > 0) {
                 x += deltaXList[(i - 1)];
@@ -161,5 +160,37 @@ export const getExtensionByPath = function (path) {
     if (!matches) return "";
     return matches[1] || "";
 }
+
+
+let REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
+
+let HTML_DECODE = {
+    "&lt;" : "<",
+    "&gt;" : ">",
+    "&amp;" : "&",
+    "&nbsp;": " ",
+    "&quot;": "\"",
+    "&copy;": "",
+    "&apos;": "'"
+    // Add more
+};
+
+export const decodeHtml = function(s){
+    s = (s != undefined) ? s : this.toString();
+    return (typeof s != "string") ? s :
+        s.replace(REGX_HTML_DECODE,
+            function($0, $1){
+                var c = HTML_DECODE[$0];
+                if(c == undefined){
+                    // Maybe is Entity Number
+                    if(!isNaN($1)){
+                        c = String.fromCharCode(($1 == 160) ? 32:$1);
+                    }else{
+                        c = $0;
+                    }
+                }
+                return c;
+            });
+};
 
 
