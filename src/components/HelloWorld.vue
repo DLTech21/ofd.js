@@ -507,7 +507,7 @@ export default {
             if (item['@_Type'].toLowerCase() === 'image') {
               const format = item['@_Format'];
               const ext = getExtensionByPath(file);
-              if (format && format.toLowerCase() === 'gbig2' || ext && ext.toLowerCase() === 'jb2') {
+              if ((format && (format.toLowerCase() === 'gbig2' || format.toLowerCase() === 'jb2')) || ext && (ext.toLowerCase() === 'jb2' || ext.toLowerCase() === 'gbig2')) {
                 const jbig2 = await this.getImageArrayFromZip(file);
                 this.multiMediaResObj[item['@_ID']] = jbig2;
               } else {
