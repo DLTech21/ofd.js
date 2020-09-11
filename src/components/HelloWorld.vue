@@ -17,7 +17,7 @@
 import JsZip from 'jszip'
 import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
-import {replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/point_cal_util"
+import {getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -93,14 +93,14 @@ export default {
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
           const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-          this.drawLayer(layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, stampAnnotBoundary);
+          this.drawLayer(layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
         }
         const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        this.drawLayer(contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, stampAnnotBoundary);
+        this.drawLayer(contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
       }
     },
 
-    drawLayer(layer, pageId, stampAnnotBoundary) {
+    drawLayer(layer, pageId, isStampAnnot, stampAnnotBoundary) {
       let fillColor = `rgb(0, 0, 0)`;
       let strokeColor = `rgb(0, 0, 0)`;
       let lineWith = converterDpi(0.25);
@@ -123,7 +123,7 @@ export default {
       pathObjectArray = pathObjectArray.concat(pathObjects);
       for (const pathObject of pathObjectArray) {
         if (pathObject) {
-          this.drawPathObject(pathObject, pageId, fillColor, strokeColor, lineWith, stampAnnotBoundary);
+          this.drawPathObject(pathObject, pageId, fillColor, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary);
         }
       }
       const textObjects = layer['ofd:TextObject'];
@@ -131,7 +131,7 @@ export default {
       textObjectArray = textObjectArray.concat(textObjects);
       for (const textObject of textObjectArray) {
         if (textObject) {
-          this.drawTextObject(textObject, pageId, fillColor, strokeColor, stampAnnotBoundary);
+          this.drawTextObject(textObject, pageId, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
         }
       }
     },
@@ -194,7 +194,7 @@ export default {
 
     },
 
-    drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, stampAnnotBoundary) {
+    drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(textObject['@_Boundary']);
       const ctm = textObject['@_CTM'];
       const font = textObject['@_Font'];
@@ -241,7 +241,7 @@ export default {
       }, 1)
     },
 
-    drawPathObject(pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, stampAnnotBoundary) {
+    drawPathObject(pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(pathObject['@_Boundary']);
       const lineWidth = pathObject['@_LineWidth'];
       const abbreviatedData = pathObject['ofd:AbbreviatedData'];
@@ -361,10 +361,11 @@ export default {
     },
 
     getDocumentObj() {
+      console.log('start'+ new Date())
       pipeline.call(this, async () => await this.getDocRoot(), this.getDocument,
           this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
           .then(res => {
-            console.log('Document', res.stampAnnot)
+            console.log('end'+ new Date())
             this.getPageBox(res.pages);
             this.drawPage(res.pages, res.tpls, false, null);
             this.unzipSeal(res.stampAnnot);
@@ -504,7 +505,9 @@ export default {
               file = `${this.doc}/${file}`
             }
             if (item['@_Type'].toLowerCase() === 'image') {
-              if (item['@_Format'].toLowerCase() === 'gbig2') {
+              const format = item['@_Format'];
+              const ext = getExtensionByPath(file);
+              if (format && format.toLowerCase() === 'gbig2' || ext && ext.toLowerCase() === 'jb2') {
                 const jbig2 = await this.getImageArrayFromZip(file);
                 this.multiMediaResObj[item['@_ID']] = jbig2;
               } else {
@@ -565,7 +568,6 @@ export default {
 
     async getJsonFromXmlContent(xmlName) {
       let that = this;
-      console.log(xmlName)
       return new Promise((resolve, reject) => {
         that.zipObj.files[xmlName].async('string').then(function (content) {
           let ops = {

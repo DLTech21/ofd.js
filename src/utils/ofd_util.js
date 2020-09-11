@@ -155,4 +155,11 @@ export const replaceFirstSlash = function (str) {
     return str;
 }
 
+export const getExtensionByPath = function (path) {
+    if (!path && typeof path !== "string") return "";
+    var matches = /\.([a-z]+)$/.exec(path);
+    if (!matches) return "";
+    return matches[1] || "";
+}
+
 
