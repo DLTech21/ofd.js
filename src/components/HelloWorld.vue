@@ -168,29 +168,32 @@ export default {
           }
         }, 1)
       } else {
-        let div = document.createElement('div');
-
-        let img = document.createElement('img');
-        img.src = this.multiMediaResObj[resId].img;
-        img.setAttribute('width', '100%');
-        img.setAttribute('height', '100%');
-        div.appendChild(img);
-        var a = setInterval(() => {
-          mycanvas = document.getElementById(pageId)
-          if (!mycanvas) {
-            return false
-          } else {
-            clearInterval(a)
-            const pw = parseFloat(mycanvas.style.width.replace('px',''));
-            const ph = parseFloat(mycanvas.style.height.replace('px',''));
-            const w = boundary.w > pw ? pw: boundary.w;
-            const h = boundary.h > ph ? ph :boundary.h;
-            div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px`)
-            mycanvas.appendChild(div);
-          }
-        }, 1)
+        this.drawImageOnDiv(this.multiMediaResObj[resId].img, pageId, boundary);
       }
+    },
 
+    drawImageOnDiv(imgSrc, pageId, boundary) {
+      let mycanvas = document.getElementById(pageId)
+      let div = document.createElement('div');
+      let img = document.createElement('img');
+      img.src = imgSrc;
+      img.setAttribute('width', '100%');
+      img.setAttribute('height', '100%');
+      div.appendChild(img);
+      var a = setInterval(() => {
+        mycanvas = document.getElementById(pageId)
+        if (!mycanvas) {
+          return false
+        } else {
+          clearInterval(a)
+          const pw = parseFloat(mycanvas.style.width.replace('px',''));
+          const ph = parseFloat(mycanvas.style.height.replace('px',''));
+          const w = boundary.w > pw ? pw: boundary.w;
+          const h = boundary.h > ph ? ph :boundary.h;
+          div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px`)
+          mycanvas.appendChild(div);
+        }
+      }, 1)
     },
 
     drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
@@ -686,7 +689,8 @@ export default {
                 console.log(e)
               });
         } else if (stampAnnot.sealObj.type === 'png') {
-
+          let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stampAnnot.sealObj.ofdArray));
+          this.drawImageOnDiv(img, stampAnnot.stampAnnot['@_PageRef'], this.parseStBox(stampAnnot.stampAnnot['@_Boundary']));
         }
       }
     },
