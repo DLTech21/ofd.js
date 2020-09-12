@@ -172,8 +172,8 @@ export default {
       }
     },
 
-    drawImageOnDiv(imgSrc, pageId, boundary) {
-      let mycanvas = document.getElementById(pageId)
+    drawImageOnDiv(imgSrc, pageId, boundary, clip) {
+      let mycanvas = document.getElementById(pageId);
       let div = document.createElement('div');
       let img = document.createElement('img');
       img.src = imgSrc;
@@ -190,7 +190,11 @@ export default {
           const ph = parseFloat(mycanvas.style.height.replace('px',''));
           const w = boundary.w > pw ? pw: boundary.w;
           const h = boundary.h > ph ? ph :boundary.h;
-          div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px`)
+          let c;
+          if (clip) {
+            c = `clip: rect(${clip.y}px, ${clip.w+clip.x}px, ${clip.h+clip.y}px, ${clip.x}px)`
+          }
+          div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
           mycanvas.appendChild(div);
         }
       }, 1)
@@ -315,7 +319,7 @@ export default {
           w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
         };
       } else {
-        return {};
+        return null;
       }
     },
 
@@ -694,7 +698,7 @@ export default {
           for (const annot of stampArray) {
             if (annot) {
               console.log(annot)
-              this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']));
+              this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']), this.parseStBox(annot['@_Clip']));
             }
           }
         }
