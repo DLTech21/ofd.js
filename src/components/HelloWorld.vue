@@ -95,7 +95,6 @@ export default {
           this.drawLayer(layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
         }
         const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        console.log(page[pageId]['json'])
         this.drawLayer(contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
       }
     },
@@ -195,7 +194,7 @@ export default {
           if (clip) {
             c = `clip: rect(${clip.y}px, ${clip.w+clip.x}px, ${clip.h+clip.y}px, ${clip.x}px)`
           }
-          div.setAttribute('style', `overflow: hidden; position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+          div.setAttribute('style', `overflow: hidden; position: absolute; left: ${c?boundary.x : boundary.x<0?0:boundary.x}px; top: ${c? boundary.y : boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
           mycanvas.appendChild(div);
         }
       }, 1)
