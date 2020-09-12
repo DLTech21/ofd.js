@@ -251,7 +251,7 @@ export default {
       const boundary = this.parseStBox(pathObject['@_Boundary']);
       const lineWidth = pathObject['@_LineWidth'];
       const abbreviatedData = pathObject['ofd:AbbreviatedData'];
-      const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData))
+      const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));
       const ctm = pathObject['@_CTM'];
       let svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
       svg.setAttribute('version','1.1');
@@ -277,6 +277,9 @@ export default {
       }
       if (defaultLineWith > 0 && !defaultStrokeColor) {
         defaultStrokeColor = defaultFillColor;
+        if (!defaultStrokeColor) {
+          defaultStrokeColor = 'rgb(0, 0, 0)';
+        }
       }
       strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
       fillStyle = `fill:${isStampAnnot?'none': defaultFillColor?defaultFillColor:'none'};`;
@@ -289,6 +292,8 @@ export default {
           d += `L${point.x} ${point.y} `;
         } else if (point.type === 'B') {
           d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3} `;
+        } else if (point.type === 'C') {
+          d += `Z`;
         }
       }
       path.setAttribute('d', d);

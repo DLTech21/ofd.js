@@ -21,6 +21,12 @@ export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
             i = i + 3;
             pointList.push(point);
         } else if (array[i] === 'C') {
+            let point = {
+                'type': 'C',
+                'x': 0,
+                'y': 0
+            }
+            pointList.push(point)
             i++;
         } else if (array[i] === 'B') {
             let point = {
@@ -46,7 +52,7 @@ export const calPathPoint = function (abbreviatedPoint) {
 
     for (let i = 0; i < abbreviatedPoint.length; i++) {
         let point = abbreviatedPoint[i];
-        if (point.type === 'M' || point.type === 'L') {
+        if (point.type === 'M' || point.type === 'L' || point.type === 'C') {
             let x = 0, y = 0;
             x = point.x;
             y = point.y;
