@@ -95,14 +95,15 @@ export default {
           this.drawLayer(layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
         }
         const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        console.log(page[pageId]['json'])
         this.drawLayer(contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
       }
     },
 
     drawLayer(layer, pageId, isStampAnnot, stampAnnotBoundary) {
-      let fillColor = `rgb(0, 0, 0)`;
-      let strokeColor = `rgb(0, 0, 0)`;
-      let lineWith = converterDpi(0.25);
+      let fillColor = null;
+      let strokeColor = null;
+      let lineWith = 0;
       const drawParam = layer['@_DrawParam'];
       if (drawParam && Object.keys(this.drawParamResObj).length > 0 && this.drawParamResObj[drawParam]) {
         fillColor = this.parseColor(this.drawParamResObj[drawParam]['FillColor']);
@@ -194,7 +195,7 @@ export default {
           if (clip) {
             c = `clip: rect(${clip.y}px, ${clip.w+clip.x}px, ${clip.h+clip.y}px, ${clip.x}px)`
           }
-          div.setAttribute('style', `position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+          div.setAttribute('style', `overflow: hidden; position: absolute; left: ${boundary.x<0?0:boundary.x}px; top: ${boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
           mycanvas.appendChild(div);
         }
       }, 1)
@@ -265,11 +266,22 @@ export default {
         const ctms = this.parseCtm(ctm);
         path.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
       }
+      let strokeStyle = '';
       const strokeColor = pathObject['ofd:StrokeColor'];
       if (strokeColor) {
         defaultStrokeColor = this.parseColor(strokeColor['@_Value'])
       }
-      path.setAttribute('style', `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith};fill: none`)
+      let fillStyle = 'fill: none;';
+      const fillColor = pathObject['ofd:FillColor'];
+      if (fillColor) {
+        defaultFillColor = this.parseColor(fillColor['@_Value'])
+      }
+      if (defaultLineWith > 0 && !defaultStrokeColor) {
+        defaultStrokeColor = defaultFillColor;
+      }
+      strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
+      fillStyle = `fill:${isStampAnnot?'none': defaultFillColor?defaultFillColor:'none'};`;
+      path.setAttribute('style', `${strokeStyle};${fillStyle}`)
       let d = '';
       for (const point of points) {
         if (point.type === 'M') {
@@ -697,7 +709,7 @@ export default {
           stampArray = stampArray.concat(stampAnnot.stampAnnot);
           for (const annot of stampArray) {
             if (annot) {
-              console.log(annot)
+              // console.log(annot)
               this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']), this.parseStBox(annot['@_Clip']));
             }
           }
