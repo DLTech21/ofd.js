@@ -559,7 +559,8 @@ export default {
 
     async getDocRoot() {
       const data = await this.getJsonFromXmlContent('OFD.xml');
-      const docRoot = data['json']['ofd:OFD']['ofd:DocBody']['ofd:DocRoot'];
+      let docRoot = data['json']['ofd:OFD']['ofd:DocBody']['ofd:DocRoot'];
+      docRoot = replaceFirstSlash(docRoot);
       this.doc = docRoot.split('/')[0];
       this.signatures = data['json']['ofd:OFD']['ofd:DocBody']['ofd:Signatures'];
       const stampAnnot = await this.getSignature();
@@ -573,21 +574,23 @@ export default {
         if (this.signatures.indexOf(this.doc) === -1) {
           this.signatures = `${this.doc}/${this.signatures}`
         }
-        let data = await this.getJsonFromXmlContent(this.signatures);
-        let signature = data['json']['ofd:Signatures']['ofd:Signature'];
-        let signatureArray = [];
-        signatureArray = signatureArray.concat(signature);
-        for (const sign of signatureArray) {
-          if (sign) {
-            let signatureLoc = sign['@_BaseLoc'];
-            signatureLoc = replaceFirstSlash(signatureLoc);
-            if (signatureLoc.indexOf('Signs') === -1) {
-              signatureLoc = `Signs/${signatureLoc}`
+        if (this.zipObj.files[this.signatures]) {
+          let data = await this.getJsonFromXmlContent(this.signatures);
+          let signature = data['json']['ofd:Signatures']['ofd:Signature'];
+          let signatureArray = [];
+          signatureArray = signatureArray.concat(signature);
+          for (const sign of signatureArray) {
+            if (sign) {
+              let signatureLoc = sign['@_BaseLoc'];
+              signatureLoc = replaceFirstSlash(signatureLoc);
+              if (signatureLoc.indexOf('Signs') === -1) {
+                signatureLoc = `Signs/${signatureLoc}`
+              }
+              if (signatureLoc.indexOf(this.doc) === -1) {
+                signatureLoc = `${this.doc}/${signatureLoc}`
+              }
+              stampAnnot.push(await this.getSignatureData(signatureLoc));
             }
-            if (signatureLoc.indexOf(this.doc) === -1) {
-              signatureLoc = `${this.doc}/${signatureLoc}`
-            }
-            stampAnnot.push(await this.getSignatureData(signatureLoc));
           }
         }
       }
@@ -605,6 +608,7 @@ export default {
 
     async getJsonFromXmlContent(xmlName) {
       let that = this;
+      console.log(xmlName)
       return new Promise((resolve, reject) => {
         that.zipObj.files[xmlName].async('string').then(function (content) {
           let ops = {
