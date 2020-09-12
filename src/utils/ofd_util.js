@@ -3,7 +3,7 @@ export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
     let pointList = [];
     let i = 0;
     while (i < array.length) {
-        if (array[i] === 'M') {
+        if (array[i] === 'M'|| array[i] === 'S') {
             let point = {
                 'type': 'M',
                 'x': parseFloat(array[i + 1]),
@@ -206,6 +206,9 @@ let FONT_FAMILY = {
     'KaiTi': '楷体, KaiTi, Kai',
     'Kai': '楷体, KaiTi, Kai',
     '宋体': 'SimSun, Songti SC',
+    '黑体': 'SimHei, STHeiti',
+    '仿宋': 'FangSong, STFangsong',
+    '小标宋体': 'sSun',
 };
 
 export const getFontFamily = function (font) {

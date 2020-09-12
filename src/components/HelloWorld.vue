@@ -249,7 +249,7 @@ export default {
 
     drawPathObject(pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(pathObject['@_Boundary']);
-      const lineWidth = pathObject['@_LineWidth'];
+      let lineWidth = pathObject['@_LineWidth'];
       const abbreviatedData = pathObject['ofd:AbbreviatedData'];
       const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));
       const ctm = pathObject['@_CTM'];
@@ -260,6 +260,13 @@ export default {
       let path = document.createElementNS('http://www.w3.org/2000/svg','path');
       if (lineWidth) {
         defaultLineWith = converterDpi(lineWidth);
+      }
+      const drawParam = pathObject['@_DrawParam'];
+      if (drawParam) {
+        lineWidth = this.drawParamResObj[drawParam].LineWidth;
+        if (lineWidth) {
+          defaultLineWith = converterDpi(lineWidth);
+        }
       }
       if (ctm) {
         const ctms = this.parseCtm(ctm);
@@ -320,6 +327,12 @@ export default {
 
     parseColor(color) {
       if (color) {
+        if (color.indexOf('#') !== -1) {
+          color = color.replaceAll('#', '');
+          color = color.replaceAll(' ', '');
+          color = '#'+color.toString();
+          return color;
+        }
         let array = color.split(' ');
         return `rgb(${array[0]}, ${array[1]}, ${array[2]})`
       } else {
@@ -608,7 +621,6 @@ export default {
 
     async getJsonFromXmlContent(xmlName) {
       let that = this;
-      console.log(xmlName)
       return new Promise((resolve, reject) => {
         that.zipObj.files[xmlName].async('string').then(function (content) {
           let ops = {
