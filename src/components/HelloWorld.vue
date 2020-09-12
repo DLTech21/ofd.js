@@ -203,7 +203,9 @@ export default {
     drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(textObject['@_Boundary']);
       const ctm = textObject['@_CTM'];
+      const hScale = textObject['@_HScale'];
       const font = textObject['@_Font'];
+      const weight = textObject['@_Weight'];
       const size = converterDpi(parseFloat(textObject['@_Size']));
       const textCode = textObject['ofd:TextCode'];
       const textCodePointList = calTextPoint(textCode);
@@ -225,9 +227,14 @@ export default {
             const ctms = this.parseCtm(ctm);
             text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
           }
+          if (hScale) {
+            text.setAttribute('transform', `scale(${hScale}, 1)`)
+            text.setAttribute('transform-origin', `${textCodePoint.x}`);
+          }
+          console.log(text.style.width)
           text.setAttribute('fill', defaultStrokeColor);
           text.setAttribute('fill', defaultFillColor);
-          text.setAttribute('style', `font-size:${size}px;font-family: ${getFontFamily(this.fontResObj[font])};`)
+          text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(this.fontResObj[font])};`)
           svg.appendChild(text);
         }
 
