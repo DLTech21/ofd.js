@@ -80,7 +80,7 @@ const millimetersToPixel = function (mm, dpi) {
 }
 
 export const converterDpi = function (width) {
-    return millimetersToPixel(width, 5*25.4);
+    return millimetersToPixel(width, 3.78*25.4);
 }
 
 export const deltaFormatter = function (delta) {
