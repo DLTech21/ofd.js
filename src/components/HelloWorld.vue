@@ -262,8 +262,8 @@ export default {
       const ctm = pathObject['@_CTM'];
       let svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
       svg.setAttribute('version','1.1');
-      svg.style.width = Math.ceil(boundary.w);
-      svg.style.height = Math.ceil(boundary.h);
+      svg.style.width = isStampAnnot? boundary.w: Math.ceil(boundary.w);
+      svg.style.height = isStampAnnot? boundary.h : Math.ceil(boundary.h);
       let path = document.createElementNS('http://www.w3.org/2000/svg','path');
       if (lineWidth) {
         defaultLineWith = converterDpi(lineWidth);
