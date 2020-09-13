@@ -38,11 +38,25 @@ export default {
       drawParamResObj: {},
       multiMediaResObj: {},
       signatures: null,
+      screenWidth: document.body.clientWidth,
     }
   },
+
   created() {
     this.file = null;
   },
+
+  mounted() {
+    let that = this;
+    window.onresize = () => {
+      return (() => {
+        setPageScal(5)
+        that.screenWidth = (document.body.clientWidth);
+        console.log(that.screenWidth)
+      })()
+    }
+  },
+
   methods: {
     uploadFile() {
       this.signatures = null;
@@ -350,8 +364,8 @@ export default {
       if (obj) {
         let array = obj.split(' ');
         let width = converterDpi(parseFloat(array[2]));
-        if (width > screen.width) {
-          const scale = (screen.width-5) / parseFloat(array[2]);
+        if (width > this.screenWidth) {
+          const scale = (this.screenWidth-5) / parseFloat(array[2]);
           setPageScal(scale>0?scale:1);
         }
         return {
