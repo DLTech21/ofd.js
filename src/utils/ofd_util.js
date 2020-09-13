@@ -78,9 +78,14 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
+let Scale = 5;
+
+export const setPageScal = function (scale) {
+    Scale = scale;
+}
 
 export const converterDpi = function (width) {
-    return millimetersToPixel(width, 3.78*25.4);
+    return millimetersToPixel(width, Scale*25.4);
 }
 
 export const deltaFormatter = function (delta) {

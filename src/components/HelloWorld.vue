@@ -17,7 +17,7 @@
 import JsZip from 'jszip'
 import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
-import {getFontFamily, getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
+import {setPageScal,getFontFamily, getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -231,7 +231,6 @@ export default {
             text.setAttribute('transform', `scale(${hScale}, 1)`)
             text.setAttribute('transform-origin', `${textCodePoint.x}`);
           }
-          console.log(text.style.width)
           text.setAttribute('fill', defaultStrokeColor);
           text.setAttribute('fill', defaultFillColor);
           text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(this.fontResObj[font])};`)
@@ -347,6 +346,23 @@ export default {
       }
     },
 
+    parsePageBox(obj) {
+      if (obj) {
+        let array = obj.split(' ');
+        let width = converterDpi(parseFloat(array[2]));
+        if (width > screen.width) {
+          const scale = (screen.width-5) / parseFloat(array[2]);
+          setPageScal(scale>0?scale:1);
+        }
+        return {
+          x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
+          w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
+        };
+      } else {
+        return null;
+      }
+    },
+
     parseStBox(obj) {
       if (obj) {
         let array = obj.split(' ');
@@ -366,15 +382,15 @@ export default {
         if (area) {
           const physicalBox = area['ofd:PhysicalBox']
           if (physicalBox) {
-            box = this.parseStBox(physicalBox);
+            box = (physicalBox);
           } else {
             const applicationBox = area['ofd:ApplicationBox']
             if (applicationBox) {
-              box = this.parseStBox(applicationBox);
+              box = (applicationBox);
             } else {
               const contentBox = area['ofd:ContentBox']
               if (contentBox) {
-                box = this.parseStBox(contentBox);
+                box = (contentBox);
               }
             }
           }
@@ -382,19 +398,20 @@ export default {
           let documentArea = this.documentObj['ofd:CommonData']['ofd:PageArea']
           const physicalBox = documentArea['ofd:PhysicalBox']
           if (physicalBox) {
-            box = this.parseStBox(physicalBox);
+            box = (physicalBox);
           } else {
             const applicationBox = documentArea['ofd:ApplicationBox']
             if (applicationBox) {
-              box = this.parseStBox(applicationBox);
+              box = (applicationBox);
             } else {
               const contentBox = documentArea['ofd:ContentBox']
               if (contentBox) {
-                box = this.parseStBox(contentBox);
+                box = (contentBox);
               }
             }
           }
         }
+        box = this.parsePageBox(box);
         let boxObj = {};
         boxObj['id'] = Object.keys(page)[0];
         boxObj['box'] = box;
