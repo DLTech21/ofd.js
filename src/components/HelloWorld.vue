@@ -44,7 +44,6 @@ export default {
       return (() => {
         setPageScal(5)
         that.screenWidth = (document.body.clientWidth);
-        console.log(that.screenWidth)
       })()
     }
   },
