@@ -29,11 +29,7 @@ export default {
   data() {
     return {
       pageBoxs: [],
-      publicResObj: null,
-      documentResObj: null,
-      fontResObj: {},
-      drawParamResObj: {},
-      multiMediaResObj: {},
+
       screenWidth: document.body.clientWidth,
     }
   },
@@ -55,12 +51,7 @@ export default {
 
   methods: {
     uploadFile() {
-      this.multiMediaResObj = {},
-      this.drawParamResObj = {},
-      this.fontResObj = {};
       this.pageBoxs= [];
-      this.publicResObj= null;
-      this.documentResObj = null;
       this.file = null;
       this.$refs.file.click();
     },
@@ -86,7 +77,7 @@ export default {
     },
 
 
-    drawPage(pages, tpls, isStampAnnot, stampAnnot) {
+    drawPage(pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj) {
       for (const page of pages) {
         const pageId = Object.keys(page)[0];
         let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
@@ -96,29 +87,29 @@ export default {
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
           const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-          this.drawLayer(layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
+          this.drawLayer(fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
         }
         const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        this.drawLayer(contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
+        this.drawLayer(fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot ? stampAnnot['@_PageRef'] : pageId, isStampAnnot, stampAnnotBoundary);
       }
     },
 
-    drawLayer(layer, pageId, isStampAnnot, stampAnnotBoundary) {
+    drawLayer(fontResObj, drawParamResObj, multiMediaResObj, layer, pageId, isStampAnnot, stampAnnotBoundary) {
       let fillColor = null;
       let strokeColor = null;
       let lineWith = 0;
       const drawParam = layer['@_DrawParam'];
-      if (drawParam && Object.keys(this.drawParamResObj).length > 0 && this.drawParamResObj[drawParam]) {
-        fillColor = this.parseColor(this.drawParamResObj[drawParam]['FillColor']);
-        strokeColor  = this.parseColor(this.drawParamResObj[drawParam]['StrokeColor']);
-        lineWith = converterDpi(this.drawParamResObj[drawParam]['LineWidth']);
+      if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
+        fillColor = this.parseColor(drawParamResObj[drawParam]['FillColor']);
+        strokeColor  = this.parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
       }
       const imageObjects = layer['ofd:ImageObject'];
       let imageObjectArray = [];
       imageObjectArray = imageObjectArray.concat(imageObjects);
       for (const imageObject of imageObjectArray) {
         if (imageObject) {
-          this.drawImageObject(imageObject, pageId);
+          this.drawImageObject(multiMediaResObj, imageObject, pageId);
         }
       }
       const pathObjects = layer['ofd:PathObject'];
@@ -126,7 +117,7 @@ export default {
       pathObjectArray = pathObjectArray.concat(pathObjects);
       for (const pathObject of pathObjectArray) {
         if (pathObject) {
-          this.drawPathObject(pathObject, pageId, fillColor, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary);
+          this.drawPathObject(drawParamResObj, pathObject, pageId, fillColor, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary);
         }
       }
       const textObjects = layer['ofd:TextObject'];
@@ -134,18 +125,18 @@ export default {
       textObjectArray = textObjectArray.concat(textObjects);
       for (const textObject of textObjectArray) {
         if (textObject) {
-          this.drawTextObject(textObject, pageId, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
+          this.drawTextObject(fontResObj, textObject, pageId, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
         }
       }
     },
 
-    drawImageObject(imageObject, pageId) {
+    drawImageObject(multiMediaResObj, imageObject, pageId) {
       const boundary = this.parseStBox(imageObject['@_Boundary']);
       const resId = imageObject['@_ResourceID'];
-      if (this.multiMediaResObj[resId].format === 'gbig2') {
-        const img = this.multiMediaResObj[resId].img;
-        const width = this.multiMediaResObj[resId].width;
-        const height = this.multiMediaResObj[resId].height;
+      if (multiMediaResObj[resId].format === 'gbig2') {
+        const img = multiMediaResObj[resId].img;
+        const width = multiMediaResObj[resId].width;
+        const height = multiMediaResObj[resId].height;
         const arr = new Uint8ClampedArray(4*width*height);
         var mycanvas = document.getElementById(pageId)
         for(var i = 0; i < img.length; i++) {
@@ -172,7 +163,7 @@ export default {
           }
         }, 1)
       } else {
-        this.drawImageOnDiv(this.multiMediaResObj[resId].img, pageId, boundary);
+        this.drawImageOnDiv(multiMediaResObj[resId].img, pageId, boundary);
       }
     },
 
@@ -204,7 +195,7 @@ export default {
       }, 1)
     },
 
-    drawTextObject(textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
+    drawTextObject(fontResObj, textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(textObject['@_Boundary']);
       const ctm = textObject['@_CTM'];
       const hScale = textObject['@_HScale'];
@@ -237,7 +228,7 @@ export default {
           }
           text.setAttribute('fill', defaultStrokeColor);
           text.setAttribute('fill', defaultFillColor);
-          text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(this.fontResObj[font])};`)
+          text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
           svg.appendChild(text);
         }
 
@@ -257,7 +248,7 @@ export default {
       }, 1)
     },
 
-    drawPathObject(pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
+    drawPathObject(drawParamResObj, pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
       const boundary = this.parseStBox(pathObject['@_Boundary']);
       let lineWidth = pathObject['@_LineWidth'];
       const abbreviatedData = pathObject['ofd:AbbreviatedData'];
@@ -273,7 +264,7 @@ export default {
       }
       const drawParam = pathObject['@_DrawParam'];
       if (drawParam) {
-        lineWidth = this.drawParamResObj[drawParam].LineWidth;
+        lineWidth = drawParamResObj[drawParam].LineWidth;
         if (lineWidth) {
           defaultLineWith = converterDpi(lineWidth);
         }
@@ -430,7 +421,7 @@ export default {
           .then(res => {
             console.log('end'+ new Date())
             this.getPageBox(res.pages, res.document);
-            this.drawPage(res.pages, res.tpls, false, null);
+            this.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
             for (const stamp of res.stampAnnot) {
               this.unzipSeal(stamp);
             }
@@ -445,7 +436,7 @@ export default {
           this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
           .then(res => {
             console.log('seal Document', res)
-            this.drawPage(res.pages, res.tpls, true, stampAnnot.stampAnnot);
+            this.drawPage(res.pages, res.tpls, true, stampAnnot.stampAnnot, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
           })
           .catch(res => {
             console.log(res)
@@ -463,7 +454,7 @@ export default {
       return pageObj;
     },
 
-    async getPage([zip, doc, Document, stampAnnot, tpls]) {
+    async getPage([zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
       let pages = Document['ofd:Pages']['ofd:Page'];
       let array = [];
       array = array.concat(pages);
@@ -474,10 +465,10 @@ export default {
           res.push(pageObj);
         }
       }
-      return {'doc': doc, 'document': Document, 'pages': res, 'tpls': tpls, 'stampAnnot': stampAnnot};
+      return {'doc': doc, 'document': Document, 'pages': res, 'tpls': tpls, 'stampAnnot': stampAnnot, fontResObj, drawParamResObj, multiMediaResObj};
     },
 
-    async getTemplatePage([zip, doc, Document, stampAnnot]) {
+    async getTemplatePage([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
       let templatePages = Document['ofd:CommonData']['ofd:TemplatePage'];
       let array = [];
       array = array.concat(templatePages);
@@ -488,10 +479,10 @@ export default {
           tpls[Object.keys(pageObj)[0]] = pageObj[Object.keys(pageObj)[0]];
         }
       }
-      return [zip, doc, Document, stampAnnot, tpls];
+      return [zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj];
     },
 
-    async getPublicRes([zip, doc, Document, stampAnnot]) {
+    async getPublicRes([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
       let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
       if (publicResPath) {
         if (publicResPath.indexOf(doc) == -1) {
@@ -499,66 +490,82 @@ export default {
         }
         if (zip.files[publicResPath]) {
           const data = await this.getJsonFromXmlContent(zip, publicResPath);
-          this.publicResObj = data['json']['ofd:Res'];
-          await this.getFont(this.publicResObj);
-          await this.getDrawParam(this.publicResObj);
-          await this.getMultiMediaRes(zip, this.publicResObj, doc);
+          const publicResObj = data['json']['ofd:Res'];
+          let fontObj = await this.getFont(publicResObj);
+          fontResObj = Object.assign(fontResObj, fontObj);
+          let drawParamObj = await this.getDrawParam(publicResObj);
+          drawParamResObj = Object.assign(drawParamResObj, drawParamObj);
+          let multiMediaObj = await this.getMultiMediaRes(zip, publicResObj, doc);
+          multiMediaResObj = Object.assign(multiMediaResObj, multiMediaObj);
         }
       }
-      return [zip, doc, Document, stampAnnot];
+      return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
     },
 
     async getDocumentRes([zip, doc, Document, stampAnnot]) {
       let documentResPath = Document['ofd:CommonData']['ofd:DocumentRes'];
+      let fontResObj = {};
+      let drawParamResObj = {};
+      let multiMediaResObj = {};
       if (documentResPath) {
         if (documentResPath.indexOf('/') == -1) {
           documentResPath = `${doc}/${documentResPath}`;
         }
         if (zip.files[documentResPath]) {
           const data = await this.getJsonFromXmlContent(zip, documentResPath);
-          this.documentResObj = data['json']['ofd:Res'];
-          await this.getFont(this.documentResObj);
-          await this.getDrawParam(this.documentResObj);
-          await this.getMultiMediaRes(zip, this.documentResObj, doc);
+          const documentResObj = data['json']['ofd:Res'];
+          fontResObj = await this.getFont(documentResObj);
+          drawParamResObj = await this.getDrawParam(documentResObj);
+          multiMediaResObj = await this.getMultiMediaRes(zip, documentResObj, doc);
         }
       }
-      return [zip, doc, Document, stampAnnot];
+      return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
     },
 
     async getFont(res) {
       const fonts = res['ofd:Fonts'];
+      let fontResObj = {};
       if (fonts) {
         let fontArray = [];
         fontArray = fontArray.concat(fonts['ofd:Font']);
         for (const font of fontArray) {
           if (font) {
             if (font['@_FamilyName']) {
-              this.fontResObj[font['@_ID']] = font['@_FamilyName'];
+              fontResObj[font['@_ID']] = font['@_FamilyName'];
+              // this.fontResObj[font['@_ID']] = font['@_FamilyName'];
             } else {
-              this.fontResObj[font['@_ID']] = font['@_FontName'];
+              fontResObj[font['@_ID']] = font['@_FontName'];
+              // this.fontResObj[font['@_ID']] = font['@_FontName'];
             }
           }
         }
       }
+      return fontResObj;
     },
 
     async getDrawParam(res) {
       const drawParams = res['ofd:DrawParams'];
+      let drawParamResObj = {};
       if (drawParams) {
         let array = [];
         array = array.concat(drawParams['ofd:DrawParam']);
         for (const item of array) {
           if (item) {
-            this.drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
-            'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
-                'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
+            // this.drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
+            // 'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
+            //     'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
+            drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
+              'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
+              'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
           }
         }
       }
+      return drawParamResObj;
     },
 
     async getMultiMediaRes(zip, res, doc) {
       const multiMedias = res['ofd:MultiMedias'];
+      let multiMediaResObj = {};
       if (multiMedias) {
         let array = [];
         array = array.concat(multiMedias['ofd:MultiMedia']);
@@ -578,17 +585,21 @@ export default {
               const ext = getExtensionByPath(file);
               if ((format && (format.toLowerCase() === 'gbig2' || format.toLowerCase() === 'jb2')) || ext && (ext.toLowerCase() === 'jb2' || ext.toLowerCase() === 'gbig2')) {
                 const jbig2 = await this.getImageArrayFromZip(zip, file);
-                this.multiMediaResObj[item['@_ID']] = jbig2;
+                // this.multiMediaResObj[item['@_ID']] = jbig2;
+                multiMediaResObj[item['@_ID']] = jbig2;
               } else {
                 const img = await this.getImageFromZip(zip, file);
-                this.multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
+                // this.multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
+                multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
               }
             } else {
-              this.multiMediaResObj[item['@_ID']] = file;
+              // this.multiMediaResObj[item['@_ID']] = file;
+              multiMediaResObj[item['@_ID']] = file;
             }
           }
         }
       }
+      return multiMediaResObj;
     },
 
     async getDocument([zip, doc, docRoot, stampAnnot]) {
@@ -664,7 +675,6 @@ export default {
     },
 
     async getImageArrayFromZip(zip, name) {
-      let that = this;
       return new Promise((resolve, reject) => {
         zip.files[name].async('uint8array').then(function (bytes) {
           let jbig2 = new Jbig2Image();
@@ -677,7 +687,6 @@ export default {
     },
 
     async getImageFromZip(zip, name) {
-      let that = this;
       return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
           const img = 'data:image/png;base64,'+ bytes;
