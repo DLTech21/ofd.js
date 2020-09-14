@@ -223,4 +223,35 @@ export const getFontFamily = function (font) {
     return font;
 }
 
+export const parseStBox = function (obj) {
+    if (obj) {
+        let array = obj.split(' ');
+        return {
+            x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
+            w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
+        };
+    } else {
+        return null;
+    }
+}
+
+export const parseCtm = function (ctm) {
+    let array = ctm.split(' ');
+    return array;
+}
+
+export const parseColor = function (color) {
+    if (color) {
+        if (color.indexOf('#') !== -1) {
+            color = color.replace(/#/g, '');
+            color = color.replace(/ /g, '');
+            color = '#' + color.toString();
+            return color;
+        }
+        let array = color.split(' ');
+        return `rgb(${array[0]}, ${array[1]}, ${array[2]})`
+    } else {
+        return `rgb(0, 0, 0)`
+    }
+}
 

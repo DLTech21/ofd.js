@@ -1,6 +1,6 @@
 import {pipeline} from "@/utils/pipeline";
 import JsZip from "jszip";
-import {getExtensionByPath, replaceFirstSlash} from "@/utils/ofd_util";
+import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd_util";
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -8,23 +8,18 @@ import Hex from '@lapo/asn1js/hex';
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
 import {Jbig2Image} from '../utils/jbig2'
 
-export const getOfdDocumentObj = function (file) {
-    pipeline.call(this, async () => await unzipOfd(file), getDocRoot, getDocument,
+export const parseOfdDocument = function (options) {
+    pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoot, getDocument,
         getDocumentRes, getPublicRes, getTemplatePage, getPage)
         .then(res => {
-            console.log(res)
-            // this.getPageBox(res.pages, res.document);
-            // this.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
-            // for (const stamp of res.stampAnnot) {
-            //     if (stamp.type === 'ofd') {
-            //         this.drawPage(stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj);
-            //     } else if (stamp.type === 'png') {
-            //         this.drawImageOnDiv(stamp.obj.img, stamp.obj.pageId, stamp.obj.boundary, stamp.obj.clip);
-            //     }
-            // }
+            if (options.success) {
+                options.success(res);
+            }
         })
         .catch(res => {
-            console.log(res)
+            if (options.fail) {
+                options.fail(res);
+            }
         });
 }
 
@@ -51,6 +46,9 @@ const getDocRoot = async function (zip) {
         if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
             if (stamp.sealObj.type === 'ofd') {
                 const stampObj = await getSealDocumentObj(stamp);
+                console.log(stamp.stampAnnot)
+                stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
+                stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
                 stampAnnotArray.push({type: 'ofd', obj: stampObj, stamp});
             } else if (stamp.sealObj.type === 'png') {
                 let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
@@ -380,14 +378,4 @@ const getImageFromZip = async function (zip, name) {
     });
 }
 
-const parseStBox = function (obj) {
-    if (obj) {
-        let array = obj.split(' ');
-        return {
-            x: (parseFloat(array[0])), y: (parseFloat(array[1])),
-            w: (parseFloat(array[2])), h: (parseFloat(array[3]))
-        };
-    } else {
-        return null;
-    }
-}
+
