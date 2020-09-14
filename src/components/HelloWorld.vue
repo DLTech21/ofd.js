@@ -1,13 +1,13 @@
 <template>
   <div>
-    <div class="upload-icon" @click="uploadFile" >
+    <div class="upload-icon" @click="uploadFile">
       <i class="upload-icon">选择OFD文件</i>
       <input type="file" ref="file" class="hidden" accept="ofd"
              @change="fileChanged">
     </div>
     <div style="display: flex;flex-direction: column;align-items: center;justify-content: center">
       <div v-for="box in pageBoxs" :key="box.id" style="position: relative;margin-bottom: 5px">
-        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}"  class="mycanvas"></div>
+        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}" class="mycanvas"></div>
       </div>
     </div>
   </div>
@@ -17,11 +17,22 @@
 import JsZip from 'jszip'
 import {Jbig2Image} from '../utils/jbig2'
 import {pipeline} from "../utils/pipeline"
-import {setPageScal,getFontFamily, getExtensionByPath, replaceFirstSlash, converterDpi, convertPathAbbreviatedDatatoPoint, calPathPoint, calTextPoint} from "../utils/ofd_util"
+import {
+  setPageScal,
+  getFontFamily,
+  getExtensionByPath,
+  replaceFirstSlash,
+  converterDpi,
+  convertPathAbbreviatedDatatoPoint,
+  calPathPoint,
+  calTextPoint
+} from "../utils/ofd_util"
+
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
 import Hex from '@lapo/asn1js/hex';
+
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
 
 export default {
@@ -50,7 +61,7 @@ export default {
 
   methods: {
     uploadFile() {
-      this.pageBoxs= [];
+      this.pageBoxs = [];
       this.file = null;
       this.$refs.file.click();
     },
@@ -65,16 +76,37 @@ export default {
         // this.$toast('error', "文件大小需 < 5M");
         return;
       }
-      let that = this;
-      JsZip.loadAsync(this.file)
-          .then(function (zip) {
-            that.getDocumentObj(zip);
-          }, function (e) {
-            console.log(e)
-          });
+      this.getOfdDocumentObj(this.file);
       this.$refs.file.value = null;
     },
 
+
+    getOfdDocumentObj(file) {
+      pipeline.call(this, async () => await this.unzipOfd(file), this.getDocRoot, this.getDocument,
+          this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
+          .then(res => {
+            console.log(res)
+            // const ofdRes = res;
+            this.getPageBox(res.pages, res.document);
+            this.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
+            // for (const stamp of res.stampAnnot) {
+            // }
+          })
+          .catch(res => {
+            console.log(res)
+          });
+    },
+
+    unzipOfd(file) {
+      return new Promise((resolve, reject) => {
+        JsZip.loadAsync(file)
+            .then(function (zip) {
+              resolve(zip);
+            }, function (e) {
+              reject(e);
+            });
+      });
+    },
 
     drawPage(pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj) {
       for (const page of pages) {
@@ -100,7 +132,7 @@ export default {
       const drawParam = layer['@_DrawParam'];
       if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
         fillColor = this.parseColor(drawParamResObj[drawParam]['FillColor']);
-        strokeColor  = this.parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        strokeColor = this.parseColor(drawParamResObj[drawParam]['StrokeColor']);
         lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
       }
       const imageObjects = layer['ofd:ImageObject'];
@@ -136,13 +168,13 @@ export default {
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
         const height = multiMediaResObj[resId].height;
-        const arr = new Uint8ClampedArray(4*width*height);
+        const arr = new Uint8ClampedArray(4 * width * height);
         var mycanvas = document.getElementById(pageId)
-        for(var i = 0; i < img.length; i++) {
-          arr[4*i] = img[i];
-          arr[4*i + 1] = img[i];
-          arr[4*i + 2] = img[i];
-          arr[4*i + 3] = 255;
+        for (var i = 0; i < img.length; i++) {
+          arr[4 * i] = img[i];
+          arr[4 * i + 1] = img[i];
+          arr[4 * i + 2] = img[i];
+          arr[4 * i + 3] = 255;
         }
         let imageData = new ImageData(arr, width, height);
         let canvas = document.createElement('canvas');
@@ -180,15 +212,15 @@ export default {
           return false
         } else {
           clearInterval(a)
-          const pw = parseFloat(mycanvas.style.width.replace('px',''));
-          const ph = parseFloat(mycanvas.style.height.replace('px',''));
-          const w = boundary.w > pw ? pw: boundary.w;
-          const h = boundary.h > ph ? ph :boundary.h;
+          const pw = parseFloat(mycanvas.style.width.replace('px', ''));
+          const ph = parseFloat(mycanvas.style.height.replace('px', ''));
+          const w = boundary.w > pw ? pw : boundary.w;
+          const h = boundary.h > ph ? ph : boundary.h;
           let c;
           if (clip) {
-            c = `clip: rect(${clip.y}px, ${clip.w+clip.x}px, ${clip.h+clip.y}px, ${clip.x}px)`
+            c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
           }
-          div.setAttribute('style', `overflow: hidden; position: absolute; left: ${c?boundary.x : boundary.x<0?0:boundary.x}px; top: ${c? boundary.y : boundary.y<0?0:boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+          div.setAttribute('style', `overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
           mycanvas.appendChild(div);
         }
       }, 1)
@@ -203,8 +235,8 @@ export default {
       const size = converterDpi(parseFloat(textObject['@_Size']));
       const textCode = textObject['ofd:TextCode'];
       const textCodePointList = calTextPoint(textCode);
-      let svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('version','1.1');
+      let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('version', '1.1');
       svg.style.width = boundary.w;
       svg.style.height = boundary.h;
       const fillColor = textObject['ofd:FillColor'];
@@ -212,8 +244,8 @@ export default {
         defaultFillColor = this.parseColor(fillColor['@_Value']);
       }
       for (const textCodePoint of textCodePointList) {
-        if ( !isNaN(textCodePoint.x) ) {
-          let text = document.createElementNS('http://www.w3.org/2000/svg','text');
+        if (!isNaN(textCodePoint.x)) {
+          let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           text.setAttribute('x', textCodePoint.x);
           text.setAttribute('y', textCodePoint.y);
           text.innerHTML = textCodePoint.text;
@@ -253,11 +285,11 @@ export default {
       const abbreviatedData = pathObject['ofd:AbbreviatedData'];
       const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));
       const ctm = pathObject['@_CTM'];
-      let svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('version','1.1');
-      svg.style.width = isStampAnnot? boundary.w: Math.ceil(boundary.w);
-      svg.style.height = isStampAnnot? boundary.h : Math.ceil(boundary.h);
-      let path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('version', '1.1');
+      svg.style.width = isStampAnnot ? boundary.w : Math.ceil(boundary.w);
+      svg.style.height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
+      let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       if (lineWidth) {
         defaultLineWith = converterDpi(lineWidth);
       }
@@ -289,7 +321,7 @@ export default {
         }
       }
       strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
-      fillStyle = `fill:${isStampAnnot?'none': defaultFillColor?defaultFillColor:'none'};`;
+      fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
       path.setAttribute('style', `${strokeStyle};${fillStyle}`)
       let d = '';
       for (const point of points) {
@@ -330,7 +362,7 @@ export default {
         if (color.indexOf('#') !== -1) {
           color = color.replace(/#/g, '');
           color = color.replace(/ /g, '');
-          color = '#'+color.toString();
+          color = '#' + color.toString();
           return color;
         }
         let array = color.split(' ');
@@ -345,8 +377,8 @@ export default {
         let array = obj.split(' ');
         let width = converterDpi(parseFloat(array[2]));
         if (width > this.screenWidth) {
-          const scale = (this.screenWidth-5) / parseFloat(array[2]);
-          setPageScal(scale>0?scale:1);
+          const scale = (this.screenWidth - 5) / parseFloat(array[2]);
+          setPageScal(scale > 0 ? scale : 1);
         }
         return {
           x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
@@ -413,33 +445,20 @@ export default {
       }
     },
 
-    getDocumentObj(zip) {
-      console.log('start'+ new Date())
-      pipeline.call(this, async () => await this.getDocRoot(zip), this.getDocument,
-          this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
-          .then(res => {
-            console.log('end'+ new Date())
-            this.getPageBox(res.pages, res.document);
-            this.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
-            for (const stamp of res.stampAnnot) {
-              this.unzipSeal(stamp);
-            }
-          })
-          .catch(res => {
-            console.log(res)
-          });
-    },
-
-    getSealDocumentObj(zip, stampAnnot) {
-      pipeline.call(this, async () => await this.getDocRoot(zip), this.getDocument,
-          this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
-          .then(res => {
-            console.log('seal Document', res)
-            this.drawPage(res.pages, res.tpls, true, stampAnnot.stampAnnot, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
-          })
-          .catch(res => {
-            console.log(res)
-          });
+    getSealDocumentObj(stampAnnot) {
+      return new Promise((resolve, reject) => {
+        pipeline.call(this, async () => await this.unzipOfd(stampAnnot.sealObj.ofdArray), this.getDocRoot, this.getDocument,
+            this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
+            .then(res => {
+              console.log('seal Document', res)
+              resolve(res)
+              // this.drawPage(res.pages, res.tpls, true, stampAnnot.stampAnnot, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
+            })
+            .catch(res => {
+              reject(res);
+              // console.log(res)
+            });
+      });
     },
 
     async parsePage(zip, obj, doc) {
@@ -464,7 +483,16 @@ export default {
           res.push(pageObj);
         }
       }
-      return {'doc': doc, 'document': Document, 'pages': res, 'tpls': tpls, 'stampAnnot': stampAnnot, fontResObj, drawParamResObj, multiMediaResObj};
+      return {
+        'doc': doc,
+        'document': Document,
+        'pages': res,
+        'tpls': tpls,
+        'stampAnnot': stampAnnot,
+        fontResObj,
+        drawParamResObj,
+        multiMediaResObj
+      };
     },
 
     async getTemplatePage([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
@@ -553,9 +581,11 @@ export default {
             // this.drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
             // 'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
             //     'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
-            drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
-              'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
-              'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
+            drawParamResObj[item['@_ID']] = {
+              'LineWidth': item['@_LineWidth'],
+              'FillColor': item['ofd:FillColor'] ? item['ofd:FillColor']['@_Value'] : '',
+              'StrokeColor': item['ofd:StrokeColor'] ? item['ofd:StrokeColor']['@_Value'] : ""
+            };
           }
         }
       }
@@ -614,7 +644,28 @@ export default {
       const doc = docRoot.split('/')[0];
       const signatures = data['json']['ofd:OFD']['ofd:DocBody']['ofd:Signatures'];
       const stampAnnot = await this.getSignature(zip, signatures, doc);
-      return [zip, doc, docRoot, stampAnnot];
+      let stampAnnotArray = [];
+      for (const stamp of stampAnnot) {
+        if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
+          if (stamp.sealObj.type === 'ofd') {
+            const stampObj = await this.getSealDocumentObj(stamp);
+            stampAnnotArray.push({type: 'ofd', stamp: stampObj});
+          } else if (stamp.sealObj.type === 'png') {
+            let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stampAnnot.sealObj.ofdArray));
+            let stampArray = [];
+            stampArray = stampArray.concat(stampAnnot.stampAnnot);
+            for (const annot of stampArray) {
+              if (annot) {
+                const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': this.parseStBox(annot['@_Boundary']), 'clip': this.parseStBox(annot['@_Clip'])};
+                stampAnnotArray.push({type: 'png', stamp: stampObj});
+                // this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']), this.parseStBox(annot['@_Clip']));
+              }
+            }
+          }
+        }
+      }
+
+      return [zip, doc, docRoot, stampAnnotArray];
     },
 
     async getSignature(zip, signatures, doc) {
@@ -652,8 +703,10 @@ export default {
       let signedValue = (data['json']['ofd:Signature']['ofd:SignedValue'])
       signedValue = signedValue.toString().replace('/', '');
       let sealObj = await this.getByteFromZip(zip, signedValue);
-      return {'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
-          'sealObj': sealObj};
+      return {
+        'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
+        'sealObj': sealObj
+      };
     },
 
     async getJsonFromXmlContent(zip, xmlName) {
@@ -663,6 +716,7 @@ export default {
             attributeNamePrefix: "@_",
             ignoreAttributes: false,
             parseNodeValue: false,
+            trimValues: false
           };
           let jsonObj = parser.parse(content, ops);
           let result = {'xml': content, 'json': jsonObj};
@@ -688,7 +742,7 @@ export default {
     async getImageFromZip(zip, name) {
       return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
-          const img = 'data:image/png;base64,'+ bytes;
+          const img = 'data:image/png;base64,' + bytes;
           resolve(img);
         }, function error(e) {
           reject(e);
@@ -724,7 +778,7 @@ export default {
         let asn1 = ASN1.decode(der, offset);
         const type = this.getSealType(asn1);
         const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[1];
-        const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos+sealObj.header, sealObj.stream.pos+sealObj.length+sealObj.header);
+        const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
         return {ofdArray, 'type': type.toLowerCase()};
       } catch (e) {
         console.log(e)
@@ -734,11 +788,11 @@ export default {
 
     getSealType(asn1) {
       const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[0];
-      const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos+sealObj.header, sealObj.stream.pos+sealObj.length+sealObj.header);
+      const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
       return this.Uint8ArrayToString(ofdArray);
     },
 
-    Uint8ArrayToString(fileData){
+    Uint8ArrayToString(fileData) {
       let dataString = "";
       for (let i = 0; i < fileData.length; i++) {
         dataString += String.fromCharCode(fileData[i]);
@@ -750,20 +804,13 @@ export default {
       let that = this;
       if (stampAnnot.sealObj && Object.keys(stampAnnot.sealObj).length > 0) {
         if (stampAnnot.sealObj.type === 'ofd') {
-          JsZip.loadAsync(stampAnnot.sealObj.ofdArray)
-              .then(function (zip) {
-                console.log(zip)
-                that.getSealDocumentObj(zip, stampAnnot);
-              }, function (e) {
-                console.log(e)
-              });
+          that.getSealDocumentObj(stampAnnot);
         } else if (stampAnnot.sealObj.type === 'png') {
           let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stampAnnot.sealObj.ofdArray));
           let stampArray = [];
           stampArray = stampArray.concat(stampAnnot.stampAnnot);
           for (const annot of stampArray) {
             if (annot) {
-              // console.log(annot)
               this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']), this.parseStBox(annot['@_Clip']));
             }
           }
@@ -795,7 +842,7 @@ export default {
   border: 1px solid rgb(199, 198, 198);
 }
 
-.hidden{
+.hidden {
   display: none !important;
 }
 
