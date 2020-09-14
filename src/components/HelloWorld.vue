@@ -27,6 +27,7 @@ import {
 } from "../utils/ofd_util"
 
 import {parseOfdDocument} from "@/utils/ofd_parser";
+import {renderPageBox} from "@/utils/ofd_render";
 
 export default {
   name: 'HelloWorld',
@@ -78,8 +79,7 @@ export default {
       parseOfdDocument({
         ofd: file,
         success(res) {
-          console.log(res.stampAnnot)
-          that.getPageBox(res.pages, res.document);
+          that.pageBoxs = renderPageBox(that.screenWidth, res.pages, res.document);
           that.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
           for (const stamp of res.stampAnnot) {
             if (stamp.type === 'ofd') {
@@ -337,67 +337,6 @@ export default {
           mycanvas.appendChild(svg);
         }
       }, 1)
-    },
-
-    parsePageBox(obj) {
-      if (obj) {
-        let array = obj.split(' ');
-        let width = converterDpi(parseFloat(array[2]));
-        if (width > this.screenWidth) {
-          const scale = (this.screenWidth - 5) / parseFloat(array[2]);
-          setPageScal(scale > 0 ? scale : 1);
-        }
-        return {
-          x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
-          w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
-        };
-      } else {
-        return null;
-      }
-    },
-
-    getPageBox(pages, document) {
-      for (const page of pages) {
-        const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
-        let box;
-        if (area) {
-          const physicalBox = area['ofd:PhysicalBox']
-          if (physicalBox) {
-            box = (physicalBox);
-          } else {
-            const applicationBox = area['ofd:ApplicationBox']
-            if (applicationBox) {
-              box = (applicationBox);
-            } else {
-              const contentBox = area['ofd:ContentBox']
-              if (contentBox) {
-                box = (contentBox);
-              }
-            }
-          }
-        } else {
-          let documentArea = document['ofd:CommonData']['ofd:PageArea']
-          const physicalBox = documentArea['ofd:PhysicalBox']
-          if (physicalBox) {
-            box = (physicalBox);
-          } else {
-            const applicationBox = documentArea['ofd:ApplicationBox']
-            if (applicationBox) {
-              box = (applicationBox);
-            } else {
-              const contentBox = documentArea['ofd:ContentBox']
-              if (contentBox) {
-                box = (contentBox);
-              }
-            }
-          }
-        }
-        box = this.parsePageBox(box);
-        let boxObj = {};
-        boxObj['id'] = Object.keys(page)[0];
-        boxObj['box'] = box;
-        this.pageBoxs.push(boxObj);
-      }
     },
   }
 }
