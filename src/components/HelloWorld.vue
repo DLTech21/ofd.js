@@ -328,8 +328,8 @@ export default {
     parseColor(color) {
       if (color) {
         if (color.indexOf('#') !== -1) {
-          color = color.replaceAll('#', '');
-          color = color.replaceAll(' ', '');
+          color = color.replace(/#/g, '');
+          color = color.replace(/ /g, '');
           color = '#'+color.toString();
           return color;
         }
