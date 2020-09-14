@@ -86,11 +86,15 @@ export default {
           this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
           .then(res => {
             console.log(res)
-            // const ofdRes = res;
             this.getPageBox(res.pages, res.document);
             this.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
-            // for (const stamp of res.stampAnnot) {
-            // }
+            for (const stamp of res.stampAnnot) {
+              if (stamp.type === 'ofd') {
+                this.drawPage(stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj);
+              } else if (stamp.type === 'png') {
+                this.drawImageOnDiv(stamp.obj.img, stamp.obj.pageId, stamp.obj.boundary, stamp.obj.clip);
+              }
+            }
           })
           .catch(res => {
             console.log(res)
@@ -450,13 +454,10 @@ export default {
         pipeline.call(this, async () => await this.unzipOfd(stampAnnot.sealObj.ofdArray), this.getDocRoot, this.getDocument,
             this.getDocumentRes, this.getPublicRes, this.getTemplatePage, this.getPage)
             .then(res => {
-              console.log('seal Document', res)
               resolve(res)
-              // this.drawPage(res.pages, res.tpls, true, stampAnnot.stampAnnot, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
             })
             .catch(res => {
               reject(res);
-              // console.log(res)
             });
       });
     },
@@ -559,10 +560,8 @@ export default {
           if (font) {
             if (font['@_FamilyName']) {
               fontResObj[font['@_ID']] = font['@_FamilyName'];
-              // this.fontResObj[font['@_ID']] = font['@_FamilyName'];
             } else {
               fontResObj[font['@_ID']] = font['@_FontName'];
-              // this.fontResObj[font['@_ID']] = font['@_FontName'];
             }
           }
         }
@@ -578,9 +577,6 @@ export default {
         array = array.concat(drawParams['ofd:DrawParam']);
         for (const item of array) {
           if (item) {
-            // this.drawParamResObj[item['@_ID']] = { 'LineWidth': item['@_LineWidth'],
-            // 'FillColor': item['ofd:FillColor']?item['ofd:FillColor']['@_Value']:'',
-            //     'StrokeColor': item['ofd:StrokeColor']?item['ofd:StrokeColor']['@_Value']:""};
             drawParamResObj[item['@_ID']] = {
               'LineWidth': item['@_LineWidth'],
               'FillColor': item['ofd:FillColor'] ? item['ofd:FillColor']['@_Value'] : '',
@@ -614,15 +610,12 @@ export default {
               const ext = getExtensionByPath(file);
               if ((format && (format.toLowerCase() === 'gbig2' || format.toLowerCase() === 'jb2')) || ext && (ext.toLowerCase() === 'jb2' || ext.toLowerCase() === 'gbig2')) {
                 const jbig2 = await this.getImageArrayFromZip(zip, file);
-                // this.multiMediaResObj[item['@_ID']] = jbig2;
                 multiMediaResObj[item['@_ID']] = jbig2;
               } else {
                 const img = await this.getImageFromZip(zip, file);
-                // this.multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
                 multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
               }
             } else {
-              // this.multiMediaResObj[item['@_ID']] = file;
               multiMediaResObj[item['@_ID']] = file;
             }
           }
@@ -649,16 +642,15 @@ export default {
         if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
           if (stamp.sealObj.type === 'ofd') {
             const stampObj = await this.getSealDocumentObj(stamp);
-            stampAnnotArray.push({type: 'ofd', stamp: stampObj});
+            stampAnnotArray.push({type: 'ofd', obj: stampObj, stamp});
           } else if (stamp.sealObj.type === 'png') {
-            let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stampAnnot.sealObj.ofdArray));
+            let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
             let stampArray = [];
-            stampArray = stampArray.concat(stampAnnot.stampAnnot);
+            stampArray = stampArray.concat(stamp.stampAnnot);
             for (const annot of stampArray) {
               if (annot) {
                 const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': this.parseStBox(annot['@_Boundary']), 'clip': this.parseStBox(annot['@_Clip'])};
-                stampAnnotArray.push({type: 'png', stamp: stampObj});
-                // this.drawImageOnDiv(img, annot['@_PageRef'], this.parseStBox(annot['@_Boundary']), this.parseStBox(annot['@_Clip']));
+                stampAnnotArray.push({type: 'png', obj: stampObj});
               }
             }
           }
