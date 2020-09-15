@@ -1,9 +1,30 @@
+/*
+ * ofd.js - A Javascript class for reading and rendering ofd files
+ * <https://github.com/DLTech21/ofd.js>
+ *
+ * Copyright (c) 2020. DLTech21 All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+
 export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
     let array = abbreviatedData.split(' ');
     let pointList = [];
     let i = 0;
     while (i < array.length) {
-        if (array[i] === 'M') {
+        if (array[i] === 'M'|| array[i] === 'S') {
             let point = {
                 'type': 'M',
                 'x': parseFloat(array[i + 1]),
@@ -21,6 +42,12 @@ export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
             i = i + 3;
             pointList.push(point);
         } else if (array[i] === 'C') {
+            let point = {
+                'type': 'C',
+                'x': 0,
+                'y': 0
+            }
+            pointList.push(point)
             i++;
         } else if (array[i] === 'B') {
             let point = {
@@ -46,7 +73,7 @@ export const calPathPoint = function (abbreviatedPoint) {
 
     for (let i = 0; i < abbreviatedPoint.length; i++) {
         let point = abbreviatedPoint[i];
-        if (point.type === 'M' || point.type === 'L') {
+        if (point.type === 'M' || point.type === 'L' || point.type === 'C') {
             let x = 0, y = 0;
             x = point.x;
             y = point.y;
@@ -72,9 +99,14 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
+let Scale = 5;
+
+export const setPageScal = function (scale) {
+    Scale = scale;
+}
 
 export const converterDpi = function (width) {
-    return millimetersToPixel(width, 5*25.4);
+    return millimetersToPixel(width, Scale*25.4);
 }
 
 export const deltaFormatter = function (delta) {
@@ -94,6 +126,9 @@ export const deltaFormatter = function (delta) {
             if ('g' === s) {
                 gFlag = true;
             } else {
+                if (!s || s.trim().length == 0) {
+                    continue;
+                }
                 if (gFlag) {
                     gItemCount = parseInt(s);
                     gProcessing = true;
@@ -132,6 +167,7 @@ export const calTextPoint = function (textCode) {
         if (textStr) {
             textStr += '';
             textStr = decodeHtml(textStr);
+            textStr = textStr.replace(/&#x20;/g, ' ');
             for (let i = 0; i < textStr.length; i++) {
                 if (i > 0 && deltaXList.length > 0) {
                     x += deltaXList[(i - 1)];
@@ -199,6 +235,9 @@ let FONT_FAMILY = {
     'KaiTi': '楷体, KaiTi, Kai',
     'Kai': '楷体, KaiTi, Kai',
     '宋体': 'SimSun, Songti SC',
+    '黑体': 'SimHei, STHeiti',
+    '仿宋': 'FangSong, STFangsong',
+    '小标宋体': 'sSun',
 };
 
 export const getFontFamily = function (font) {
@@ -208,4 +247,35 @@ export const getFontFamily = function (font) {
     return font;
 }
 
+export const parseStBox = function (obj) {
+    if (obj) {
+        let array = obj.split(' ');
+        return {
+            x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
+            w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
+        };
+    } else {
+        return null;
+    }
+}
+
+export const parseCtm = function (ctm) {
+    let array = ctm.split(' ');
+    return array;
+}
+
+export const parseColor = function (color) {
+    if (color) {
+        if (color.indexOf('#') !== -1) {
+            color = color.replace(/#/g, '');
+            color = color.replace(/ /g, '');
+            color = '#' + color.toString();
+            return color;
+        }
+        let array = color.split(' ');
+        return `rgb(${array[0]}, ${array[1]}, ${array[2]})`
+    } else {
+        return `rgb(0, 0, 0)`
+    }
+}
 
