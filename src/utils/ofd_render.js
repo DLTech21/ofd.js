@@ -26,7 +26,8 @@ import {
     parseColor,
     parseCtm,
     parseStBox,
-    setPageScal
+    setPageScal,
+    converterBox
 } from "@/utils/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -75,25 +76,12 @@ const calPageBox = function (screenWidth, document, page) {
             }
         }
     }
-    box = parsePageBox(screenWidth, box);
+    let array = box.split(' ');
+    const scale = (screenWidth - 5) / parseFloat(array[2]);
+    setPageScal(scale > 0 ? scale.toFixed(1) : 1);
+    box = parseStBox( box);
+    box = converterBox(box)
     return box;
-}
-
-const parsePageBox = function (screenWidth, obj) {
-    if (obj) {
-        let array = obj.split(' ');
-        let width = converterDpi(parseFloat(array[2]));
-        if (width > screenWidth) {
-            const scale = (screenWidth - 5) / parseFloat(array[2]);
-            setPageScal(scale > 0 ? scale : 1);
-        }
-        return {
-            x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
-            w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
-        };
-    } else {
-        return null;
-    }
 }
 
 export const renderOfd = function (screenWidth, ofd) {
@@ -138,7 +126,6 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
         if (isStampAnnot && stampAnnot) {
             stampAnnotBoundary = stampAnnot.boundary;
-            console.log(stampAnnotBoundary)
         }
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
@@ -151,6 +138,7 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
 }
 
 const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
+    stampAnnotBoundary = converterBox(stampAnnotBoundary);
     let fillColor = null;
     let strokeColor = null;
     let lineWith = 0;
@@ -190,7 +178,8 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
 }
 
 export const renderImageObject = function (pageWidth, pageHeight, multiMediaResObj, imageObject){
-    const boundary = parseStBox(imageObject['@_Boundary']);
+    let boundary = parseStBox(imageObject['@_Boundary']);
+    boundary = converterBox(boundary);
     const resId = imageObject['@_ResourceID'];
     if (multiMediaResObj[resId].format === 'gbig2') {
         const img = multiMediaResObj[resId].img;
@@ -234,6 +223,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     const h = boundary.h > ph ? ph : boundary.h;
     let c;
     if (clip) {
+        clip = converterBox(clip);
         c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
     }
     div.setAttribute('style', `overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
@@ -241,7 +231,8 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
 }
 
 export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
-    const boundary = parseStBox(textObject['@_Boundary']);
+    let boundary = parseStBox(textObject['@_Boundary']);
+    boundary = converterBox(boundary);
     const ctm = textObject['@_CTM'];
     const hScale = textObject['@_HScale'];
     const font = textObject['@_Font'];
@@ -285,7 +276,8 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
 }
 
 export const renderPathObject = function (drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
-    const boundary = parseStBox(pathObject['@_Boundary']);
+    let boundary = parseStBox(pathObject['@_Boundary']);
+    boundary = converterBox(boundary);
     let lineWidth = pathObject['@_LineWidth'];
     const abbreviatedData = pathObject['ofd:AbbreviatedData'];
     const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));

@@ -99,7 +99,7 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
-let Scale = 5;
+let Scale = 6.8;
 
 export const setPageScal = function (scale) {
     Scale = scale;
@@ -251,8 +251,8 @@ export const parseStBox = function (obj) {
     if (obj) {
         let array = obj.split(' ');
         return {
-            x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
-            w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
+            x: (parseFloat(array[0])), y: (parseFloat(array[1])),
+            w: (parseFloat(array[2])), h: (parseFloat(array[3]))
         };
     } else {
         return null;
@@ -277,5 +277,12 @@ export const parseColor = function (color) {
     } else {
         return `rgb(0, 0, 0)`
     }
+}
+
+export const converterBox = function (box) {
+    return {
+        x: converterDpi(box.x), y: converterDpi(box.y),
+        w: converterDpi(box.w), h: converterDpi(box.h)
+    };
 }
 
