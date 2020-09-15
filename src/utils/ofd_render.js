@@ -154,8 +154,6 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     const textCodePointList = calTextPoint(textCode);
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
-    svg.style.width = boundary.w;
-    svg.style.height = boundary.h;
     const fillColor = textObject['ofd:FillColor'];
     if (fillColor) {
         defaultFillColor = parseColor(fillColor['@_Value']);
@@ -181,9 +179,11 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
         }
 
     }
-    svg.style.left = stampAnnotBoundary.x + boundary.x;
-    svg.style.top = stampAnnotBoundary.y + boundary.y;
-    svg.style.position = 'absolute';
+    let width = boundary.w;
+    let height = boundary.h;
+    let left = stampAnnotBoundary.x + boundary.x;
+    let top = stampAnnotBoundary.y + boundary.y;
+    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
     return svg;
 }
 
@@ -195,8 +195,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     const ctm = pathObject['@_CTM'];
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
-    svg.style.width = isStampAnnot ? boundary.w : Math.ceil(boundary.w);
-    svg.style.height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     if (lineWidth) {
         defaultLineWith = converterDpi(lineWidth);
@@ -245,8 +243,10 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     }
     path.setAttribute('d', d);
     svg.appendChild(path);
-    svg.style.left = stampAnnotBoundary.x + boundary.x;
-    svg.style.top = stampAnnotBoundary.y + boundary.y;
-    svg.style.position = 'absolute';
+    let width = isStampAnnot ? boundary.w : Math.ceil(boundary.w);
+    let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
+    let left = stampAnnotBoundary.x + boundary.x;
+    let top = stampAnnotBoundary.y + boundary.y;
+    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
     return svg;
 }

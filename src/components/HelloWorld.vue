@@ -7,7 +7,7 @@
     </div>
     <div style="display: flex;flex-direction: column;align-items: center;justify-content: center">
       <div v-for="box in pageBoxs" :key="box.id" style="position: relative;margin-bottom: 5px">
-        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}" class="mycanvas"></div>
+        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}" class="pageDiv"></div>
       </div>
     </div>
   </div>
@@ -143,57 +143,57 @@ export default {
     },
 
     drawImageObject(multiMediaResObj, imageObject, pageId) {
-      let mycanvas = document.getElementById(pageId);
+      let pageDiv = document.getElementById(pageId);
       let a = setInterval(() => {
-        mycanvas = document.getElementById(pageId)
-        if (!mycanvas) {
+        pageDiv = document.getElementById(pageId)
+        if (!pageDiv) {
           return false
         } else {
           clearInterval(a);
-          let element = renderImageObject(mycanvas.style.width, mycanvas.style.height, multiMediaResObj, imageObject)
-          mycanvas.appendChild(element);
+          let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, multiMediaResObj, imageObject)
+          pageDiv.appendChild(element);
         }
       }, 1);
     },
 
     drawImageOnDiv(imgSrc, pageId, boundary, clip) {
-      let mycanvas = document.getElementById(pageId);
+      let pageDiv = document.getElementById(pageId);
       let a = setInterval(() => {
-        mycanvas = document.getElementById(pageId)
-        if (!mycanvas) {
+        pageDiv = document.getElementById(pageId)
+        if (!pageDiv) {
           return false
         } else {
           clearInterval(a);
-          let element = renderImageOnDiv(mycanvas.style.width, mycanvas.style.height, imgSrc, boundary, clip)
-          mycanvas.appendChild(element);
+          let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, imgSrc, boundary, clip)
+          pageDiv.appendChild(element);
         }
       }, 1);
     },
 
     drawTextObject(fontResObj, textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
-      let mycanvas = document.getElementById(pageId);
+      let pageDiv = document.getElementById(pageId);
       let a = setInterval(() => {
-        mycanvas = document.getElementById(pageId)
-        if (!mycanvas) {
+        pageDiv = document.getElementById(pageId)
+        if (!pageDiv) {
           return false
         } else {
           clearInterval(a);
           let svg = renderTextObject(fontResObj, textObject, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary);
-          mycanvas.appendChild(svg);
+          pageDiv.appendChild(svg);
         }
       }, 1)
     },
 
     drawPathObject(drawParamResObj, pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
-      let mycanvas = document.getElementById(pageId)
+      let pageDiv = document.getElementById(pageId)
       let a = setInterval(() => {
-        mycanvas = document.getElementById(pageId)
-        if (!mycanvas) {
+        pageDiv = document.getElementById(pageId)
+        if (!pageDiv) {
           return false
         } else {
           clearInterval(a)
           let svg = renderPathObject(drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary)
-          mycanvas.appendChild(svg);
+          pageDiv.appendChild(svg);
         }
       }, 1)
     },
@@ -218,7 +218,7 @@ export default {
   font-family: "Kai, KaiTi";
 }
 
-.mycanvas {
+.pageDiv {
   border: 1px solid rgb(199, 198, 198);
 }
 
