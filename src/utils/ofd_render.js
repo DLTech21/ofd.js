@@ -77,8 +77,8 @@ const calPageBox = function (screenWidth, document, page) {
         }
     }
     let array = box.split(' ');
-    const scale = (screenWidth - 5) / parseFloat(array[2]);
-    setPageScal(scale > 0 ? scale.toFixed(1) : 1);
+    const scale = ((screenWidth - 5) / parseFloat(array[2])).toFixed(1);
+    setPageScal(scale > 0 ? scale : 1);
     box = parseStBox( box);
     box = converterBox(box)
     return box;

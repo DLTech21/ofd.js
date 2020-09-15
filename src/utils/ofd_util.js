@@ -102,7 +102,7 @@ const millimetersToPixel = function (mm, dpi) {
 let Scale = 6.8;
 
 export const setPageScal = function (scale) {
-    Scale = scale;
+    Scale = scale > 5 ? 5: scale;
 }
 
 export const converterDpi = function (width) {
@@ -231,10 +231,10 @@ export const decodeHtml = function(s){
 };
 
 let FONT_FAMILY = {
-    '楷体': '楷体, KaiTi, Kai',
-    'KaiTi': '楷体, KaiTi, Kai',
+    '楷体': '楷体, KaiTi, Kai, simkai',
+    'KaiTi': '楷体, KaiTi, Kai, simkai',
     'Kai': '楷体, KaiTi, Kai',
-    '宋体': 'SimSun, Songti SC',
+    '宋体': 'SimSun, simsun, Songti SC',
     '黑体': 'SimHei, STHeiti',
     '仿宋': 'FangSong, STFangsong',
     '小标宋体': 'sSun',
