@@ -61,17 +61,16 @@ export default {
         // this.$toast('error', "文件大小需 < 5M");
         return;
       }
-      this.getOfdDocumentObj(this.file);
+      this.getOfdDocumentObj(this.file, this.screenWidth);
       this.$refs.file.value = null;
     },
 
 
-    getOfdDocumentObj(file) {
-      let that = this;
+    getOfdDocumentObj(file, screenWidth) {
       parseOfdDocument({
         ofd: file,
         success(res) {
-          const divs = renderOfd(that.screenWidth, res);
+          const divs = renderOfd(screenWidth, res);
           let contentDiv = document.getElementById('content');
           contentDiv.innerHTML ='';
           for (const div of divs) {

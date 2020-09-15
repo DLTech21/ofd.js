@@ -9,6 +9,23 @@
 
 [体验地址](https://51shouzu.xyz/ofd/)
 
+## 接口使用（暂时提供）
+
+```
+其中file支持本地文件及二进制、screenWidth为屏幕宽度
+parseOfdDocument({
+        ofd: file,
+        success(res) {
+          //输出ofd每页的div
+          const divs = renderOfd(screenWidth, res);
+          
+        },
+        fail(error) {
+          console.log(error)
+        }
+      });
+```
+
 ## 愿景
 希望能做到pdf.js的高度
 
