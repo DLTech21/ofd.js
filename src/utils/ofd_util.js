@@ -126,6 +126,9 @@ export const deltaFormatter = function (delta) {
             if ('g' === s) {
                 gFlag = true;
             } else {
+                if (!s || s.trim().length == 0) {
+                    continue;
+                }
                 if (gFlag) {
                     gItemCount = parseInt(s);
                     gProcessing = true;

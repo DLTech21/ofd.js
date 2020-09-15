@@ -2,7 +2,7 @@
   <div>
     <div class="upload-icon" @click="uploadFile">
       <i class="upload-icon">选择OFD文件</i>
-      <input type="file" ref="file" class="hidden" accept="ofd"
+      <input type="file" ref="file" class="hidden" accept=".ofd"
              @change="fileChanged">
     </div>
     <div style="display: flex;flex-direction: column;align-items: center;justify-content: center">
