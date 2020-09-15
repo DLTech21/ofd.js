@@ -32,47 +32,51 @@ import {
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
     for (const page of pages) {
-        const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
-        let box;
-        if (area) {
-            const physicalBox = area['ofd:PhysicalBox']
-            if (physicalBox) {
-                box = (physicalBox);
-            } else {
-                const applicationBox = area['ofd:ApplicationBox']
-                if (applicationBox) {
-                    box = (applicationBox);
-                } else {
-                    const contentBox = area['ofd:ContentBox']
-                    if (contentBox) {
-                        box = (contentBox);
-                    }
-                }
-            }
-        } else {
-            let documentArea = document['ofd:CommonData']['ofd:PageArea']
-            const physicalBox = documentArea['ofd:PhysicalBox']
-            if (physicalBox) {
-                box = (physicalBox);
-            } else {
-                const applicationBox = documentArea['ofd:ApplicationBox']
-                if (applicationBox) {
-                    box = (applicationBox);
-                } else {
-                    const contentBox = documentArea['ofd:ContentBox']
-                    if (contentBox) {
-                        box = (contentBox);
-                    }
-                }
-            }
-        }
-        box = parsePageBox(screenWidth, box);
         let boxObj = {};
         boxObj['id'] = Object.keys(page)[0];
-        boxObj['box'] = box;
+        boxObj['box'] = calPageBox(screenWidth, document, page);
         pageBoxs.push(boxObj);
     }
     return pageBoxs;
+}
+
+const calPageBox = function (screenWidth, document, page) {
+    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    let box;
+    if (area) {
+        const physicalBox = area['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = area['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = area['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    } else {
+        let documentArea = document['ofd:CommonData']['ofd:PageArea']
+        const physicalBox = documentArea['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = documentArea['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = documentArea['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    }
+    box = parsePageBox(screenWidth, box);
+    return box;
 }
 
 const parsePageBox = function (screenWidth, obj) {
@@ -89,6 +93,99 @@ const parsePageBox = function (screenWidth, obj) {
         };
     } else {
         return null;
+    }
+}
+
+export const renderOfd = function (screenWidth, ofd) {
+    let divArray = [];
+    for (const page of ofd.pages) {
+        let box = calPageBox(screenWidth, ofd.document, page);
+        const pageId = Object.keys(page)[0];
+        let pageDiv = document.createElement('div');
+        pageDiv.id = pageId;
+        pageDiv.setAttribute('style', `border: 1px solid rgb(199, 198, 198);position: relative;width:${box.w}px;height:${box.h}px`)
+        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        divArray.push(pageDiv);
+    }
+    return divArray;
+}
+
+const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
+    const pageId = Object.keys(page)[0];
+    let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
+    const template = page[pageId]['json']['ofd:Template'];
+    if (template) {
+        const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false, stampAnnotBoundary);
+    }
+    const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false, stampAnnotBoundary);
+    if (page[pageId].stamp) {
+        for (const stamp of page[pageId].stamp) {
+          if (stamp.type === 'ofd') {
+            renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj);
+          } else if (stamp.type === 'png') {
+              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, stamp.obj.boundary, stamp.obj.clip);
+              pageDiv.appendChild(element);
+          }
+        }
+    }
+}
+
+const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj) {
+    for (const page of pages) {
+        const pageId = Object.keys(page)[0];
+        let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
+        if (isStampAnnot && stampAnnot) {
+            stampAnnotBoundary = stampAnnot.boundary;
+            console.log(stampAnnotBoundary)
+        }
+        const template = page[pageId]['json']['ofd:Template'];
+        if (template) {
+            const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot, stampAnnotBoundary);
+        }
+        const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot, stampAnnotBoundary);
+    }
+}
+
+const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
+    let fillColor = null;
+    let strokeColor = null;
+    let lineWith = 0;
+    const drawParam = layer['@_DrawParam'];
+    if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
+        fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+    }
+    const imageObjects = layer['ofd:ImageObject'];
+    let imageObjectArray = [];
+    imageObjectArray = imageObjectArray.concat(imageObjects);
+    for (const imageObject of imageObjectArray) {
+        if (imageObject) {
+            let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, multiMediaResObj, imageObject)
+            pageDiv.appendChild(element);
+        }
+    }
+    const pathObjects = layer['ofd:PathObject'];
+    let pathObjectArray = [];
+    pathObjectArray = pathObjectArray.concat(pathObjects);
+    for (const pathObject of pathObjectArray) {
+        if (pathObject) {
+            let svg = renderPathObject(drawParamResObj, pathObject, null, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary)
+            pageDiv.appendChild(svg);
+        }
+    }
+    const textObjects = layer['ofd:TextObject'];
+    let textObjectArray = [];
+    textObjectArray = textObjectArray.concat(textObjects);
+    for (const textObject of textObjectArray) {
+        if (textObject) {
+            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
+            pageDiv.appendChild(svg);
+        }
     }
 }
 

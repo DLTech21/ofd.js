@@ -61,15 +61,17 @@ const getDocRoot = async function (zip) {
     const doc = docRoot.split('/')[0];
     const signatures = data['json']['ofd:OFD']['ofd:DocBody']['ofd:Signatures'];
     const stampAnnot = await getSignature(zip, signatures, doc);
-    let stampAnnotArray = [];
+    let stampAnnotArray = {};
     for (const stamp of stampAnnot) {
         if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
             if (stamp.sealObj.type === 'ofd') {
                 const stampObj = await getSealDocumentObj(stamp);
-                console.log(stamp.stampAnnot)
                 stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
                 stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
-                stampAnnotArray.push({type: 'ofd', obj: stampObj, stamp});
+                if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
+                    stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
+                }
+                stampAnnotArray[stamp.stampAnnot['@_PageRef']].push({type: 'ofd', obj: stampObj, stamp});
             } else if (stamp.sealObj.type === 'png') {
                 let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
                 let stampArray = [];
@@ -77,7 +79,10 @@ const getDocRoot = async function (zip) {
                 for (const annot of stampArray) {
                     if (annot) {
                         const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': parseStBox(annot['@_Boundary']), 'clip': parseStBox(annot['@_Clip'])};
-                        stampAnnotArray.push({type: 'png', obj: stampObj});
+                        if (!stampAnnotArray[annot['@_PageRef']]) {
+                            stampAnnotArray[annot['@_PageRef']] = [];
+                        }
+                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj});
                     }
                 }
             }
@@ -154,6 +159,11 @@ const getPage = async function ([zip, doc, Document, stampAnnot, tpls, fontResOb
     for (const page of array) {
         if (page) {
             let pageObj = await parsePage(zip, page, doc);
+            const pageId = Object.keys(pageObj)[0];
+            const currentPageStamp = stampAnnot[pageId];
+            if (currentPageStamp) {
+                pageObj[pageId].stamp = currentPageStamp;
+            }
             res.push(pageObj);
         }
     }
