@@ -18,7 +18,16 @@
  *
  */
 
-import {converterDpi, setPageScal} from "@/utils/ofd_util";
+import {
+    calPathPoint,
+    calTextPoint,
+    converterDpi, convertPathAbbreviatedDatatoPoint,
+    getFontFamily,
+    parseColor,
+    parseCtm,
+    parseStBox,
+    setPageScal
+} from "@/utils/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -81,4 +90,163 @@ const parsePageBox = function (screenWidth, obj) {
     } else {
         return null;
     }
+}
+
+export const renderImageObject = function (pageWidth, pageHeight, multiMediaResObj, imageObject){
+    const boundary = parseStBox(imageObject['@_Boundary']);
+    const resId = imageObject['@_ResourceID'];
+    if (multiMediaResObj[resId].format === 'gbig2') {
+        const img = multiMediaResObj[resId].img;
+        const width = multiMediaResObj[resId].width;
+        const height = multiMediaResObj[resId].height;
+        return renderImageOnCanvas(img, width, height, boundary);
+    } else {
+        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary);
+    }
+}
+
+const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
+    const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
+    for (var i = 0; i < img.length; i++) {
+        arr[4 * i] = img[i];
+        arr[4 * i + 1] = img[i];
+        arr[4 * i + 2] = img[i];
+        arr[4 * i + 3] = 255;
+    }
+    let imageData = new ImageData(arr, imgWidth, imgHeight);
+    let canvas = document.createElement('canvas');
+    canvas.width = imgWidth;
+    canvas.height = imgHeight;
+    let context = canvas.getContext('2d');
+    context.putImageData(imageData, 0, 0);
+    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px`)
+    canvas.style.position = 'absolute';
+    return canvas;
+}
+
+export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip) {
+    let div = document.createElement('div');
+    let img = document.createElement('img');
+    img.src = imgSrc;
+    img.setAttribute('width', '100%');
+    img.setAttribute('height', '100%');
+    div.appendChild(img);
+    const pw = parseFloat(pageWidth.replace('px', ''));
+    const ph = parseFloat(pageHeight.replace('px', ''));
+    const w = boundary.w > pw ? pw : boundary.w;
+    const h = boundary.h > ph ? ph : boundary.h;
+    let c;
+    if (clip) {
+        c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
+    }
+    div.setAttribute('style', `overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+    return div;
+}
+
+export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
+    const boundary = parseStBox(textObject['@_Boundary']);
+    const ctm = textObject['@_CTM'];
+    const hScale = textObject['@_HScale'];
+    const font = textObject['@_Font'];
+    const weight = textObject['@_Weight'];
+    const size = converterDpi(parseFloat(textObject['@_Size']));
+    const textCode = textObject['ofd:TextCode'];
+    const textCodePointList = calTextPoint(textCode);
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('version', '1.1');
+    svg.style.width = boundary.w;
+    svg.style.height = boundary.h;
+    const fillColor = textObject['ofd:FillColor'];
+    if (fillColor) {
+        defaultFillColor = parseColor(fillColor['@_Value']);
+    }
+    for (const textCodePoint of textCodePointList) {
+        if (!isNaN(textCodePoint.x)) {
+            let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', textCodePoint.x);
+            text.setAttribute('y', textCodePoint.y);
+            text.innerHTML = textCodePoint.text;
+            if (ctm) {
+                const ctms = parseCtm(ctm);
+                text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+            }
+            if (hScale) {
+                text.setAttribute('transform', `scale(${hScale}, 1)`)
+                text.setAttribute('transform-origin', `${textCodePoint.x}`);
+            }
+            text.setAttribute('fill', defaultStrokeColor);
+            text.setAttribute('fill', defaultFillColor);
+            text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
+            svg.appendChild(text);
+        }
+
+    }
+    svg.style.left = stampAnnotBoundary.x + boundary.x;
+    svg.style.top = stampAnnotBoundary.y + boundary.y;
+    svg.style.position = 'absolute';
+    return svg;
+}
+
+export const renderPathObject = function (drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
+    const boundary = parseStBox(pathObject['@_Boundary']);
+    let lineWidth = pathObject['@_LineWidth'];
+    const abbreviatedData = pathObject['ofd:AbbreviatedData'];
+    const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));
+    const ctm = pathObject['@_CTM'];
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('version', '1.1');
+    svg.style.width = isStampAnnot ? boundary.w : Math.ceil(boundary.w);
+    svg.style.height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
+    let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    if (lineWidth) {
+        defaultLineWith = converterDpi(lineWidth);
+    }
+    const drawParam = pathObject['@_DrawParam'];
+    if (drawParam) {
+        lineWidth = drawParamResObj[drawParam].LineWidth;
+        if (lineWidth) {
+            defaultLineWith = converterDpi(lineWidth);
+        }
+    }
+    if (ctm) {
+        const ctms = parseCtm(ctm);
+        path.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+    }
+    let strokeStyle = '';
+    const strokeColor = pathObject['ofd:StrokeColor'];
+    if (strokeColor) {
+        defaultStrokeColor = parseColor(strokeColor['@_Value'])
+    }
+    let fillStyle = 'fill: none;';
+    const fillColor = pathObject['ofd:FillColor'];
+    if (fillColor) {
+        defaultFillColor = parseColor(fillColor['@_Value'])
+    }
+    if (defaultLineWith > 0 && !defaultStrokeColor) {
+        defaultStrokeColor = defaultFillColor;
+        if (!defaultStrokeColor) {
+            defaultStrokeColor = 'rgb(0, 0, 0)';
+        }
+    }
+    strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
+    fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
+    path.setAttribute('style', `${strokeStyle};${fillStyle}`)
+    let d = '';
+    for (const point of points) {
+        if (point.type === 'M') {
+            d += `M${point.x} ${point.y} `;
+        } else if (point.type === 'L') {
+            d += `L${point.x} ${point.y} `;
+        } else if (point.type === 'B') {
+            d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3} `;
+        } else if (point.type === 'C') {
+            d += `Z`;
+        }
+    }
+    path.setAttribute('d', d);
+    svg.appendChild(path);
+    svg.style.left = stampAnnotBoundary.x + boundary.x;
+    svg.style.top = stampAnnotBoundary.y + boundary.y;
+    svg.style.position = 'absolute';
+    return svg;
 }
