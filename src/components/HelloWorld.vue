@@ -1,26 +1,37 @@
 <template>
   <div>
-    <div class="upload-icon" @click="uploadFile">
-      <i class="upload-icon">选择OFD文件</i>
-      <input type="file" ref="file" class="hidden" accept=".ofd"
-             @change="fileChanged">
+    <div style="display: flex">
+      <div class="upload-icon" @click="uploadFile">
+        <i class="upload-icon">选择文件</i>
+        <input type="file" ref="file" class="hidden" accept=".ofd"
+               @change="fileChanged">
+      </div>
+
+      <button class="upload-icon" @click="demo(1)">
+        <i class="upload-icon">电票</i>
+      </button>
+
+      <div class="upload-icon" @click="demo(2)">
+        <i class="upload-icon">电子公文</i>
+      </div>
+
+      <div class="upload-icon" @click="demo(3)">
+        <i class="upload-icon">骑缝章</i>
+      </div>
+
+      <div class="upload-icon" @click="demo(4)">
+        <i class="upload-icon">多页文档</i>
+      </div>
     </div>
-    <div style="display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
-<!--      <div v-for="box in pageBoxs" :key="box.id" style="position: relative;margin-bottom: 5px">-->
-<!--        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}" class="pageDiv"></div>-->
-<!--      </div>-->
+    <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
     </div>
   </div>
 </template>
 
 <script>
-import {
-  setPageScal,
-} from "../utils/ofd_util"
 
 import {parseOfdDocument} from "@/utils/ofd_parser";
 import {renderOfd} from "@/utils/ofd_render";
-
 export default {
   name: 'HelloWorld',
   data() {
@@ -51,6 +62,64 @@ export default {
   },
 
   methods: {
+    demo(value) {
+      let ofdFile = null;
+      switch (value) {
+        case 1:
+          ofdFile = '../assets/999.ofd';
+          break;
+        case 2:
+          ofdFile = '../assets/n.ofd';
+          break;
+        case 3:
+          ofdFile = '../assets/h.ofd';
+          break;
+        case 4:
+          ofdFile = '../assets/2.ofd';
+          break;
+      }
+      var xmlhttp = null
+      if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+        /* eslint-disable no-new */
+        xmlhttp = new window.XMLHttpRequest()
+      } else { // code for IE6, IE5
+        /* eslint-disable no-new */
+        xmlhttp = new window.ActiveXObject('Microsoft.XMLHTTP')
+      }
+      xmlhttp.open('GET', ofdFile, true)
+      xmlhttp.withCredentials = true
+
+      // recent browsers
+      if ('responseType' in xmlhttp) {
+        xmlhttp.responseType = 'arraybuffer'
+      }
+
+      // older browser
+      if (xmlhttp.overrideMimeType) {
+        xmlhttp.overrideMimeType('text/plain; charset=x-user-defined')
+      }
+      xmlhttp.send();
+      let that = this;
+      xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+          var file = xmlhttp.response || xmlhttp.responseText
+console.log(file)
+          that.getOfdDocumentObj(file, that.screenWidth);
+          // JSZip.loadAsync(file).then(function (zip) {
+          //   console.log(zip)
+          // })
+        }
+      }
+      // JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
+      //   if(err) {
+      //     throw err; // or handle err
+      //   }
+      //   console.log(data)
+      //
+      // });
+
+    },
+
     uploadFile() {
       this.file = null;
       this.$refs.file.click();
@@ -218,7 +287,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100px;
+  width: 80px;
   line-height: 36px;
   background-color: rgb(59, 95, 232);
   border-radius: 2px;
@@ -226,7 +295,7 @@ export default {
   font-weight: 500;
   font-size: 1rem;
   color: white;
-  font-family: "Kai, KaiTi";
+  margin: 1px;
 }
 
 .pageDiv {
