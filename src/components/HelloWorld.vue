@@ -32,6 +32,7 @@
 
 import {parseOfdDocument} from "@/utils/ofd_parser";
 import {renderOfd} from "@/utils/ofd_render";
+import * as JSZipUtils from "jszip-utils";
 export default {
   name: 'HelloWorld',
   data() {
@@ -66,57 +67,25 @@ export default {
       let ofdFile = null;
       switch (value) {
         case 1:
-          ofdFile = '../assets/999.ofd';
+          ofdFile = 'https://51shouzu.xyz/999.ofd';
           break;
         case 2:
-          ofdFile = '../assets/n.ofd';
+          ofdFile = 'https://51shouzu.xyz/n.ofd';
           break;
         case 3:
-          ofdFile = '../assets/h.ofd';
+          ofdFile = 'https://51shouzu.xyz/h.ofd';
           break;
         case 4:
-          ofdFile = '../assets/2.ofd';
+          ofdFile = 'https://51shouzu.xyz/2.ofd';
           break;
       }
-      var xmlhttp = null
-      if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-        /* eslint-disable no-new */
-        xmlhttp = new window.XMLHttpRequest()
-      } else { // code for IE6, IE5
-        /* eslint-disable no-new */
-        xmlhttp = new window.ActiveXObject('Microsoft.XMLHTTP')
-      }
-      xmlhttp.open('GET', ofdFile, true)
-      xmlhttp.withCredentials = true
-
-      // recent browsers
-      if ('responseType' in xmlhttp) {
-        xmlhttp.responseType = 'arraybuffer'
-      }
-
-      // older browser
-      if (xmlhttp.overrideMimeType) {
-        xmlhttp.overrideMimeType('text/plain; charset=x-user-defined')
-      }
-      xmlhttp.send();
       let that = this;
-      xmlhttp.onreadystatechange = function () {
-        if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-          var file = xmlhttp.response || xmlhttp.responseText
-console.log(file)
-          that.getOfdDocumentObj(file, that.screenWidth);
-          // JSZip.loadAsync(file).then(function (zip) {
-          //   console.log(zip)
-          // })
+      JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
+        if(err) {
+          throw err; // or handle err
         }
-      }
-      // JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
-      //   if(err) {
-      //     throw err; // or handle err
-      //   }
-      //   console.log(data)
-      //
-      // });
+        that.getOfdDocumentObj(data, that.screenWidth);
+      });
 
     },
 
