@@ -25,7 +25,7 @@ export default {
   name: 'HelloWorld',
   data() {
     return {
-      pageBoxs: [],
+      ofdObj: null,
       screenWidth: document.body.clientWidth,
     }
   },
@@ -38,15 +38,20 @@ export default {
     let that = this;
     window.onresize = () => {
       return (() => {
-        setPageScal(5)
+        // setPageScal(5)
         that.screenWidth = (document.body.clientWidth);
+        const divs = renderOfd(that.screenWidth, that.ofdObj);
+        let contentDiv = document.getElementById('content');
+        contentDiv.innerHTML ='';
+        for (const div of divs) {
+          contentDiv.appendChild(div)
+        }
       })()
     }
   },
 
   methods: {
     uploadFile() {
-      this.pageBoxs = [];
       this.file = null;
       this.$refs.file.click();
     },
@@ -67,9 +72,11 @@ export default {
 
 
     getOfdDocumentObj(file, screenWidth) {
+      let that = this;
       parseOfdDocument({
         ofd: file,
         success(res) {
+          that.ofdObj = res;
           const divs = renderOfd(screenWidth, res);
           let contentDiv = document.getElementById('content');
           contentDiv.innerHTML ='';

@@ -99,10 +99,10 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
-let Scale = 5;
+let Scale = 6.8;
 
 export const setPageScal = function (scale) {
-    Scale = scale;
+    Scale = scale > 5 ? 5: scale;
 }
 
 export const converterDpi = function (width) {
@@ -231,10 +231,10 @@ export const decodeHtml = function(s){
 };
 
 let FONT_FAMILY = {
-    '楷体': '楷体, KaiTi, Kai',
-    'KaiTi': '楷体, KaiTi, Kai',
+    '楷体': '楷体, KaiTi, Kai, simkai',
+    'KaiTi': '楷体, KaiTi, Kai, simkai',
     'Kai': '楷体, KaiTi, Kai',
-    '宋体': 'SimSun, Songti SC',
+    '宋体': 'SimSun, simsun, Songti SC',
     '黑体': 'SimHei, STHeiti',
     '仿宋': 'FangSong, STFangsong',
     '小标宋体': 'sSun',
@@ -251,8 +251,8 @@ export const parseStBox = function (obj) {
     if (obj) {
         let array = obj.split(' ');
         return {
-            x: converterDpi(parseFloat(array[0])), y: converterDpi(parseFloat(array[1])),
-            w: converterDpi(parseFloat(array[2])), h: converterDpi(parseFloat(array[3]))
+            x: (parseFloat(array[0])), y: (parseFloat(array[1])),
+            w: (parseFloat(array[2])), h: (parseFloat(array[3]))
         };
     } else {
         return null;
@@ -277,5 +277,12 @@ export const parseColor = function (color) {
     } else {
         return `rgb(0, 0, 0)`
     }
+}
+
+export const converterBox = function (box) {
+    return {
+        x: converterDpi(box.x), y: converterDpi(box.y),
+        w: converterDpi(box.w), h: converterDpi(box.h)
+    };
 }
 

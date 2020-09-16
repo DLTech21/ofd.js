@@ -2,3 +2,13 @@
     font-family: "sSun";
     src: url("../assets/xbst.ttf");
 }
+
+@font-face {
+    font-family: "simsun";
+    src: url("../assets/simsun.ttf");
+}
+
+@font-face {
+    font-family: "simkai";
+    src: url("../assets/simkai.ttf");
+}

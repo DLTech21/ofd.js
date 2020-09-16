@@ -67,6 +67,7 @@ const getDocRoot = async function (zip) {
             if (stamp.sealObj.type === 'ofd') {
                 const stampObj = await getSealDocumentObj(stamp);
                 stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
+                console.log(stamp.stampAnnot.boundary)
                 stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
                 if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
                     stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
