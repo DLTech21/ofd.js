@@ -113,6 +113,7 @@ const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, m
           if (stamp.type === 'ofd') {
             renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj);
           } else if (stamp.type === 'png') {
+              stamp.obj.boundary = converterBox(stamp.obj.boundary);
               let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, stamp.obj.boundary, stamp.obj.clip);
               pageDiv.appendChild(element);
           }
