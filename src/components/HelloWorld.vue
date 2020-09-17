@@ -25,7 +25,7 @@
     </div>
     <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
     </div>
-    
+
     <div ref="sealInfoDiv" id="sealInfoDiv" hidden="hidden" style="position: fixed;top: 50%;left: 50%;width: 30%;height: auto;z-index: 2000;-webkit-transform: translateX(-50%) translateY(-50%);-moz-transform: translateX(-50%) translateY(-50%);-ms-transform: translateX(-50%) translateY(-50%);transform: translateX(-50%) translateY(-50%);padding:20px; border-radius:5px;background:rgba(199,198,198,0.98); box-shadow:3px 3px 4px #6d6d6d;; border:rgb(0, 0, 0, 1);">
       <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>签章信息</b></p>
       <p style="font-size:0.8vw;height:1%;text-align:left">
@@ -82,13 +82,12 @@
       <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X" @click="closeSealInfoDialog()" />
     </div>
   </div>
-  
+
 </template>
 
 <script>
 
-import {parseOfdDocument} from "@/utils/ofd_parser";
-import {renderOfd} from "@/utils/ofd_render";
+import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
 export default {
   name: 'HelloWorld',
