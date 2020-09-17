@@ -29,7 +29,7 @@ import {
     setPageScal,
     converterBox,
     Uint8ArrayToHexString
-} from "@/utils/ofd_util";
+} from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -42,7 +42,7 @@ export const renderPageBox = function (screenWidth, pages, document) {
     return pageBoxs;
 }
 
-const calPageBox = function (screenWidth, document, page) {
+export const calPageBox = function (screenWidth, document, page) {
     const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
     let box;
     if (area) {
@@ -85,21 +85,9 @@ const calPageBox = function (screenWidth, document, page) {
     return box;
 }
 
-export const renderOfd = function (screenWidth, ofd) {
-    let divArray = [];
-    for (const page of ofd.pages) {
-        let box = calPageBox(screenWidth, ofd.document, page);
-        const pageId = Object.keys(page)[0];
-        let pageDiv = document.createElement('div');
-        pageDiv.id = pageId;
-        pageDiv.setAttribute('style', `border: 1px solid rgb(199, 198, 198);position: relative;width:${box.w}px;height:${box.h}px`)
-        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
-        divArray.push(pageDiv);
-    }
-    return divArray;
-}
 
-const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
+
+export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
     const pageId = Object.keys(page)[0];
     let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
     const template = page[pageId]['json']['ofd:Template'];
@@ -160,7 +148,7 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot, stampAnnotBoundary);
         pageDiv.appendChild(div);
     }
-    
+
 }
 
 const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
