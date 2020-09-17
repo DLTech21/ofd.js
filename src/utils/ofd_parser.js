@@ -20,7 +20,7 @@
 
 import {pipeline} from "@/utils/pipeline";
 import JsZip from "jszip";
-import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd_util";
+import {parseStBox, getExtensionByPath, replaceFirstSlash, Uint8ArrayToHexString} from "@/utils/ofd_util";
 let parser = require('fast-xml-parser');
 import ASN1 from '@lapo/asn1js';
 import Base64 from '@lapo/asn1js/base64';
@@ -67,7 +67,7 @@ const getDocRoot = async function (zip) {
             if (stamp.sealObj.type === 'ofd') {
                 const stampObj = await getSealDocumentObj(stamp);
                 stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
-                console.log(stamp.stampAnnot.boundary)
+                //console.log(stamp.stampAnnot.boundary)
                 stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
                 if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
                     stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
@@ -302,7 +302,12 @@ const getSignatureData = async function (zip, signature) {
     let sealObj = await getByteFromZip(zip, signedValue);
     return {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
-        'sealObj': sealObj
+        'sealObj': sealObj,
+        'signedInfo':{
+            'Provider':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
+            'SignatureMethod':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
+            'SignatureDateTime':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],
+        },
     };
 }
 
@@ -358,14 +363,106 @@ const decodeText = function (val) {
     }
 }
 
+const decodeSES_Signature = function (der, offset) {
+    offset = offset || 0;
+    try {
+        let asn1 = ASN1.decode(der, offset);
+        const certListType = asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[2]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[2].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[2].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[2].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[2].length);
+        const asn1CertList = asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[3];
+        let certList = new Array();
+        if(asn1CertList){
+            asn1CertList.sub.forEach(asn1Cert => {
+                certList.push(asn1Cert.stream.parseOctetString(asn1Cert.stream.pos + asn1Cert.header, asn1Cert.stream.pos + asn1Cert.header+asn1Cert.length));
+            });
+        }
+        const asn1ExtDatas = asn1.sub[0]?.sub[1]?.sub[0]?.sub[4];
+        let extDatas = new Array();
+        if(asn1ExtDatas){
+            asn1ExtDatas.sub.forEach(asn1ExtData => {
+                extDatas.push({
+                    'extnID':asn1ExtData.sub[0]?.stream.parseOID(asn1ExtData.sub[0].stream.pos + asn1ExtData.sub[0].header, asn1ExtData.sub[0].stream.pos + asn1ExtData.sub[0].header+asn1ExtData.sub[0].length),
+                    'critical':asn1ExtData.sub[1]?.stream.parseInteger(asn1ExtData.sub[1].stream.pos + asn1ExtData.sub[1].header, asn1ExtData.sub[1].stream.pos + asn1ExtData.sub[1].header+asn1ExtData.sub[1].length),
+                    'extnValue':asn1ExtData.sub[2]?.stream.parseOctetString(asn1ExtData.sub[2].stream.pos + asn1ExtData.sub[2].header, asn1ExtData.sub[2].stream.pos + asn1ExtData.sub[2].header+asn1ExtData.sub[2].length),
+                })
+            });
+        }
+        const SES_Signature = 
+        {
+            'toSign':{
+                'version':asn1.sub[0]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header, asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header + asn1.sub[0].sub[0].length),
+                'eseal':{
+                    'esealInfo':{
+                        'header':{
+                            'ID':asn1.sub[0]?.sub[1]?.sub[0]?.sub[0]?.sub[0]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[0].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[0].header, asn1.sub[0].sub[1].sub[0].sub[0].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[0].header + asn1.sub[0].sub[1].sub[0].sub[0].sub[0].length),
+                            'version':asn1.sub[0]?.sub[1]?.sub[0]?.sub[0]?.sub[1]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[0].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[0].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[0].sub[1].length),
+                            'Vid':asn1.sub[0]?.sub[1]?.sub[0]?.sub[0]?.sub[2]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[0].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[2].header, asn1.sub[0].sub[1].sub[0].sub[0].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[0].sub[2].header + asn1.sub[0].sub[1].sub[0].sub[0].sub[2].length),
+                        },
+                        'esID':asn1.sub[0]?.sub[1]?.sub[0]?.sub[1]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[1].length),
+                        'property':{
+                            'type':asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[2].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[0].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[0].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[0].length),
+                            'name':asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[1]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[2].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[1].length),
+                            'certListType':certListType,
+                            'certList':certList,
+                            'createDate':asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[4]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[4].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[4].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].length),
+                            'validStart':asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[5]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[5].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[5].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].length),
+                            'validEnd':asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[6]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[6].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[6].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[6].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[6].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[6].length),
+
+                        },
+                        'picture':{
+                            'type':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[0]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[3].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].length),
+                            'data':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[1]?.stream.parseOctetString(asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].length),
+                            'width':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[2]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[3].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].length),
+                            'height':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[3]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[3].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].length),
+                        },
+                        'extDatas':extDatas,
+                    },
+                    'cert':decodeCert(asn1.sub[0]?.sub[1]?.sub[1]),
+                    'signAlgID':asn1.sub[0]?.sub[1]?.sub[2]?.stream.parseOID(asn1.sub[0].sub[1].sub[2].stream.pos + asn1.sub[0].sub[1].sub[2].header, asn1.sub[0].sub[1].sub[2].stream.pos + asn1.sub[0].sub[1].sub[2].header + asn1.sub[0].sub[1].sub[2].length),
+                    'signedValue':asn1.sub[0]?.sub[1]?.sub[3]?.stream.hexDump(asn1.sub[0].sub[1].sub[3].stream.pos + asn1.sub[0].sub[1].sub[3].header, asn1.sub[0].sub[1].sub[3].stream.pos + asn1.sub[0].sub[1].sub[3].header + asn1.sub[0].sub[1].sub[3].length, false)
+                },
+                'timeInfo':asn1.sub[0]?.sub[2]?.stream.parseTime(asn1.sub[0].sub[2].stream.pos + asn1.sub[0].sub[2].header, asn1.sub[0].sub[2].stream.pos + asn1.sub[0].sub[2].header + asn1.sub[0].sub[2].length, false),
+                'dataHash':asn1.sub[0]?.sub[3]?.stream.hexDump(asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header, asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header + asn1.sub[0].sub[3].length, false),
+                'propertyInfo':Uint8ArrayToString(asn1.sub[0].sub[4])
+            },
+            'cert':decodeCert(asn1.sub[1]),
+            'signatureAlgID':asn1.sub[2]?.stream.parseOID(asn1.sub[2].stream.pos + asn1.sub[2].header, asn1.sub[2].stream.pos + asn1.sub[2].header + asn1.sub[2].length),
+            'signature':asn1.sub[3]?.stream.hexDump(asn1.sub[3].stream.pos + asn1.sub[3].header, asn1.sub[3].stream.pos + asn1.sub[3].header + asn1.sub[3].length, false),
+            'timpStamp':asn1.sub[4]?.stream.parseTime(asn1.sub[4].stream.pos + asn1.sub[4].header, asn1.sub[4].stream.pos + asn1.sub[4].header + asn1.sub[4].length)
+        };
+        return SES_Signature;
+    } catch (e) {
+        console.log(e)
+        return {};
+    }
+}
+
+const decodeCert = function (asn1, offset) {
+    offset = offset || 0;
+    try {
+        const asn1Subject = asn1.sub[0].sub[0].sub[5];
+        let subject = new Map();
+        asn1Subject.sub.forEach(element => {
+            const key = element.sub[0].sub[0].content().split('\n')[0];
+            const value = element.sub[0].sub[1]?.stream.parseStringUTF(element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header, element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header + element.sub[0].sub[1].length);
+            subject.set(key, value);
+        });
+        console.log(subject);
+        return {subject,'commonName':subject.get("2.5.4.3")};
+    } catch (e) {
+        console.log(e)
+        return {};
+    }
+}
+
 const decode = function (der, offset) {
     offset = offset || 0;
     try {
+        const SES_Signature = decodeSES_Signature(der,offset);
         let asn1 = ASN1.decode(der, offset);
         const type = getSealType(asn1);
         const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[1];
         const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
-        return {ofdArray, 'type': type.toLowerCase()};
+        return {ofdArray, 'type': type.toLowerCase(), SES_Signature};
     } catch (e) {
         console.log(e)
         return {};
