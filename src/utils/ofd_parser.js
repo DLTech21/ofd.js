@@ -386,7 +386,7 @@ const decodeSES_Signature = function (der, offset) {
                 })
             });
         }
-        const SES_Signature = 
+        const SES_Signature =
         {
             'toSign':{
                 'version':asn1.sub[0]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header, asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header + asn1.sub[0].sub[0].length),
@@ -410,7 +410,7 @@ const decodeSES_Signature = function (der, offset) {
                         },
                         'picture':{
                             'type':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[0]?.stream.parseStringUTF(asn1.sub[0].sub[1].sub[0].sub[3].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[0].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[0].length),
-                            'data':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[1]?.stream.parseOctetString(asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].length),
+                            'data': {'hex': asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[1]?.stream.parseOctetString(asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].length), byte: asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[1]?.stream.enc.subarray(asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[1].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[1].length)},
                             'width':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[2]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[3].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[2].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[2].length),
                             'height':asn1.sub[0]?.sub[1]?.sub[0]?.sub[3]?.sub[3]?.stream.parseInteger(asn1.sub[0].sub[1].sub[0].sub[3].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].header, asn1.sub[0].sub[1].sub[0].sub[3].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].header + asn1.sub[0].sub[1].sub[0].sub[3].sub[3].length),
                         },
@@ -458,21 +458,13 @@ const decode = function (der, offset) {
     offset = offset || 0;
     try {
         const SES_Signature = decodeSES_Signature(der,offset);
-        let asn1 = ASN1.decode(der, offset);
-        const type = getSealType(asn1);
-        const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[1];
-        const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
+        const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
+        const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
         return {ofdArray, 'type': type.toLowerCase(), SES_Signature};
     } catch (e) {
         console.log(e)
         return {};
     }
-}
-
-const getSealType = function (asn1) {
-    const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[0];
-    const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
-    return Uint8ArrayToString(ofdArray);
 }
 
 const Uint8ArrayToString = function (fileData) {
