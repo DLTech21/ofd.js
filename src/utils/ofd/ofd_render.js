@@ -137,18 +137,34 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
     div.addEventListener("click",function(){
         document.getElementById('sealInfoDiv').hidden = false;
         document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
-        document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
-        document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-        document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g, ' ');
-        document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g, ' ');
-        document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g, ' ');
-        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-        document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-        document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-        document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-        document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-        document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-        document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        if(SES_Signature.toSign.version<4){
+            console.log(signedInfo);
+            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash;
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature;
+            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm;
+            document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }else{
+            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash;
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature;
+            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID;
+            document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }
     });
 }
 
