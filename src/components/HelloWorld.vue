@@ -25,13 +25,70 @@
     </div>
     <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
     </div>
+
+    <div ref="sealInfoDiv" id="sealInfoDiv" hidden="hidden" style="position: fixed;top: 50%;left: 50%;width: 30%;height: auto;z-index: 2000;-webkit-transform: translateX(-50%) translateY(-50%);-moz-transform: translateX(-50%) translateY(-50%);-ms-transform: translateX(-50%) translateY(-50%);transform: translateX(-50%) translateY(-50%);padding:20px; border-radius:5px;background:rgba(199,198,198,0.98); box-shadow:3px 3px 4px #6d6d6d;; border:rgb(0, 0, 0, 1);">
+      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>签章信息</b></p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>签章人</u>：</b></span>
+        <span id="spSigner" style="font-family:simsun">Signer</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>签章提供者</u>：</b></span>
+        <span id="spProvider" style="font-family:simsun">Provider</span>
+      </p>
+      <p style="font-size:0.8vw;height:8%;text-align:left">
+        <span><b><u>原文摘要值</u>：</b></span><br/>
+        <span id="spHashedValue" style="font-family:simsun">HashedValue</span>
+      </p>
+      <p style="font-size:0.8vw;height:13%;text-align:left">
+        <span><b><u>签名值</u>：</b></span><br/>
+        <span id="spSignedValue" style="font-family:simsun">SignedValue</span>
+      </p>
+      <p style="font-size:0.8vw;height:8%;text-align:left">
+        <span><b><u>签名算法</u>：</b></span><br/>
+        <span id="spSignMethod" style="font-family:simsun">SignMethod</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>版本号</u>：</b></span>
+        <span id="spVersion" style="font-family:simsun">Version</span>
+      </p>
+
+      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>印章信息</b></p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章标识</u>：</b></span>
+        <span id="spSealID" style="font-family:simsun">SealID</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章名称</u>：</b></span>
+        <span id="spSealName" style="font-family:simsun">SealName</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章类型</u>：</b></span>
+        <span id="spSealType" style="font-family:simsun">SealType</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>有效时间</u>：</b></span>
+        <span id="spSealAuthTime" style="font-family:simsun">从NotBefore到NotAfter</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>制章日期</u>：</b></span>
+        <span id="spSealMakeTime" style="font-family:simsun">MakeTime</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章版本</u>：</b></span>
+        <span id="spSealVersion" style="font-family:simsun">Version</span>
+      </p>
+
+      <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X" @click="closeSealInfoDialog()" />
+    </div>
   </div>
+
 </template>
 
 <script>
 
-import {parseOfdDocument} from "@/utils/ofd_parser";
-import {renderOfd} from "@/utils/ofd_render";
+import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
+import * as JSZipUtils from "jszip-utils";
 export default {
   name: 'HelloWorld',
   data() {
@@ -62,61 +119,32 @@ export default {
   },
 
   methods: {
+    closeSealInfoDialog(){
+      this.$refs.sealInfoDiv.hidden = true;
+    },
     demo(value) {
       let ofdFile = null;
       switch (value) {
         case 1:
-          ofdFile = '../assets/999.ofd';
+          ofdFile = 'https://51shouzu.xyz/999.ofd';
           break;
         case 2:
-          ofdFile = '../assets/n.ofd';
+          ofdFile = 'https://51shouzu.xyz/n.ofd';
           break;
         case 3:
-          ofdFile = '../assets/h.ofd';
+          ofdFile = 'https://51shouzu.xyz/h.ofd';
           break;
         case 4:
-          ofdFile = '../assets/2.ofd';
+          ofdFile = 'https://51shouzu.xyz/2.ofd';
           break;
       }
-      var xmlhttp = null
-      if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-        /* eslint-disable no-new */
-        xmlhttp = new window.XMLHttpRequest()
-      } else { // code for IE6, IE5
-        /* eslint-disable no-new */
-        xmlhttp = new window.ActiveXObject('Microsoft.XMLHTTP')
-      }
-      xmlhttp.open('GET', ofdFile, true)
-      xmlhttp.withCredentials = true
-
-      // recent browsers
-      if ('responseType' in xmlhttp) {
-        xmlhttp.responseType = 'arraybuffer'
-      }
-
-      // older browser
-      if (xmlhttp.overrideMimeType) {
-        xmlhttp.overrideMimeType('text/plain; charset=x-user-defined')
-      }
-      xmlhttp.send();
       let that = this;
-      xmlhttp.onreadystatechange = function () {
-        if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-          var file = xmlhttp.response || xmlhttp.responseText
-console.log(file)
-          that.getOfdDocumentObj(file, that.screenWidth);
-          // JSZip.loadAsync(file).then(function (zip) {
-          //   console.log(zip)
-          // })
+      JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
+        if(err) {
+          throw err; // or handle err
         }
-      }
-      // JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
-      //   if(err) {
-      //     throw err; // or handle err
-      //   }
-      //   console.log(data)
-      //
-      // });
+        that.getOfdDocumentObj(data, that.screenWidth);
+      });
 
     },
 
