@@ -102,8 +102,8 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
           if (stamp.type === 'ofd') {
             renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
           } else if (stamp.type === 'png') {
-              stamp.obj.boundary = converterBox(stamp.obj.boundary);
-              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, stamp.obj.boundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
+              let sealBoundary = converterBox(stamp.obj.boundary);
+              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, sealBoundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
               pageDiv.appendChild(element);
           }
         }
