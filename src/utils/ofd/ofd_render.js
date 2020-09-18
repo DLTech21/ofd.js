@@ -103,7 +103,7 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
             renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
           } else if (stamp.type === 'png') {
               stamp.obj.boundary = converterBox(stamp.obj.boundary);
-              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, stamp.obj.boundary, stamp.obj.clip, true);
+              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, stamp.obj.boundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
               pageDiv.appendChild(element);
           }
         }
@@ -120,26 +120,8 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         let divBoundary = converterBox(stampAnnotBoundary);
         let div = document.createElement('div');
         div.setAttribute("name","seal_img_div");
-        div.addEventListener("click",function(){
-            document.getElementById('sealInfoDiv').hidden = false;
-            document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
-            console.log(SES_Signature.cert);
-            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
-            document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g, ' ');
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g, ' ');
-            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g, ' ');
-            document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
-            //console.log(signedInfo);
-        });
         div.setAttribute('style', `cursor: pointer; position:relative; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
-
+        addEventOnSealDiv(div, SES_Signature, signedInfo);
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
             const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
@@ -149,7 +131,25 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot, stampAnnotBoundary);
         pageDiv.appendChild(div);
     }
+}
 
+const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
+    div.addEventListener("click",function(){
+        document.getElementById('sealInfoDiv').hidden = false;
+        document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
+        document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+        document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
+        document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g, ' ');
+        document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g, ' ');
+        document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g, ' ');
+        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+        document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+        document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+        document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+        document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+        document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+        document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+    });
 }
 
 const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
@@ -225,12 +225,12 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
     return canvas;
 }
 
-export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot) {
+export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo) {
     let div = document.createElement('div');
     if(isStampAnnot)
     {
         div.setAttribute("name","seal_img_div");
-        div.addEventListener("click",function(){document.getElementById('sealInfoDiv').hidden = false;});
+        addEventOnSealDiv(div, SES_Signature, signedInfo);
     }
     let img = document.createElement('img');
     img.src = imgSrc;
