@@ -286,3 +286,31 @@ export const converterBox = function (box) {
     };
 }
 
+var hexDigits = "0123456789ABCDEF";
+function hexByte(b) {
+    return hexDigits.charAt((b >> 4) & 0xF) + hexDigits.charAt(b & 0xF);
+};
+
+export const Uint8ArrayToHexString = function (arr) {
+    if(typeof arr === 'string') {  
+        return arr;  
+    }  
+    var str = '',  
+        _arr = arr;  
+    for(var i = 0; i < _arr.length; i++) {  
+        var one = hexByte(_arr[i]),  
+            v = one.match(/^1+?(?=0)/);  
+        if(v && one.length == 8) {  
+            var bytesLength = v[0].length;  
+            var store = hexByte(_arr[i]).slice(7 - bytesLength);  
+            for(var st = 1; st < bytesLength; st++) {  
+                store += hexByte(_arr[st + i]).slice(2);  
+            }  
+            str += String.fromCharCode(parseInt(store, 2));  
+            i += bytesLength - 1;  
+        } else {  
+            str += String.fromCharCode(_arr[i]);  
+        }  
+    }  
+    return str;
+}

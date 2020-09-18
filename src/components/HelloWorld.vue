@@ -1,26 +1,94 @@
 <template>
   <div>
-    <div class="upload-icon" @click="uploadFile">
-      <i class="upload-icon">选择OFD文件</i>
-      <input type="file" ref="file" class="hidden" accept=".ofd"
-             @change="fileChanged">
+    <div style="display: flex">
+      <div class="upload-icon" @click="uploadFile">
+        <i class="upload-icon">选择文件</i>
+        <input type="file" ref="file" class="hidden" accept=".ofd"
+               @change="fileChanged">
+      </div>
+
+      <button class="upload-icon" @click="demo(1)">
+        <i class="upload-icon">电票</i>
+      </button>
+
+      <div class="upload-icon" @click="demo(2)">
+        <i class="upload-icon">电子公文</i>
+      </div>
+
+      <div class="upload-icon" @click="demo(3)">
+        <i class="upload-icon">骑缝章</i>
+      </div>
+
+      <div class="upload-icon" @click="demo(4)">
+        <i class="upload-icon">多页文档</i>
+      </div>
     </div>
-    <div style="display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
-<!--      <div v-for="box in pageBoxs" :key="box.id" style="position: relative;margin-bottom: 5px">-->
-<!--        <div :id="box.id" :style="{ width: box.box.w + 'px', height: box.box.h + 'px'}" class="pageDiv"></div>-->
-<!--      </div>-->
+    <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
+    </div>
+
+    <div ref="sealInfoDiv" id="sealInfoDiv" hidden="hidden" style="position: fixed;top: 50%;left: 50%;width: 30%;height: auto;z-index: 2000;-webkit-transform: translateX(-50%) translateY(-50%);-moz-transform: translateX(-50%) translateY(-50%);-ms-transform: translateX(-50%) translateY(-50%);transform: translateX(-50%) translateY(-50%);padding:20px; border-radius:5px;background:rgba(199,198,198,0.98); box-shadow:3px 3px 4px #6d6d6d;; border:rgb(0, 0, 0, 1);">
+      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>签章信息</b></p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>签章人</u>：</b></span>
+        <span id="spSigner" style="font-family:simsun">Signer</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>签章提供者</u>：</b></span>
+        <span id="spProvider" style="font-family:simsun">Provider</span>
+      </p>
+      <p style="font-size:0.8vw;height:8%;text-align:left">
+        <span><b><u>原文摘要值</u>：</b></span><br/>
+        <span id="spHashedValue" style="font-family:simsun">HashedValue</span>
+      </p>
+      <p style="font-size:0.8vw;height:13%;text-align:left">
+        <span><b><u>签名值</u>：</b></span><br/>
+        <span id="spSignedValue" style="font-family:simsun">SignedValue</span>
+      </p>
+      <p style="font-size:0.8vw;height:8%;text-align:left">
+        <span><b><u>签名算法</u>：</b></span><br/>
+        <span id="spSignMethod" style="font-family:simsun">SignMethod</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>版本号</u>：</b></span>
+        <span id="spVersion" style="font-family:simsun">Version</span>
+      </p>
+
+      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>印章信息</b></p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章标识</u>：</b></span>
+        <span id="spSealID" style="font-family:simsun">SealID</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章名称</u>：</b></span>
+        <span id="spSealName" style="font-family:simsun">SealName</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章类型</u>：</b></span>
+        <span id="spSealType" style="font-family:simsun">SealType</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>有效时间</u>：</b></span>
+        <span id="spSealAuthTime" style="font-family:simsun">从NotBefore到NotAfter</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>制章日期</u>：</b></span>
+        <span id="spSealMakeTime" style="font-family:simsun">MakeTime</span>
+      </p>
+      <p style="font-size:0.8vw;height:1%;text-align:left">
+        <span><b><u>印章版本</u>：</b></span>
+        <span id="spSealVersion" style="font-family:simsun">Version</span>
+      </p>
+
+      <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X" @click="closeSealInfoDialog()" />
     </div>
   </div>
+
 </template>
 
 <script>
-import {
-  setPageScal,
-} from "../utils/ofd_util"
 
-import {parseOfdDocument} from "@/utils/ofd_parser";
-import {renderOfd} from "@/utils/ofd_render";
-
+import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
+import * as JSZipUtils from "jszip-utils";
 export default {
   name: 'HelloWorld',
   data() {
@@ -51,6 +119,35 @@ export default {
   },
 
   methods: {
+    closeSealInfoDialog(){
+      this.$refs.sealInfoDiv.hidden = true;
+    },
+    demo(value) {
+      let ofdFile = null;
+      switch (value) {
+        case 1:
+          ofdFile = 'https://51shouzu.xyz/999.ofd';
+          break;
+        case 2:
+          ofdFile = 'https://51shouzu.xyz/n.ofd';
+          break;
+        case 3:
+          ofdFile = 'https://51shouzu.xyz/h.ofd';
+          break;
+        case 4:
+          ofdFile = 'https://51shouzu.xyz/2.ofd';
+          break;
+      }
+      let that = this;
+      JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
+        if(err) {
+          throw err; // or handle err
+        }
+        that.getOfdDocumentObj(data, that.screenWidth);
+      });
+
+    },
+
     uploadFile() {
       this.file = null;
       this.$refs.file.click();
@@ -218,7 +315,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100px;
+  width: 80px;
   line-height: 36px;
   background-color: rgb(59, 95, 232);
   border-radius: 2px;
@@ -226,7 +323,7 @@ export default {
   font-weight: 500;
   font-size: 1rem;
   color: white;
-  font-family: "Kai, KaiTi";
+  margin: 1px;
 }
 
 .pageDiv {

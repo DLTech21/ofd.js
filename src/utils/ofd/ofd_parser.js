@@ -18,32 +18,16 @@
  *
  */
 
-import {pipeline} from "@/utils/pipeline";
+import {pipeline} from "@/utils/ofd/pipeline";
 import JsZip from "jszip";
-import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd_util";
+import {parseStBox, getExtensionByPath, replaceFirstSlash, Uint8ArrayToHexString} from "@/utils/ofd/ofd_util";
 let parser = require('fast-xml-parser');
-import ASN1 from '@lapo/asn1js';
-import Base64 from '@lapo/asn1js/base64';
-import Hex from '@lapo/asn1js/hex';
-let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
-import {Jbig2Image} from '../utils/jbig2'
 
-export const parseOfdDocument = function (options) {
-    pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoot, getDocument,
-        getDocumentRes, getPublicRes, getTemplatePage, getPage)
-        .then(res => {
-            if (options.success) {
-                options.success(res);
-            }
-        })
-        .catch(res => {
-            if (options.fail) {
-                options.fail(res);
-            }
-        });
-}
+import {Jbig2Image} from '../jbig2/jbig2'
+import {parseSesSignature} from "@/utils/ofd/ses_signature_parser";
 
-const unzipOfd = function (file) {
+
+export const unzipOfd = function (file) {
     return new Promise((resolve, reject) => {
         JsZip.loadAsync(file)
             .then(function (zip) {
@@ -54,7 +38,7 @@ const unzipOfd = function (file) {
     });
 }
 
-const getDocRoot = async function (zip) {
+export const getDocRoot = async function (zip) {
     const data = await getJsonFromXmlContent(zip, 'OFD.xml');
     let docRoot = data['json']['ofd:OFD']['ofd:DocBody']['ofd:DocRoot'];
     docRoot = replaceFirstSlash(docRoot);
@@ -67,7 +51,7 @@ const getDocRoot = async function (zip) {
             if (stamp.sealObj.type === 'ofd') {
                 const stampObj = await getSealDocumentObj(stamp);
                 stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
-                console.log(stamp.stampAnnot.boundary)
+                //console.log(stamp.stampAnnot.boundary)
                 stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
                 if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
                     stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
@@ -92,13 +76,13 @@ const getDocRoot = async function (zip) {
     return [zip, doc, docRoot, stampAnnotArray];
 }
 
-const getDocument = async function ([zip, doc, docRoot, stampAnnot]) {
+export const getDocument = async function ([zip, doc, docRoot, stampAnnot]) {
     const data = await getJsonFromXmlContent(zip, docRoot);
     const documentObj = data['json']['ofd:Document'];
     return [zip, doc, documentObj, stampAnnot];
 }
 
-const getDocumentRes = async function ([zip, doc, Document, stampAnnot]) {
+export const getDocumentRes = async function ([zip, doc, Document, stampAnnot]) {
     let documentResPath = Document['ofd:CommonData']['ofd:DocumentRes'];
     let fontResObj = {};
     let drawParamResObj = {};
@@ -118,7 +102,7 @@ const getDocumentRes = async function ([zip, doc, Document, stampAnnot]) {
     return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-const getPublicRes = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPublicRes = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
     let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
     if (publicResPath) {
         if (publicResPath.indexOf(doc) == -1) {
@@ -138,7 +122,7 @@ const getPublicRes = async function ([zip, doc, Document, stampAnnot, fontResObj
     return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-const getTemplatePage = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
     let templatePages = Document['ofd:CommonData']['ofd:TemplatePage'];
     let array = [];
     array = array.concat(templatePages);
@@ -152,7 +136,7 @@ const getTemplatePage = async function ([zip, doc, Document, stampAnnot, fontRes
     return [zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-const getPage = async function ([zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPage = async function ([zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
     let pages = Document['ofd:Pages']['ofd:Page'];
     let array = [];
     array = array.concat(pages);
@@ -239,10 +223,10 @@ const getMultiMediaRes = async function (zip, res, doc) {
                     const format = item['@_Format'];
                     const ext = getExtensionByPath(file);
                     if ((format && (format.toLowerCase() === 'gbig2' || format.toLowerCase() === 'jb2')) || ext && (ext.toLowerCase() === 'jb2' || ext.toLowerCase() === 'gbig2')) {
-                        const jbig2 = await getImageArrayFromZip(zip, file);
+                        const jbig2 = await parseJbig2ImageFromZip(zip, file);
                         multiMediaResObj[item['@_ID']] = jbig2;
                     } else {
-                        const img = await getImageFromZip(zip, file);
+                        const img = await parseOtherImageFromZip(zip, file);
                         multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
                     }
                 } else {
@@ -299,10 +283,15 @@ const getSignatureData = async function (zip, signature) {
     const data = await getJsonFromXmlContent(zip, signature);
     let signedValue = (data['json']['ofd:Signature']['ofd:SignedValue'])
     signedValue = signedValue.toString().replace('/', '');
-    let sealObj = await getByteFromZip(zip, signedValue);
+    let sealObj = await parseSesSignature(zip, signedValue);
     return {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
-        'sealObj': sealObj
+        'sealObj': sealObj,
+        'signedInfo':{
+            'Provider':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
+            'SignatureMethod':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
+            'SignatureDateTime':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],
+        },
     };
 }
 
@@ -337,56 +326,7 @@ const getJsonFromXmlContent = async function (zip, xmlName) {
     });
 }
 
-const getByteFromZip = async function (zip, name) {
-    return new Promise((resolve, reject) => {
-        zip.files[name].async('base64').then(function (bytes) {
-            let res = decodeText(bytes);
-            resolve(res);
-        }, function error(e) {
-            reject(e);
-        })
-    });
-}
-
-const decodeText = function (val) {
-    try {
-        let der = reHex.test(val) ? Hex.decode(val) : Base64.unarmor(val);
-        return decode(der);
-    } catch (e) {
-        console.log(e)
-        return {};
-    }
-}
-
-const decode = function (der, offset) {
-    offset = offset || 0;
-    try {
-        let asn1 = ASN1.decode(der, offset);
-        const type = getSealType(asn1);
-        const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[1];
-        const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
-        return {ofdArray, 'type': type.toLowerCase()};
-    } catch (e) {
-        console.log(e)
-        return {};
-    }
-}
-
-const getSealType = function (asn1) {
-    const sealObj = asn1.sub[0].sub[1].sub[0].sub[3].sub[0];
-    const ofdArray = sealObj.stream.enc.subarray(sealObj.stream.pos + sealObj.header, sealObj.stream.pos + sealObj.length + sealObj.header);
-    return Uint8ArrayToString(ofdArray);
-}
-
-const Uint8ArrayToString = function (fileData) {
-    let dataString = "";
-    for (let i = 0; i < fileData.length; i++) {
-        dataString += String.fromCharCode(fileData[i]);
-    }
-    return dataString
-}
-
-const getImageArrayFromZip = async function (zip, name) {
+const parseJbig2ImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
         zip.files[name].async('uint8array').then(function (bytes) {
             let jbig2 = new Jbig2Image();
@@ -398,7 +338,7 @@ const getImageArrayFromZip = async function (zip, name) {
     });
 }
 
-const getImageFromZip = async function (zip, name) {
+const parseOtherImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
             const img = 'data:image/png;base64,' + bytes;
