@@ -18,6 +18,7 @@
     "fast-xml-parser": "^3.17.4",
     "jszip": "^3.5.0",
     "jszip-utils": "^0.1.0",
+    "sm-crypto": "^0.2.1",
     "vue": "^2.6.11",
     "web-streams-polyfill": "^2.1.1",
     "xml-js": "^1.6.11"

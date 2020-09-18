@@ -22,6 +22,7 @@
 import Hex from "@lapo/asn1js/hex";
 import Base64 from "@lapo/asn1js/base64";
 import ASN1 from "@lapo/asn1js";
+import {SES_Signature_Verify} from "@/utils/ofd/verify_signature_util";
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
 
 export const parseSesSignature = async function (zip, name) {
@@ -51,7 +52,7 @@ const decode = function (der, offset) {
         const SES_Signature = decodeSES_Signature(der,offset);
         const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
         const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
-        return {ofdArray, 'type': type.toLowerCase(), SES_Signature};
+        return {ofdArray, 'type': type.toLowerCase(), SES_Signature,'verifyRet':SES_Signature_Verify(SES_Signature)};
     } catch (e) {
         console.log(e)
         return {};
@@ -101,6 +102,7 @@ const decodeSES_Signature = function (der, offset) {
             //ASN1.decode(asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[3]);
             SES_Signature =
             {
+                'toSignDer':asn1.sub[0]?.stream.enc.subarray(asn1.sub[0].stream.pos,asn1.sub[0].stream.pos+asn1.sub[0].header+asn1.sub[0].length),
                 'toSign':{
                     'version':asn1.sub[0]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header, asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header + asn1.sub[0].sub[0].length),
                     'eseal':{
@@ -165,6 +167,7 @@ const decodeSES_Signature = function (der, offset) {
             }
             SES_Signature =
             {
+                'toSignDer':asn1.sub[0]?.stream.enc.subarray(asn1.sub[0].stream.pos,asn1.sub[0].stream.pos+asn1.sub[0].header+asn1.sub[0].length),
                 'toSign':{
                     'version':asn1.sub[0]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header, asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header + asn1.sub[0].sub[0].length),
                     'eseal':{
@@ -224,7 +227,15 @@ const decodeCert = function (asn1, offset) {
             const value = element.sub[0].sub[1]?.stream.parseStringUTF(element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header, element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header + element.sub[0].sub[1].length);
             subject.set(key, value);
         });
-        return {subject,'commonName':subject.get("2.5.4.3")};
+
+        const asn1PublicKeyInfo = asn1.sub[0].sub[0].sub[6];
+        return {
+            subject,
+            'commonName':subject.get("2.5.4.3"),
+            'subjectPublicKeyInfo':{
+                'algorithm':asn1PublicKeyInfo.sub[0]?.stream.parseOID(asn1PublicKeyInfo.sub[0].stream.pos+asn1PublicKeyInfo.sub[0].header,asn1PublicKeyInfo.sub[0].stream.pos+asn1PublicKeyInfo.sub[0].header+asn1PublicKeyInfo.sub[0].length),
+                'subjectPublicKey':asn1PublicKeyInfo.sub[1]?.stream.hexDump(asn1PublicKeyInfo.sub[1].stream.pos+asn1PublicKeyInfo.sub[1].header,asn1PublicKeyInfo.sub[1].stream.pos+asn1PublicKeyInfo.sub[1].header+asn1PublicKeyInfo.sub[1].length),
+            }};
     } catch (e) {
         console.log(e)
         return {};

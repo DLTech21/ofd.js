@@ -28,7 +28,6 @@ import {
     parseStBox,
     setPageScal,
     converterBox,
-    Uint8ArrayToHexString
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -141,10 +140,9 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
             console.log(signedInfo);
             document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
             document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash;
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature;
-            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm;
-            document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');;
             document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
             document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
             document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
@@ -154,10 +152,9 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
         }else{
             document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
             document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash;
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature;
-            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID;
-            document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');;
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');;
+            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');;
             document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
             document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
             document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
@@ -165,6 +162,8 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
             document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
             document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
         }
+        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+        document.getElementById('VerifyRet').innerText = signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败";
     });
 }
 

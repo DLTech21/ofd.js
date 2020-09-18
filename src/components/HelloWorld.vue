@@ -87,7 +87,11 @@
             <span class="title">版本号</span>
             <span class="value" id="spVersion">Version</span>
           </div>
-
+          <div class="subcontent">
+            <span class="title">验签结果</span>
+            <span class="value" id="VerifyRet">VerifyRet</span>
+          </div>
+          
           <p class="content-title">印章信息</p>
           <div class="subcontent">
             <span class="title">印章标识</span>
