@@ -1,34 +1,50 @@
 <template>
   <el-container style="width:100vw; height: 100vh;">
     <el-header style="display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
-        <div class="upload-icon" @click="uploadFile">
-          <div class="upload-icon">打开OFD</div>
-          <input type="file" ref="file" class="hidden" accept=".ofd"
-                 @change="fileChanged">
-        </div>
+      <div class="upload-icon" @click="uploadFile">
+        <div class="upload-icon">打开OFD</div>
+        <font-awesome-icon icon="cloud-upload-alt"/>
+        <input type="file" ref="file" class="hidden" accept=".ofd"
+               @change="fileChanged">
+      </div>
+
+      <div class="scale-icon" style="margin-left: 10px">
+        <font-awesome-icon icon="search-plus"/>
+      </div>
+
+     <div class="scale-icon">
+       <font-awesome-icon icon="search-minus"/>
+     </div>
+
+      <div class="scale-icon">
+        <font-awesome-icon icon="left"/>
+      </div>
+
     </el-header>
     <el-main style="height: auto;background: #808080;;padding: 0">
-      <div style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
+      <div
+          style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
         <div class="text-icon" @click="demo(1)">
-          <p >电子发票</p>
+          <p>电子发票</p>
         </div>
 
         <div class="text-icon" @click="demo(2)">
-          <p >电子公文</p>
+          <p>电子公文</p>
         </div>
 
         <div class="text-icon" @click="demo(3)">
-          <p >骑缝章</p>
+          <p>骑缝章</p>
         </div>
 
         <div class="text-icon" @click="demo(4)">
-          <p >多页文档</p>
+          <p>多页文档</p>
         </div>
       </div>
-      <div style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
-           id="content">
+      <div
+          style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
+          id="content">
       </div>
-      </el-main>
+    </el-main>
   </el-container>
 </template>
 
@@ -168,6 +184,21 @@ export default {
   margin: 1px;
 }
 
+.scale-icon {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 28px;
+  background-color: white;
+  border-radius: 1px;
+  font-weight: 500;
+  font-size: 12px;
+  color: #333333;
+  margin: 1px;
+}
+
 .text-icon {
   display: flex;
   cursor: pointer;
@@ -209,7 +240,6 @@ export default {
   color: rgb(59, 95, 232);
   margin-top: 10px;
 }
-
 
 
 .SealContainer-content {
@@ -269,6 +299,7 @@ export default {
     font-family: simsun;
   }
 }
+
 .subcontent .title {
   font-weight: 600;
 }
