@@ -67,7 +67,7 @@ export const getDocRoot = async function (zip) {
                         if (!stampAnnotArray[annot['@_PageRef']]) {
                             stampAnnotArray[annot['@_PageRef']] = [];
                         }
-                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj});
+                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj, stamp});
                     }
                 }
             }
