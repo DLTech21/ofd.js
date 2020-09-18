@@ -15,9 +15,20 @@
      <div class="scale-icon">
        <font-awesome-icon icon="search-minus"/>
      </div>
+      <div class="scale-icon">
+        <font-awesome-icon icon="step-backward"/>
+      </div>
 
       <div class="scale-icon">
-        <font-awesome-icon icon="left"/>
+        <font-awesome-icon icon="caret-left"/>
+      </div>
+
+      <div class="scale-icon">
+        <font-awesome-icon icon="caret-right"/>
+      </div>
+
+      <div class="scale-icon">
+        <font-awesome-icon icon="step-forward"/>
       </div>
 
     </el-header>
@@ -45,6 +56,79 @@
           id="content">
       </div>
     </el-main>
+    <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
+      <div class="SealContainer mask" @click="closeSealInfoDialog"></div>
+      <div class="SealContainer-layout">
+        <div class="SealContainer-content">
+          <p class="content-title">签章信息</p>
+          <div class="subcontent">
+            <span class="title">签章人</span>
+            <span class="value" id="spSigner">Signer</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签章提供者</span>
+            <span class="value" id="spProvider">Provider</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">原文摘要值</span>
+            <span class="value" id="spHashedValue" @click="showMore('原文摘要值', 'spHashedValue')"
+                  style="cursor: pointer">HashedValue</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签名值</span>
+            <span class="value" id="spSignedValue" @click="showMore('签名值', 'spSignedValue')"
+                  style="cursor: pointer">SignedValue</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签名算法</span>
+            <span class="value" id="spSignMethod">SignMethod</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">版本号</span>
+            <span class="value" id="spVersion">Version</span>
+          </div>
+
+          <p class="content-title">印章信息</p>
+          <div class="subcontent">
+            <span class="title">印章标识</span>
+            <span class="value" id="spSealID">SealID</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章名称</span>
+            <span class="value" id="spSealName">SealName</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章类型</span>
+            <span class="value" id="spSealType">SealType</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">有效时间</span>
+            <span class="value" id="spSealAuthTime">从NotBefore到NotAfter</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">制章日期</span>
+            <span class="value" id="spSealMakeTime">MakeTime</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章版本</span>
+            <span class="value" id="spSealVersion">Version</span>
+          </div>
+        </div>
+        <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X"
+               @click="closeSealInfoDialog()"/>
+      </div>
+
+    </div>
+
+
+    <el-dialog :title="title" :visible.sync="dialogFormVisible">
+      <span style="text-align: left">
+        {{value}}
+      </span>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+      </div>
+    </el-dialog>
   </el-container>
 </template>
 
