@@ -122,12 +122,13 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         div.setAttribute("name","seal_img_div");
         div.addEventListener("click",function(){
             document.getElementById('sealInfoDiv').hidden = false;
+            document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
             console.log(SES_Signature.cert);
             document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
             document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash;
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature;
-            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID;
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g, ' ');
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g, ' ');
+            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g, ' ');
             document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
             document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
             document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
