@@ -12,22 +12,22 @@
         <font-awesome-icon icon="search-plus"/>
       </div>
 
-     <div class="scale-icon">
-       <font-awesome-icon icon="search-minus" @click="minus"/>
+     <div class="scale-icon" @click="minus">
+       <font-awesome-icon icon="search-minus" />
      </div>
       <div class="scale-icon">
-        <font-awesome-icon icon="step-backward"/>
+        <font-awesome-icon icon="step-backward" @click="firstPage"/>
       </div>
 
-      <div class="scale-icon">
+      <div class="scale-icon" style="font-size: 18px" @click="prePage">
         <font-awesome-icon icon="caret-left"/>
       </div>
 
-      <div class="scale-icon">
+      <div class="scale-icon" style="font-size: 18px" @click="nextPage">
         <font-awesome-icon icon="caret-right"/>
       </div>
 
-      <div class="scale-icon">
+      <div class="scale-icon" @click="lastPage">
         <font-awesome-icon icon="step-forward"/>
       </div>
 
@@ -191,6 +191,25 @@ export default {
       setPageScal(--this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
+    },
+
+    prePage() {
+    },
+
+    firstPage() {
+      let contentDiv = document.getElementById('content');
+      let first = contentDiv.firstElementChild;
+      first.scrollIntoView(true);
+    },
+
+    nextPage() {
+    },
+
+    lastPage() {
+      let contentDiv = document.getElementById('content');
+      let last = contentDiv.lastElementChild;
+      last.scrollIntoView(true);
+
     },
 
     demo(value) {
