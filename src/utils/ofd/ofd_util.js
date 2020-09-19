@@ -155,6 +155,13 @@ export const calTextPoint = function (textCode) {
         x = parseFloat(textCode['@_X']);
         y = parseFloat(textCode['@_Y']);
 
+        if (isNaN(x)) {
+            x = 0;
+        }
+        if (isNaN(y)) {
+            y = 0;
+        }
+
         let deltaXList = [];
         let deltaYList = [];
         if (textCode['@_DeltaX'] && textCode['@_DeltaX'].length > 0) {

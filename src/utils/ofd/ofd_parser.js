@@ -67,7 +67,7 @@ export const getDocRoot = async function (zip) {
                         if (!stampAnnotArray[annot['@_PageRef']]) {
                             stampAnnotArray[annot['@_PageRef']] = [];
                         }
-                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj});
+                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj, stamp});
                     }
                 }
             }
@@ -288,6 +288,7 @@ const getSignatureData = async function (zip, signature) {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
         'sealObj': sealObj,
         'signedInfo':{
+            'VerifyRet':sealObj.verifyRet,
             'Provider':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
             'SignatureMethod':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
             'SignatureDateTime':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],

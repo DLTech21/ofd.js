@@ -1,100 +1,155 @@
 <template>
-  <div>
-    <div style="display: flex">
+  <el-container style="width:100vw; height: 100vh;">
+    <el-header style="display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
       <div class="upload-icon" @click="uploadFile">
-        <i class="upload-icon">选择文件</i>
+        <div class="upload-icon">打开OFD</div>
+        <font-awesome-icon icon="cloud-upload-alt"/>
         <input type="file" ref="file" class="hidden" accept=".ofd"
                @change="fileChanged">
       </div>
 
-      <button class="upload-icon" @click="demo(1)">
-        <i class="upload-icon">电票</i>
-      </button>
-
-      <div class="upload-icon" @click="demo(2)">
-        <i class="upload-icon">电子公文</i>
+      <div class="scale-icon" style="margin-left: 10px">
+        <font-awesome-icon icon="search-plus"/>
       </div>
 
-      <div class="upload-icon" @click="demo(3)">
-        <i class="upload-icon">骑缝章</i>
+     <div class="scale-icon">
+       <font-awesome-icon icon="search-minus"/>
+     </div>
+      <div class="scale-icon">
+        <font-awesome-icon icon="step-backward"/>
       </div>
 
-      <div class="upload-icon" @click="demo(4)">
-        <i class="upload-icon">多页文档</i>
+      <div class="scale-icon">
+        <font-awesome-icon icon="caret-left"/>
       </div>
+
+      <div class="scale-icon">
+        <font-awesome-icon icon="caret-right"/>
+      </div>
+
+      <div class="scale-icon">
+        <font-awesome-icon icon="step-forward"/>
+      </div>
+
+    </el-header>
+    <el-main style="height: auto;background: #808080;;padding: 0">
+      <div
+          style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
+        <div class="text-icon" @click="demo(1)">
+          <p>电子发票</p>
+        </div>
+
+        <div class="text-icon" @click="demo(2)">
+          <p>电子公文</p>
+        </div>
+
+        <div class="text-icon" @click="demo(3)">
+          <p>骑缝章</p>
+        </div>
+
+        <div class="text-icon" @click="demo(4)">
+          <p>多页文档</p>
+        </div>
+      </div>
+      <div
+          style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
+          id="content">
+      </div>
+    </el-main>
+    <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
+      <div class="SealContainer mask" @click="closeSealInfoDialog"></div>
+      <div class="SealContainer-layout">
+        <div class="SealContainer-content">
+          <p class="content-title">签章信息</p>
+          <div class="subcontent">
+            <span class="title">签章人</span>
+            <span class="value" id="spSigner">Signer</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签章提供者</span>
+            <span class="value" id="spProvider">Provider</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">原文摘要值</span>
+            <span class="value" id="spHashedValue" @click="showMore('原文摘要值', 'spHashedValue')"
+                  style="cursor: pointer">HashedValue</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签名值</span>
+            <span class="value" id="spSignedValue" @click="showMore('签名值', 'spSignedValue')"
+                  style="cursor: pointer">SignedValue</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">签名算法</span>
+            <span class="value" id="spSignMethod">SignMethod</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">版本号</span>
+            <span class="value" id="spVersion">Version</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">验签结果</span>
+            <span class="value" id="VerifyRet">VerifyRet</span>
+          </div>
+          
+          <p class="content-title">印章信息</p>
+          <div class="subcontent">
+            <span class="title">印章标识</span>
+            <span class="value" id="spSealID">SealID</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章名称</span>
+            <span class="value" id="spSealName">SealName</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章类型</span>
+            <span class="value" id="spSealType">SealType</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">有效时间</span>
+            <span class="value" id="spSealAuthTime">从NotBefore到NotAfter</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">制章日期</span>
+            <span class="value" id="spSealMakeTime">MakeTime</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">印章版本</span>
+            <span class="value" id="spSealVersion">Version</span>
+          </div>
+        </div>
+        <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X"
+               @click="closeSealInfoDialog()"/>
+      </div>
+
     </div>
-    <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center" id="content">
-    </div>
 
-    <div ref="sealInfoDiv" id="sealInfoDiv" hidden="hidden" style="position: fixed;top: 50%;left: 50%;width: 30%;height: auto;z-index: 2000;-webkit-transform: translateX(-50%) translateY(-50%);-moz-transform: translateX(-50%) translateY(-50%);-ms-transform: translateX(-50%) translateY(-50%);transform: translateX(-50%) translateY(-50%);padding:20px; border-radius:5px;background:rgba(199,198,198,0.98); box-shadow:3px 3px 4px #6d6d6d;; border:rgb(0, 0, 0, 1);">
-      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>签章信息</b></p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>签章人</u>：</b></span>
-        <span id="spSigner" style="font-family:simsun">Signer</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>签章提供者</u>：</b></span>
-        <span id="spProvider" style="font-family:simsun">Provider</span>
-      </p>
-      <p style="font-size:0.8vw;height:8%;text-align:left">
-        <span><b><u>原文摘要值</u>：</b></span><br/>
-        <span id="spHashedValue" style="font-family:simsun">HashedValue</span>
-      </p>
-      <p style="font-size:0.8vw;height:13%;text-align:left">
-        <span><b><u>签名值</u>：</b></span><br/>
-        <span id="spSignedValue" style="font-family:simsun">SignedValue</span>
-      </p>
-      <p style="font-size:0.8vw;height:8%;text-align:left">
-        <span><b><u>签名算法</u>：</b></span><br/>
-        <span id="spSignMethod" style="font-family:simsun">SignMethod</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>版本号</u>：</b></span>
-        <span id="spVersion" style="font-family:simsun">Version</span>
-      </p>
 
-      <p style="font-size:1vw;height:8%;text-align:center; border-bottom:1px solid rgb(59,95,232); line-height:3em; width:30%; margin:0 auto;color:rgb(59,95,232)"><b>印章信息</b></p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>印章标识</u>：</b></span>
-        <span id="spSealID" style="font-family:simsun">SealID</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>印章名称</u>：</b></span>
-        <span id="spSealName" style="font-family:simsun">SealName</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>印章类型</u>：</b></span>
-        <span id="spSealType" style="font-family:simsun">SealType</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>有效时间</u>：</b></span>
-        <span id="spSealAuthTime" style="font-family:simsun">从NotBefore到NotAfter</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>制章日期</u>：</b></span>
-        <span id="spSealMakeTime" style="font-family:simsun">MakeTime</span>
-      </p>
-      <p style="font-size:0.8vw;height:1%;text-align:left">
-        <span><b><u>印章版本</u>：</b></span>
-        <span id="spSealVersion" style="font-family:simsun">Version</span>
-      </p>
-
-      <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X" @click="closeSealInfoDialog()" />
-    </div>
-  </div>
-
+    <el-dialog :title="title" :visible.sync="dialogFormVisible">
+      <span style="text-align: left">
+        {{value}}
+      </span>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+      </div>
+    </el-dialog>
+  </el-container>
 </template>
 
 <script>
 
 import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
+
 export default {
   name: 'HelloWorld',
   data() {
     return {
+      title: null,
+      value: null,
+      dialogFormVisible: false,
       ofdObj: null,
-      screenWidth: document.body.clientWidth,
+      screenWidth: document.body.clientWidth - 88,
     }
   },
 
@@ -107,10 +162,10 @@ export default {
     window.onresize = () => {
       return (() => {
         // setPageScal(5)
-        that.screenWidth = (document.body.clientWidth);
+        that.screenWidth = (document.body.clientWidth - 88);
         const divs = renderOfd(that.screenWidth, that.ofdObj);
         let contentDiv = document.getElementById('content');
-        contentDiv.innerHTML ='';
+        contentDiv.innerHTML = '';
         for (const div of divs) {
           contentDiv.appendChild(div)
         }
@@ -119,9 +174,16 @@ export default {
   },
 
   methods: {
-    closeSealInfoDialog(){
-      this.$refs.sealInfoDiv.hidden = true;
+    closeSealInfoDialog() {
+      this.$refs.sealInfoDiv.setAttribute('style', 'display: none');
     },
+
+    showMore(title, id) {
+      this.dialogFormVisible = true;
+      this.value = document.getElementById(id).innerText;
+      this.title = title;
+    },
+
     demo(value) {
       let ofdFile = null;
       switch (value) {
@@ -139,8 +201,8 @@ export default {
           break;
       }
       let that = this;
-      JSZipUtils.getBinaryContent(ofdFile, function(err, data) {
-        if(err) {
+      JSZipUtils.getBinaryContent(ofdFile, function (err, data) {
+        if (err) {
           throw err; // or handle err
         }
         that.getOfdDocumentObj(data, that.screenWidth);
@@ -176,20 +238,10 @@ export default {
           that.ofdObj = res;
           const divs = renderOfd(screenWidth, res);
           let contentDiv = document.getElementById('content');
-          contentDiv.innerHTML ='';
+          contentDiv.innerHTML = '';
           for (const div of divs) {
             contentDiv.appendChild(div)
           }
-          // that.pageBoxs = renderPageBox(that.screenWidth, res.pages, res.document);
-          // console.log(that.pageBoxs)
-          // that.drawPage(res.pages, res.tpls, false, null, res.fontResObj, res.drawParamResObj, res.multiMediaResObj);
-          // for (const stamp of res.stampAnnot) {
-          //   if (stamp.type === 'ofd') {
-          //     that.drawPage(stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj);
-          //   } else if (stamp.type === 'png') {
-          //     that.drawImageOnDiv(stamp.obj.img, stamp.obj.pageId, stamp.obj.boundary, stamp.obj.clip);
-          //   }
-          // }
         },
         fail(error) {
           console.log(error)
@@ -197,114 +249,6 @@ export default {
       });
     },
 
-    // drawPage(pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj) {
-    //   for (const page of pages) {
-    //     const pageId = Object.keys(page)[0];
-    //     let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
-    //     if (isStampAnnot && stampAnnot) {
-    //       stampAnnotBoundary = stampAnnot.boundary;
-    //     }
-    //     const template = page[pageId]['json']['ofd:Template'];
-    //     if (template) {
-    //       const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-    //       this.drawLayer(fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot ? stampAnnot.pageRef : pageId, isStampAnnot, stampAnnotBoundary);
-    //     }
-    //     const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    //     this.drawLayer(fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot ? stampAnnot.pageRef : pageId, isStampAnnot, stampAnnotBoundary);
-    //   }
-    // },
-
-    // drawLayer(fontResObj, drawParamResObj, multiMediaResObj, layer, pageId, isStampAnnot, stampAnnotBoundary) {
-    //   let fillColor = null;
-    //   let strokeColor = null;
-    //   let lineWith = 0;
-    //   const drawParam = layer['@_DrawParam'];
-    //   if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-    //     fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
-    //     strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
-    //     lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
-    //   }
-    //   const imageObjects = layer['ofd:ImageObject'];
-    //   let imageObjectArray = [];
-    //   imageObjectArray = imageObjectArray.concat(imageObjects);
-    //   for (const imageObject of imageObjectArray) {
-    //     if (imageObject) {
-    //       this.drawImageObject(multiMediaResObj, imageObject, pageId);
-    //     }
-    //   }
-    //   const pathObjects = layer['ofd:PathObject'];
-    //   let pathObjectArray = [];
-    //   pathObjectArray = pathObjectArray.concat(pathObjects);
-    //   for (const pathObject of pathObjectArray) {
-    //     if (pathObject) {
-    //       this.drawPathObject(drawParamResObj, pathObject, pageId, fillColor, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary);
-    //     }
-    //   }
-    //   const textObjects = layer['ofd:TextObject'];
-    //   let textObjectArray = [];
-    //   textObjectArray = textObjectArray.concat(textObjects);
-    //   for (const textObject of textObjectArray) {
-    //     if (textObject) {
-    //       this.drawTextObject(fontResObj, textObject, pageId, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
-    //     }
-    //   }
-    // },
-
-    // drawImageObject(multiMediaResObj, imageObject, pageId) {
-    //   let pageDiv = document.getElementById(pageId);
-    //   let a = setInterval(() => {
-    //     pageDiv = document.getElementById(pageId)
-    //     if (!pageDiv) {
-    //       return false
-    //     } else {
-    //       clearInterval(a);
-    //       let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, multiMediaResObj, imageObject)
-    //       pageDiv.appendChild(element);
-    //     }
-    //   }, 1);
-    // },
-
-    // drawImageOnDiv(imgSrc, pageId, boundary, clip) {
-    //   let pageDiv = document.getElementById(pageId);
-    //   let a = setInterval(() => {
-    //     pageDiv = document.getElementById(pageId)
-    //     if (!pageDiv) {
-    //       return false
-    //     } else {
-    //       clearInterval(a);
-    //       let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, imgSrc, boundary, clip)
-    //       pageDiv.appendChild(element);
-    //     }
-    //   }, 1);
-    // },
-
-    // drawTextObject(fontResObj, textObject, pageId, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
-    //   let pageDiv = document.getElementById(pageId);
-    //   let a = setInterval(() => {
-    //     pageDiv = document.getElementById(pageId)
-    //     if (!pageDiv) {
-    //       return false
-    //     } else {
-    //       clearInterval(a);
-    //       let svg = renderTextObject(fontResObj, textObject, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary);
-    //       pageDiv.appendChild(svg);
-    //     }
-    //   }, 1)
-    // },
-
-    // drawPathObject(drawParamResObj, pathObject, pageId, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
-    //   let pageDiv = document.getElementById(pageId)
-    //   let a = setInterval(() => {
-    //     pageDiv = document.getElementById(pageId)
-    //     if (!pageDiv) {
-    //       return false
-    //     } else {
-    //       clearInterval(a)
-    //       let svg = renderPathObject(drawParamResObj, pathObject, null, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary)
-    //       pageDiv.appendChild(svg);
-    //     }
-    //   }, 1)
-    // },
   }
 }
 </script>
@@ -313,26 +257,146 @@ export default {
 <style scoped>
 .upload-icon {
   display: flex;
+  cursor: pointer;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  line-height: 36px;
+  height: 28px;
+  padding-left: 10px;
+  padding-right: 10px;
   background-color: rgb(59, 95, 232);
-  border-radius: 2px;
+  border-radius: 1px;
   border-color: #5867dd;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 12px;
   color: white;
   margin: 1px;
 }
 
-.pageDiv {
-  border: 1px solid rgb(199, 198, 198);
+.scale-icon {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 28px;
+  background-color: white;
+  border-radius: 1px;
+  font-weight: 500;
+  font-size: 12px;
+  color: #333333;
+  margin: 1px;
+}
+
+.text-icon {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  height: 28px;
+  width: 90%;
+  background-color: rgb(59, 95, 232);
+  border-radius: 1px;
+  border-color: #5867dd;
+  font-weight: 500;
+  font-size: 10px;
+  color: white;
+  margin-top: 20px;
+
 }
 
 .hidden {
   display: none !important;
 }
 
+.SealContainer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+}
 
+.SealContainer .mask {
+  background: #000000;
+  opacity: 0.3;
+}
+
+.content-title {
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 1px solid rgb(59, 95, 232);
+  color: rgb(59, 95, 232);
+  margin-top: 10px;
+}
+
+
+.SealContainer-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  align-items: center;
+}
+
+.SealContainer-layout {
+  position: relative;
+  width: 60%;
+  height: 80vh;
+  overflow-y: auto;
+  background: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  align-items: center;
+}
+
+.subcontent {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: 10px;
+  font-family: simsun;
+}
+
+@media (max-width: 767px) {
+  .SealContainer-layout {
+    position: relative;
+    width: 90%;
+    height: 90vh;
+    overflow-y: auto;
+    background: white;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    align-items: center;
+  }
+
+  .subcontent {
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    margin-bottom: 10px;
+    font-family: simsun;
+  }
+}
+
+.subcontent .title {
+  font-weight: 600;
+}
+
+.subcontent .value {
+  font-weight: 400;
+  -webkit-line-clamp: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>

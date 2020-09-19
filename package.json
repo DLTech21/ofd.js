@@ -8,6 +8,9 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.30",
+    "@fortawesome/free-solid-svg-icons": "^5.14.0",
+    "@fortawesome/vue-fontawesome": "^2.0.0",
     "@lapo/asn1js": "^1.2.1",
     "adm-zip": "^0.4.16",
     "core-js": "^3.6.5",
@@ -15,9 +18,10 @@
     "fast-xml-parser": "^3.17.4",
     "jszip": "^3.5.0",
     "jszip-utils": "^0.1.0",
+    "sm-crypto": "^0.2.1",
     "vue": "^2.6.11",
-    "xml-js": "^1.6.11",
-    "web-streams-polyfill": "^2.1.1"
+    "web-streams-polyfill": "^2.1.1",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
