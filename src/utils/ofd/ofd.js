@@ -18,7 +18,7 @@
  *
  */
 
-import {calPageBox, renderPage} from "@/utils/ofd/ofd_render";
+import {calPageBox, calPageBoxScale, renderPage} from "@/utils/ofd/ofd_render";
 import {pipeline} from "@/utils/ofd/pipeline";
 import {
     getDocRoot,
@@ -49,6 +49,20 @@ export const renderOfd = function (screenWidth, ofd) {
     let divArray = [];
     for (const page of ofd.pages) {
         let box = calPageBox(screenWidth, ofd.document, page);
+        const pageId = Object.keys(page)[0];
+        let pageDiv = document.createElement('div');
+        pageDiv.id = pageId;
+        pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
+        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        divArray.push(pageDiv);
+    }
+    return divArray;
+}
+
+export const renderOfdByScale = function (ofd) {
+    let divArray = [];
+    for (const page of ofd.pages) {
+        let box = calPageBoxScale(ofd.document, page);
         const pageId = Object.keys(page)[0];
         let pageDiv = document.createElement('div');
         pageDiv.id = pageId;

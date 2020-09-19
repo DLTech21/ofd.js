@@ -27,7 +27,7 @@ import {
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox,
+    converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -78,7 +78,48 @@ export const calPageBox = function (screenWidth, document, page) {
     }
     let array = box.split(' ');
     const scale = ((screenWidth - 5) / parseFloat(array[2])).toFixed(1);
-    setPageScal(scale > 0 ? scale : 1);
+    setMaxPageScal(scale);
+    setPageScal(scale);
+    box = parseStBox( box);
+    box = converterBox(box)
+    return box;
+}
+
+export const calPageBoxScale = function (document, page) {
+    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    let box;
+    if (area) {
+        const physicalBox = area['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = area['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = area['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    } else {
+        let documentArea = document['ofd:CommonData']['ofd:PageArea']
+        const physicalBox = documentArea['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = documentArea['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = documentArea['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    }
     box = parseStBox( box);
     box = converterBox(box)
     return box;

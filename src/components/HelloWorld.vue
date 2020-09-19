@@ -8,12 +8,12 @@
                @change="fileChanged">
       </div>
 
-      <div class="scale-icon" style="margin-left: 10px">
+      <div class="scale-icon" style="margin-left: 10px" @click="plus">
         <font-awesome-icon icon="search-plus"/>
       </div>
 
      <div class="scale-icon">
-       <font-awesome-icon icon="search-minus"/>
+       <font-awesome-icon icon="search-minus" @click="minus"/>
      </div>
       <div class="scale-icon">
         <font-awesome-icon icon="step-backward"/>
@@ -91,7 +91,7 @@
             <span class="title">验签结果</span>
             <span class="value" id="VerifyRet">VerifyRet</span>
           </div>
-          
+
           <p class="content-title">印章信息</p>
           <div class="subcontent">
             <span class="title">印章标识</span>
@@ -138,13 +138,15 @@
 
 <script>
 
-import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
+import {parseOfdDocument, renderOfd, renderOfdByScale} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
+import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
 
 export default {
   name: 'HelloWorld',
   data() {
     return {
+      scale: 0,
       title: null,
       value: null,
       dialogFormVisible: false,
@@ -161,14 +163,9 @@ export default {
     let that = this;
     window.onresize = () => {
       return (() => {
-        // setPageScal(5)
         that.screenWidth = (document.body.clientWidth - 88);
         const divs = renderOfd(that.screenWidth, that.ofdObj);
-        let contentDiv = document.getElementById('content');
-        contentDiv.innerHTML = '';
-        for (const div of divs) {
-          contentDiv.appendChild(div)
-        }
+        that.displayOfdDiv(divs);
       })()
     }
   },
@@ -182,6 +179,18 @@ export default {
       this.dialogFormVisible = true;
       this.value = document.getElementById(id).innerText;
       this.title = title;
+    },
+
+    plus() {
+      setPageScal(++this.scale);
+      const divs = renderOfdByScale(this.ofdObj);
+      this.displayOfdDiv(divs);
+    },
+
+    minus() {
+      setPageScal(--this.scale);
+      const divs = renderOfdByScale(this.ofdObj);
+      this.displayOfdDiv(divs);
     },
 
     demo(value) {
@@ -237,17 +246,22 @@ export default {
         success(res) {
           that.ofdObj = res;
           const divs = renderOfd(screenWidth, res);
-          let contentDiv = document.getElementById('content');
-          contentDiv.innerHTML = '';
-          for (const div of divs) {
-            contentDiv.appendChild(div)
-          }
+          that.displayOfdDiv(divs);
         },
         fail(error) {
           console.log(error)
         }
       });
     },
+
+    displayOfdDiv(divs) {
+      this.scale = getPageScal();
+      let contentDiv = document.getElementById('content');
+      contentDiv.innerHTML = '';
+      for (const div of divs) {
+        contentDiv.appendChild(div)
+      }
+    }
 
   }
 }
