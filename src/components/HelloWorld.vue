@@ -182,12 +182,18 @@ export default {
     },
 
     plus() {
+      if (!this.ofdObj) {
+        return
+      }
       setPageScal(++this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
 
     minus() {
+      if (!this.ofdObj) {
+        return
+      }
       setPageScal(--this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
@@ -199,7 +205,7 @@ export default {
     firstPage() {
       let contentDiv = document.getElementById('content');
       let first = contentDiv.firstElementChild;
-      first.scrollIntoView(true);
+      first?.scrollIntoView(true);
     },
 
     nextPage() {
@@ -208,7 +214,7 @@ export default {
     lastPage() {
       let contentDiv = document.getElementById('content');
       let last = contentDiv.lastElementChild;
-      last.scrollIntoView(true);
+      last?.scrollIntoView(true);
 
     },
 
