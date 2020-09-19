@@ -8,27 +8,33 @@
                @change="fileChanged">
       </div>
 
-      <div class="scale-icon" style="margin-left: 10px" @click="plus">
-        <font-awesome-icon icon="search-plus"/>
-      </div>
+      <div style="display: flex" v-if="ofdObj">
+        <div class="scale-icon" style="margin-left: 10px" @click="plus">
+          <font-awesome-icon icon="search-plus"/>
+        </div>
 
-     <div class="scale-icon" @click="minus">
-       <font-awesome-icon icon="search-minus" />
-     </div>
-      <div class="scale-icon">
-        <font-awesome-icon icon="step-backward" @click="firstPage"/>
-      </div>
+        <div class="scale-icon" @click="minus">
+          <font-awesome-icon icon="search-minus" />
+        </div>
+        <div class="scale-icon">
+          <font-awesome-icon icon="step-backward" @click="firstPage"/>
+        </div>
 
-      <div class="scale-icon" style="font-size: 18px" @click="prePage">
-        <font-awesome-icon icon="caret-left"/>
-      </div>
+        <div class="scale-icon" style="font-size: 18px" @click="prePage">
+          <font-awesome-icon icon="caret-left"/>
+        </div>
 
-      <div class="scale-icon" style="font-size: 18px" @click="nextPage">
-        <font-awesome-icon icon="caret-right"/>
-      </div>
+        <div class="scale-icon">
+          {{pageIndex}}/{{pageCount}}
+        </div>
 
-      <div class="scale-icon" @click="lastPage">
-        <font-awesome-icon icon="step-forward"/>
+        <div class="scale-icon" style="font-size: 18px" @click="nextPage">
+          <font-awesome-icon icon="caret-right"/>
+        </div>
+
+        <div class="scale-icon" @click="lastPage">
+          <font-awesome-icon icon="step-forward"/>
+        </div>
       </div>
 
     </el-header>
@@ -53,7 +59,7 @@
       </div>
       <div
           style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
-          id="content">
+          id="content" ref="contentDiv" @mousewheel="scrool">
       </div>
     </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
@@ -146,6 +152,8 @@ export default {
   name: 'HelloWorld',
   data() {
     return {
+      pageIndex: 1,
+      pageCount: 0,
       scale: 0,
       title: null,
       value: null,
@@ -161,6 +169,7 @@ export default {
 
   mounted() {
     let that = this;
+    this.$refs.contentDiv.addEventListener('scroll', this.scrool);
     window.onresize = () => {
       return (() => {
         that.screenWidth = (document.body.clientWidth - 88);
@@ -171,6 +180,20 @@ export default {
   },
 
   methods: {
+    scrool() {
+      let scrolled = this.$refs.contentDiv.firstElementChild.getBoundingClientRect()?.top - 60;
+      let top = 0
+      let index = 0;
+      for (let i=0;i<this.$refs.contentDiv.childElementCount; i ++) {
+        top += (Math.abs(this.$refs.contentDiv.children.item(i)?.style.height.replace('px','')) + Math.abs(this.$refs.contentDiv.children.item(i)?.style.marginBottom.replace('px','')));
+        if (Math.abs(scrolled) < top) {
+          index = i;
+          break;
+        }
+      }
+      this.pageIndex = index+1;
+    },
+
     closeSealInfoDialog() {
       this.$refs.sealInfoDiv.setAttribute('style', 'display: none');
     },
@@ -182,40 +205,43 @@ export default {
     },
 
     plus() {
-      if (!this.ofdObj) {
-        return
-      }
       setPageScal(++this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
 
     minus() {
-      if (!this.ofdObj) {
-        return
-      }
       setPageScal(--this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
 
     prePage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.children.item(this.pageIndex-2);
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=this.pageIndex-1:'';
     },
 
     firstPage() {
       let contentDiv = document.getElementById('content');
-      let first = contentDiv.firstElementChild;
-      first?.scrollIntoView(true);
+      let ele = contentDiv.firstElementChild;
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=1:'';
     },
 
     nextPage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.children.item(this.pageIndex);
+      ele?.scrollIntoView(true);
+      ele?++this.pageIndex:'';
     },
 
     lastPage() {
       let contentDiv = document.getElementById('content');
-      let last = contentDiv.lastElementChild;
-      last?.scrollIntoView(true);
-
+      let ele = contentDiv.lastElementChild;
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=contentDiv.childElementCount:'';
     },
 
     demo(value) {
@@ -270,6 +296,7 @@ export default {
         ofd: file,
         success(res) {
           that.ofdObj = res;
+          that.pageCount = res.pages.length;
           const divs = renderOfd(screenWidth, res);
           that.displayOfdDiv(divs);
         },
@@ -324,6 +351,7 @@ export default {
   font-size: 12px;
   color: #333333;
   margin: 1px;
+  text-align: center;
 }
 
 .text-icon {
