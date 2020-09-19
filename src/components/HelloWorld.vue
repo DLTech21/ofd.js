@@ -343,15 +343,22 @@ export default {
   cursor: pointer;
   justify-content: center;
   align-items: center;
-  width: 30px;
+  width: 33px;
   height: 28px;
   background-color: white;
   border-radius: 1px;
   font-weight: 500;
   font-size: 12px;
   color: #333333;
-  margin: 1px;
   text-align: center;
+  padding: 2px;
+
+}
+.scale-icon :active {
+  color: rgb(59, 95, 232);
+}
+.scale-icon :hover {
+  color: rgb(59, 95, 232);
 }
 
 .text-icon {
