@@ -283,6 +283,9 @@ const getSignatureData = async function (zip, signature) {
     const data = await getJsonFromXmlContent(zip, signature);
     let signedValue = (data['json']['ofd:Signature']['ofd:SignedValue'])
     signedValue = signedValue.toString().replace('/', '');
+    if (!zip.files[signedValue]) {
+        signedValue = `${signature.substring(0, signature.lastIndexOf('/'))}/${signedValue}`
+    }
     let sealObj = await parseSesSignature(zip, signedValue);
     return {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
