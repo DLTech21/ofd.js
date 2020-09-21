@@ -1,27 +1,32 @@
 {
   "name": "ofd.js",
   "version": "0.1.0",
-  "private": true,
+  "main": "lib/ofd.umd.min.js",
+  "author": "dltech21",
+  "description": "ofd渲染",
+  "keywords": [
+    "ofd"
+  ],
+  "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "lib": "vue-cli-service build --target lib --name ofd --dest lib ./src/utils/ofd/ofd.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/vue-fontawesome": "^2.0.0",
-    "@lapo/asn1js": "^1.2.1",
-    "adm-zip": "^0.4.16",
-    "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
+    "vue": "^2.6.11",
+    "core-js": "^3.6.5",
+    "@lapo/asn1js": "^1.2.1",
     "fast-xml-parser": "^3.17.4",
     "jszip": "^3.5.0",
     "jszip-utils": "^0.1.0",
     "sm-crypto": "^0.2.1",
-    "vue": "^2.6.11",
-    "web-streams-polyfill": "^2.1.1",
-    "xml-js": "^1.6.11"
+    "web-streams-polyfill": "^2.1.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
@@ -50,5 +55,10 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DLTech21/ofd.js"
+  },
+  "license": "Apache-2.0"
 }
