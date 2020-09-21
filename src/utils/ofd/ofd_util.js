@@ -254,9 +254,12 @@ let FONT_FAMILY = {
     'KaiTi': '楷体, KaiTi, Kai, simkai',
     'Kai': '楷体, KaiTi, Kai',
     '宋体': 'SimSun, simsun, Songti SC',
-    '黑体': 'SimHei, STHeiti',
-    '仿宋': 'FangSong, STFangsong',
+    '黑体': 'SimHei, STHeiti, simhei',
+    '仿宋': 'FangSong, STFangsong, simfang',
     '小标宋体': 'sSun',
+    '方正小标宋_GBK': 'sSun',
+    '仿宋_GB2312': 'FangSong, STFangsong, simfang',
+    '楷体_GB2312': '楷体, KaiTi, Kai, simkai',
 };
 
 export const getFontFamily = function (font) {

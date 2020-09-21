@@ -13,3 +13,13 @@ body { margin: 0; }
     font-family: "simkai";
     src: url("../assets/simkai.ttf");
 }
+
+@font-face {
+    font-family: "simfang";
+    src: url("../assets/SIMFANG.TTF");
+}
+
+@font-face {
+    font-family: "simhei";
+    src: url("../assets/simhei.ttf");
+}
