@@ -27,8 +27,7 @@ import {
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox,
-    Uint8ArrayToHexString
+    converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -79,7 +78,48 @@ export const calPageBox = function (screenWidth, document, page) {
     }
     let array = box.split(' ');
     const scale = ((screenWidth - 5) / parseFloat(array[2])).toFixed(1);
-    setPageScal(scale > 0 ? scale : 1);
+    setMaxPageScal(scale);
+    setPageScal(scale);
+    box = parseStBox( box);
+    box = converterBox(box)
+    return box;
+}
+
+export const calPageBoxScale = function (document, page) {
+    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    let box;
+    if (area) {
+        const physicalBox = area['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = area['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = area['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    } else {
+        let documentArea = document['ofd:CommonData']['ofd:PageArea']
+        const physicalBox = documentArea['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = documentArea['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = documentArea['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    }
     box = parseStBox( box);
     box = converterBox(box)
     return box;
@@ -137,18 +177,34 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
     div.addEventListener("click",function(){
         document.getElementById('sealInfoDiv').hidden = false;
         document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
-        document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
-        document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-        document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g, ' ');
-        document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g, ' ');
-        document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g, ' ');
+        if(SES_Signature.toSign.version<4){
+            console.log(signedInfo);
+            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }else{
+            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');;
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');;
+            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }
         document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-        document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-        document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-        document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-        document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-        document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-        document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        document.getElementById('VerifyRet').innerText = signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败";
     });
 }
 

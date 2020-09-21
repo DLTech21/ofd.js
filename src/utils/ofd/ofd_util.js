@@ -99,10 +99,22 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
-let Scale = 6.8;
+
+let MaxScale = 5;
+
+let Scale = MaxScale ;
+
+export const setMaxPageScal = function (scale) {
+    MaxScale = scale > 5 ? 5 : scale;
+}
 
 export const setPageScal = function (scale) {
-    Scale = scale > 5 ? 5: scale;
+    Scale = scale > 1 ? scale: 1;
+    Scale = Scale > MaxScale ? MaxScale: Scale;
+}
+
+export const getPageScal = function () {
+    return Scale;
 }
 
 export const converterDpi = function (width) {
@@ -154,6 +166,13 @@ export const calTextPoint = function (textCode) {
     // for (let textCode of textCodes) {
         x = parseFloat(textCode['@_X']);
         y = parseFloat(textCode['@_Y']);
+
+        if (isNaN(x)) {
+            x = 0;
+        }
+        if (isNaN(y)) {
+            y = 0;
+        }
 
         let deltaXList = [];
         let deltaYList = [];
@@ -292,25 +311,25 @@ function hexByte(b) {
 };
 
 export const Uint8ArrayToHexString = function (arr) {
-    if(typeof arr === 'string') {  
-        return arr;  
-    }  
-    var str = '',  
-        _arr = arr;  
-    for(var i = 0; i < _arr.length; i++) {  
-        var one = hexByte(_arr[i]),  
-            v = one.match(/^1+?(?=0)/);  
-        if(v && one.length == 8) {  
-            var bytesLength = v[0].length;  
-            var store = hexByte(_arr[i]).slice(7 - bytesLength);  
-            for(var st = 1; st < bytesLength; st++) {  
-                store += hexByte(_arr[st + i]).slice(2);  
-            }  
-            str += String.fromCharCode(parseInt(store, 2));  
-            i += bytesLength - 1;  
-        } else {  
-            str += String.fromCharCode(_arr[i]);  
-        }  
-    }  
+    if(typeof arr === 'string') {
+        return arr;
+    }
+    var str = '',
+        _arr = arr;
+    for(var i = 0; i < _arr.length; i++) {
+        var one = hexByte(_arr[i]),
+            v = one.match(/^1+?(?=0)/);
+        if(v && one.length == 8) {
+            var bytesLength = v[0].length;
+            var store = hexByte(_arr[i]).slice(7 - bytesLength);
+            for(var st = 1; st < bytesLength; st++) {
+                store += hexByte(_arr[st + i]).slice(2);
+            }
+            str += String.fromCharCode(parseInt(store, 2));
+            i += bytesLength - 1;
+        } else {
+            str += String.fromCharCode(_arr[i]);
+        }
+    }
     return str;
 }

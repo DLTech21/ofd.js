@@ -288,6 +288,7 @@ const getSignatureData = async function (zip, signature) {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
         'sealObj': sealObj,
         'signedInfo':{
+            'VerifyRet':sealObj.verifyRet,
             'Provider':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
             'SignatureMethod':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
             'SignatureDateTime':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],

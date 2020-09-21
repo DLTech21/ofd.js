@@ -1,32 +1,67 @@
 <template>
-  <div>
-    <div style="display: flex">
+  <el-container style="width:100vw; height: 100vh;">
+    <el-header style="display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
       <div class="upload-icon" @click="uploadFile">
-        <i class="upload-icon">选择文件</i>
+        <div class="upload-icon">打开OFD</div>
+        <font-awesome-icon icon="cloud-upload-alt"/>
         <input type="file" ref="file" class="hidden" accept=".ofd"
                @change="fileChanged">
       </div>
 
-      <button class="upload-icon" @click="demo(1)">
-        <i class="upload-icon">电票</i>
-      </button>
+      <div style="display: flex" v-if="ofdObj">
+        <div class="scale-icon" style="margin-left: 10px" @click="plus">
+          <font-awesome-icon icon="search-plus"/>
+        </div>
 
-      <div class="upload-icon" @click="demo(2)">
-        <i class="upload-icon">电子公文</i>
+        <div class="scale-icon" @click="minus">
+          <font-awesome-icon icon="search-minus" />
+        </div>
+        <div class="scale-icon">
+          <font-awesome-icon icon="step-backward" @click="firstPage"/>
+        </div>
+
+        <div class="scale-icon" style="font-size: 18px" @click="prePage">
+          <font-awesome-icon icon="caret-left"/>
+        </div>
+
+        <div class="scale-icon">
+          {{pageIndex}}/{{pageCount}}
+        </div>
+
+        <div class="scale-icon" style="font-size: 18px" @click="nextPage">
+          <font-awesome-icon icon="caret-right"/>
+        </div>
+
+        <div class="scale-icon" @click="lastPage">
+          <font-awesome-icon icon="step-forward"/>
+        </div>
       </div>
 
-      <div class="upload-icon" @click="demo(3)">
-        <i class="upload-icon">骑缝章</i>
-      </div>
+    </el-header>
+    <el-main style="height: auto;background: #808080;;padding: 0">
+      <div
+          style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
+        <div class="text-icon" @click="demo(1)">
+          <p>电子发票</p>
+        </div>
 
-      <div class="upload-icon" @click="demo(4)">
-        <i class="upload-icon">多页文档</i>
-      </div>
-    </div>
-    <div style="margin-top:10px;display: flex;flex-direction: column;align-items: center;justify-content: center"
-         id="content">
-    </div>
+        <div class="text-icon" @click="demo(2)">
+          <p>电子公文</p>
+        </div>
 
+        <div class="text-icon" @click="demo(3)">
+          <p>骑缝章</p>
+        </div>
+
+        <div class="text-icon" @click="demo(4)">
+          <p>多页文档</p>
+        </div>
+      </div>
+      <div
+          style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
+          id="content" ref="contentDiv" @mousewheel="scrool">
+      </div>
+    </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
       <div class="SealContainer mask" @click="closeSealInfoDialog"></div>
       <div class="SealContainer-layout">
@@ -57,6 +92,10 @@
           <div class="subcontent">
             <span class="title">版本号</span>
             <span class="value" id="spVersion">Version</span>
+          </div>
+          <div class="subcontent">
+            <span class="title">验签结果</span>
+            <span class="value" id="VerifyRet">VerifyRet</span>
           </div>
 
           <p class="content-title">印章信息</p>
@@ -100,25 +139,27 @@
         <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
       </div>
     </el-dialog>
-
-  </div>
-
+  </el-container>
 </template>
 
 <script>
 
-import {parseOfdDocument, renderOfd} from "@/utils/ofd/ofd";
+import {parseOfdDocument, renderOfd, renderOfdByScale} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
+import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
 
 export default {
   name: 'HelloWorld',
   data() {
     return {
+      pageIndex: 1,
+      pageCount: 0,
+      scale: 0,
       title: null,
       value: null,
       dialogFormVisible: false,
       ofdObj: null,
-      screenWidth: document.body.clientWidth,
+      screenWidth: document.body.clientWidth - 88,
     }
   },
 
@@ -128,21 +169,31 @@ export default {
 
   mounted() {
     let that = this;
+    this.$refs.contentDiv.addEventListener('scroll', this.scrool);
     window.onresize = () => {
       return (() => {
-        // setPageScal(5)
-        that.screenWidth = (document.body.clientWidth);
+        that.screenWidth = (document.body.clientWidth - 88);
         const divs = renderOfd(that.screenWidth, that.ofdObj);
-        let contentDiv = document.getElementById('content');
-        contentDiv.innerHTML = '';
-        for (const div of divs) {
-          contentDiv.appendChild(div)
-        }
+        that.displayOfdDiv(divs);
       })()
     }
   },
 
   methods: {
+    scrool() {
+      let scrolled = this.$refs.contentDiv.firstElementChild.getBoundingClientRect()?.top - 60;
+      let top = 0
+      let index = 0;
+      for (let i=0;i<this.$refs.contentDiv.childElementCount; i ++) {
+        top += (Math.abs(this.$refs.contentDiv.children.item(i)?.style.height.replace('px','')) + Math.abs(this.$refs.contentDiv.children.item(i)?.style.marginBottom.replace('px','')));
+        if (Math.abs(scrolled) < top) {
+          index = i;
+          break;
+        }
+      }
+      this.pageIndex = index+1;
+    },
+
     closeSealInfoDialog() {
       this.$refs.sealInfoDiv.setAttribute('style', 'display: none');
     },
@@ -151,6 +202,46 @@ export default {
       this.dialogFormVisible = true;
       this.value = document.getElementById(id).innerText;
       this.title = title;
+    },
+
+    plus() {
+      setPageScal(++this.scale);
+      const divs = renderOfdByScale(this.ofdObj);
+      this.displayOfdDiv(divs);
+    },
+
+    minus() {
+      setPageScal(--this.scale);
+      const divs = renderOfdByScale(this.ofdObj);
+      this.displayOfdDiv(divs);
+    },
+
+    prePage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.children.item(this.pageIndex-2);
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=this.pageIndex-1:'';
+    },
+
+    firstPage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.firstElementChild;
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=1:'';
+    },
+
+    nextPage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.children.item(this.pageIndex);
+      ele?.scrollIntoView(true);
+      ele?++this.pageIndex:'';
+    },
+
+    lastPage() {
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.lastElementChild;
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex=contentDiv.childElementCount:'';
     },
 
     demo(value) {
@@ -205,18 +296,24 @@ export default {
         ofd: file,
         success(res) {
           that.ofdObj = res;
+          that.pageCount = res.pages.length;
           const divs = renderOfd(screenWidth, res);
-          let contentDiv = document.getElementById('content');
-          contentDiv.innerHTML = '';
-          for (const div of divs) {
-            contentDiv.appendChild(div)
-          }
+          that.displayOfdDiv(divs);
         },
         fail(error) {
           console.log(error)
         }
       });
     },
+
+    displayOfdDiv(divs) {
+      this.scale = getPageScal();
+      let contentDiv = document.getElementById('content');
+      contentDiv.innerHTML = '';
+      for (const div of divs) {
+        contentDiv.appendChild(div)
+      }
+    }
 
   }
 }
@@ -226,21 +323,52 @@ export default {
 <style scoped>
 .upload-icon {
   display: flex;
+  cursor: pointer;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  line-height: 36px;
+  height: 28px;
+  padding-left: 10px;
+  padding-right: 10px;
   background-color: rgb(59, 95, 232);
-  border-radius: 2px;
+  border-radius: 1px;
   border-color: #5867dd;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 12px;
   color: white;
   margin: 1px;
 }
 
-.pageDiv {
-  border: 1px solid rgb(199, 198, 198);
+.scale-icon {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 28px;
+  background-color: white;
+  border-radius: 1px;
+  font-weight: 500;
+  font-size: 12px;
+  color: #333333;
+  margin: 1px;
+  text-align: center;
+}
+
+.text-icon {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  height: 28px;
+  width: 90%;
+  background-color: rgb(59, 95, 232);
+  border-radius: 1px;
+  border-color: #5867dd;
+  font-weight: 500;
+  font-size: 10px;
+  color: white;
+  margin-top: 20px;
+
 }
 
 .hidden {
@@ -267,7 +395,6 @@ export default {
   color: rgb(59, 95, 232);
   margin-top: 10px;
 }
-
 
 
 .SealContainer-content {
@@ -327,6 +454,7 @@ export default {
     font-family: simsun;
   }
 }
+
 .subcontent .title {
   font-weight: 600;
 }
