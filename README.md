@@ -9,7 +9,15 @@
 
 [体验地址](https://51shouzu.xyz/ofd/)
 
-## 接口使用（暂时提供）
+## Usage with npm
+
+```
+npm i ofd.js
+```
+
+```
+import {parseOfdDocument, renderOfd} from "ofd.js";
+```
 
 ```
 其中ofd传入的file支持本地文件或二进制、screenWidth为屏幕宽度
