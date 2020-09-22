@@ -250,16 +250,16 @@ export default {
       let ofdFile = null;
       switch (value) {
         case 1:
-          ofdFile = 'https://51shouzu.xyz/999.ofd';
+          ofdFile = '999.ofd';
           break;
         case 2:
-          ofdFile = 'https://51shouzu.xyz/n.ofd';
+          ofdFile = 'n.ofd';
           break;
         case 3:
-          ofdFile = 'https://51shouzu.xyz/h.ofd';
+          ofdFile = 'h.ofd';
           break;
         case 4:
-          ofdFile = 'https://51shouzu.xyz/2.ofd';
+          ofdFile = '2.ofd';
           break;
       }
       let that = this;
@@ -316,6 +316,7 @@ export default {
         contentDiv.appendChild(div)
       }
       for(let ele of document.getElementsByName('seal_img_div')) {
+        console.log(ele.dataset.signedInfo);
         this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
       }
     },
