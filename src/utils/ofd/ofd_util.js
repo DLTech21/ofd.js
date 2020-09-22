@@ -100,7 +100,7 @@ const millimetersToPixel = function (mm, dpi) {
     return ((mm * dpi / 25.4));
 }
 
-let MaxScale = 5;
+let MaxScale = 10;
 
 let Scale = MaxScale ;
 
@@ -315,7 +315,7 @@ export const Uint8ArrayToHexString = function (arr) {
         words[i >>> 3] |= parseInt(arr[j], 10) << (24 - (i % 8) * 4);
         j++;
     }
-    
+
     // 转换到16进制
     let hexChars = [];
     for (let i = 0; i < arr.length; i++) {
