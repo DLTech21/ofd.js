@@ -39,10 +39,10 @@ export const parseSesSignature = async function (zip, name) {
 
 export const digestCheckProcess = function (arr){
     let ret = true;
-    arr.forEach(val=>{
-        const value = digestByteArray(val.fileData,val.hashed,val.checkMethod);
+    for (const val of arr) {
+        const value = digestByteArray(val.fileData, val.hashed, val.checkMethod);
         ret = ret && value;
-    })
+    }
     return ret;
 }
 
@@ -86,7 +86,7 @@ const decodeSES_Signature = function (der, offset) {
         const version = asn1.sub[0]?.sub[0]?.stream.parseInteger(asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header, asn1.sub[0].sub[0].stream.pos + asn1.sub[0].sub[0].header + asn1.sub[0].sub[0].length);
         if(version<4){
             //V1
-            //Unrecognized time: 
+            //Unrecognized time:
             const createDate = decodeUTCTime(asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[3]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[3].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[3].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[3].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[3].length));
             const validStart = decodeUTCTime(asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[4]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[4].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[4].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[4].length));
             const validEnd = decodeUTCTime(asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[5]?.stream.parseTime(asn1.sub[0].sub[1].sub[0].sub[2].sub[5].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].header, asn1.sub[0].sub[1].sub[0].sub[2].sub[5].stream.pos + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].header + asn1.sub[0].sub[1].sub[0].sub[2].sub[5].length));
@@ -144,7 +144,7 @@ const decodeSES_Signature = function (der, offset) {
                             'signatureAlgorithm':asn1.sub[0]?.sub[1]?.sub[1]?.sub[1]?.stream.parseOID(asn1.sub[0].sub[1].sub[1].sub[1].stream.pos + asn1.sub[0].sub[1].sub[1].sub[1].header, asn1.sub[0].sub[1].sub[1].sub[1].stream.pos + asn1.sub[0].sub[1].sub[1].sub[1].header + asn1.sub[0].sub[1].sub[1].sub[1].length),
                             'signData':asn1.sub[0]?.sub[1]?.sub[1]?.sub[2]?.stream.hexDump(asn1.sub[0].sub[1].sub[1].sub[2].stream.pos + asn1.sub[0].sub[1].sub[1].sub[2].header, asn1.sub[0].sub[1].sub[1].sub[2].stream.pos + asn1.sub[0].sub[1].sub[1].sub[2].header + asn1.sub[0].sub[1].sub[1].sub[2].length, false)
                         },
-                        
+
                     },
                     'timeInfo':timeInfo,
                     'dataHash':asn1.sub[0]?.sub[3]?.stream.hexDump(asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header, asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header + asn1.sub[0].sub[3].length, false),

@@ -144,10 +144,8 @@
 
 <script>
 
-import {parseOfdDocument, renderOfd, renderOfdByScale} from "@/utils/ofd/ofd";
+import {parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
-import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
-import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser";
 
 export default {
   name: 'HelloWorld',
@@ -183,7 +181,7 @@ export default {
 
   methods: {
     scrool() {
-      let scrolled = this.$refs.contentDiv.firstElementChild.getBoundingClientRect()?.top - 60;
+      let scrolled = this.$refs.contentDiv.firstElementChild?.getBoundingClientRect()?.top - 60;
       let top = 0
       let index = 0;
       for (let i=0;i<this.$refs.contentDiv.childElementCount; i ++) {
@@ -207,13 +205,13 @@ export default {
     },
 
     plus() {
-      setPageScal(++this.scale);
+      setPageScale(++this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
 
     minus() {
-      setPageScal(--this.scale);
+      setPageScale(--this.scale);
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
@@ -294,13 +292,20 @@ export default {
 
     getOfdDocumentObj(file, screenWidth) {
       let that = this;
+      let t = new Date().getTime();
       parseOfdDocument({
         ofd: file,
         success(res) {
+          let t1 = new Date().getTime();
+          console.log('解析ofd',t1 - t);
           that.ofdObj = res;
           that.pageCount = res.pages.length;
           const divs = renderOfd(screenWidth, res);
+          let t2 = new Date().getTime();
+          console.log('xml转svg', t2 - t1)
           that.displayOfdDiv(divs);
+          let t3 = new Date().getTime();
+          console.log('svg渲染到页面', t3 - t2)
         },
         fail(error) {
           console.log(error)
@@ -309,14 +314,13 @@ export default {
     },
 
     displayOfdDiv(divs) {
-      this.scale = getPageScal();
+      this.scale = getPageScale();
       let contentDiv = document.getElementById('content');
       contentDiv.innerHTML = '';
       for (const div of divs) {
         contentDiv.appendChild(div)
       }
       for(let ele of document.getElementsByName('seal_img_div')) {
-        console.log(ele.dataset.signedInfo);
         this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
       }
     },
@@ -357,7 +361,7 @@ export default {
         if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
           setTimeout(function(){
             const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
-            global.HashRet = digestCheckProcess(global.toBeChecked.get(signedInfo['signatureID']));
+            global.HashRet = digestCheck(global.toBeChecked.get(signedInfo['signatureID']));
             const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
             document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
           },1000);
