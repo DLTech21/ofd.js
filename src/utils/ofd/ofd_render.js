@@ -164,7 +164,6 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         div.setAttribute('style', `cursor: pointer; position:relative; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
         div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
-        // addEventOnSealDiv(div, SES_Signature, signedInfo);
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
             const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];

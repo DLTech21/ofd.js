@@ -26,7 +26,10 @@ parseOfdDocument({
         success(res) {
           //输出ofd每页的div
           const divs = renderOfd(screenWidth, res);
-          
+          //获取签章div的信息, 具体看demo
+          for(let ele of document.getElementsByName('seal_img_div')) {
+             this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
+          }
         },
         fail(error) {
           console.log(error)
