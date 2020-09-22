@@ -29,7 +29,6 @@ import {
     setPageScal,
     converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
-import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser"
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
