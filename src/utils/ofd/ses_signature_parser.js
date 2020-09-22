@@ -23,6 +23,7 @@ import Hex from "@lapo/asn1js/hex";
 import Base64 from "@lapo/asn1js/base64";
 import ASN1 from "@lapo/asn1js";
 import {SES_Signature_Verify} from "@/utils/ofd/verify_signature_util";
+import {digestByteArray} from "@/utils/ofd/verify_signature_util";
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
 
 export const parseSesSignature = async function (zip, name) {
@@ -34,6 +35,15 @@ export const parseSesSignature = async function (zip, name) {
             reject(e);
         })
     });
+}
+
+export const digestCheckProcess = function (arr){
+    let ret = true;
+    arr.forEach(val=>{
+        const value = digestByteArray(val.fileData,val.hashed,val.checkMethod);
+        ret = ret && value;
+    })
+    return ret;
 }
 
 const decodeText = function (val) {

@@ -29,6 +29,7 @@ import {
     setPageScal,
     converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
+import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser"
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -174,11 +175,11 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
 }
 
 const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
+    global.HashRet=null;
     div.addEventListener("click",function(){
         document.getElementById('sealInfoDiv').hidden = false;
         document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
         if(SES_Signature.toSign.version<4){
-            console.log(signedInfo);
             document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
             document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
             document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
@@ -204,7 +205,17 @@ const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
             document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
         }
         document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-        document.getElementById('VerifyRet').innerText = signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败";
+        global.VerifyRet=signedInfo['VerifyRet'];
+        document.getElementById('VerifyRet').innerText = "文件摘要值后台验证中，请稍等... "+(signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败");
+        if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
+            setTimeout(function(){
+                const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
+                global.HashRet = digestCheckProcess(global.toBeChecked.get(signedInfo['signatureID']));
+                const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
+                document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
+            },1000);  
+        }
+         
     });
 }
 
