@@ -308,31 +308,21 @@ export const converterBox = function (box) {
     };
 }
 
-var hexDigits = "0123456789ABCDEF";
-function hexByte(b) {
-    return hexDigits.charAt((b >> 4) & 0xF) + hexDigits.charAt(b & 0xF);
-};
-
 export const Uint8ArrayToHexString = function (arr) {
-    if(typeof arr === 'string') {
-        return arr;
+    let words = [];
+    let j = 0;
+    for (let i = 0; i < arr.length * 2; i += 2) {
+        words[i >>> 3] |= parseInt(arr[j], 10) << (24 - (i % 8) * 4);
+        j++;
     }
-    var str = '',
-        _arr = arr;
-    for(var i = 0; i < _arr.length; i++) {
-        var one = hexByte(_arr[i]),
-            v = one.match(/^1+?(?=0)/);
-        if(v && one.length == 8) {
-            var bytesLength = v[0].length;
-            var store = hexByte(_arr[i]).slice(7 - bytesLength);
-            for(var st = 1; st < bytesLength; st++) {
-                store += hexByte(_arr[st + i]).slice(2);
-            }
-            str += String.fromCharCode(parseInt(store, 2));
-            i += bytesLength - 1;
-        } else {
-            str += String.fromCharCode(_arr[i]);
-        }
+    
+    // 转换到16进制
+    let hexChars = [];
+    for (let i = 0; i < arr.length; i++) {
+        let bite = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+        hexChars.push((bite >>> 4).toString(16));
+        hexChars.push((bite & 0x0f).toString(16));
     }
-    return str;
+
+    return hexChars.join('');
 }
