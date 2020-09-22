@@ -25,12 +25,12 @@ export const SES_Signature_Verify = function(SES_Signature){
     const signAlg = SES_Signature.toSign.version<4?SES_Signature.toSign.signatureAlgorithm:SES_Signature.signatureAlgID;
     const msg = SES_Signature.toSignDer;
     if(signAlg.indexOf("1.2.156.10197.1.501")>=0 || signAlg.indexOf("sm2")>=0){
-        let sigValueHex = SES_Signature.signature.replaceAll(' ','').replaceAll('\n','');
+        let sigValueHex = SES_Signature.signature.replace(/ /g,'').replace(/\n/g,'');
         if(sigValueHex.indexOf('00')==0){
             sigValueHex = sigValueHex.substr(2,sigValueHex.length-2);
         }
         const cert = SES_Signature.toSign.version<4?SES_Signature.toSign.cert:SES_Signature.cert;
-        let publicKey = cert.subjectPublicKeyInfo.subjectPublicKey.replaceAll(' ','').replaceAll('\n','');
+        let publicKey = cert.subjectPublicKeyInfo.subjectPublicKey.replace(/ /g,'').replace(/\n/g,'');
         if(publicKey.indexOf('00')==0){
             publicKey = publicKey.substr(2,publicKey.length-2);
         }
@@ -42,7 +42,7 @@ export const SES_Signature_Verify = function(SES_Signature){
     }else{
         let sig = new rsa.KJUR.crypto.Signature({"alg": "SHA1withRSA"});
         const cert = SES_Signature.toSign.version<4?SES_Signature.toSign.cert:SES_Signature.cert;
-        let sigValueHex = SES_Signature.signature.replaceAll(' ','').replaceAll('\n','');
+        let sigValueHex = SES_Signature.signature.replace(/ /g,'').replace(/\n/g,'');
         if(sigValueHex.indexOf('00')==0){
             sigValueHex = sigValueHex.substr(2,sigValueHex.length-2);
         }
