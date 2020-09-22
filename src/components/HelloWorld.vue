@@ -147,6 +147,7 @@
 import {parseOfdDocument, renderOfd, renderOfdByScale} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
 import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
+import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser";
 
 export default {
   name: 'HelloWorld',
@@ -177,6 +178,7 @@ export default {
         that.displayOfdDiv(divs);
       })()
     }
+
   },
 
   methods: {
@@ -313,6 +315,54 @@ export default {
       for (const div of divs) {
         contentDiv.appendChild(div)
       }
+      for(let ele of document.getElementsByName('seal_img_div')) {
+        this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
+      }
+    },
+
+    addEventOnSealDiv(div, SES_Signature, signedInfo) {
+      global.HashRet=null;
+      div.addEventListener("click",function(){
+        document.getElementById('sealInfoDiv').hidden = false;
+        document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
+        if(SES_Signature.toSign.version<4){
+          document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
+          document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
+          document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+          document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+          document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');
+          document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+          document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+          document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+          document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+          document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+          document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }else{
+          document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+          document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
+          document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+          document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+          document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');
+          document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+          document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+          document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+          document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+          document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+          document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+        }
+        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+        global.VerifyRet=signedInfo['VerifyRet'];
+        document.getElementById('VerifyRet').innerText = "文件摘要值后台验证中，请稍等... "+(signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败");
+        if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
+          setTimeout(function(){
+            const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
+            global.HashRet = digestCheckProcess(global.toBeChecked.get(signedInfo['signatureID']));
+            const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
+            document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
+          },1000);
+        }
+
+      });
     }
 
   }
