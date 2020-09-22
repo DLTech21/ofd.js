@@ -61,6 +61,9 @@ export const renderOfd = function (screenWidth, ofd) {
 
 export const renderOfdByScale = function (ofd) {
     let divArray = [];
+    if (!ofd) {
+        return divArray;
+    }
     for (const page of ofd.pages) {
         let box = calPageBoxScale(ofd.document, page);
         const pageId = Object.keys(page)[0];

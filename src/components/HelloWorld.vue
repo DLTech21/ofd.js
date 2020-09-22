@@ -294,13 +294,21 @@ export default {
 
     getOfdDocumentObj(file, screenWidth) {
       let that = this;
+      let t = new Date().getTime();
       parseOfdDocument({
         ofd: file,
         success(res) {
+          let t1 = new Date().getTime();
+          console.log('解析ofd',t1 - t);
+          console.log(res);
           that.ofdObj = res;
           that.pageCount = res.pages.length;
           const divs = renderOfd(screenWidth, res);
+          let t2 = new Date().getTime();
+          console.log('xml转svg', t2 - t1)
           that.displayOfdDiv(divs);
+          let t3 = new Date().getTime();
+          console.log('svg渲染到页面', t3 - t2)
         },
         fail(error) {
           console.log(error)
