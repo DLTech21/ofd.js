@@ -88,7 +88,7 @@ export const digestCheck = function (options) {
     //             options.success(res);
     //         }
     //     });
-    return digestCheckProcess(options.arr)
+    return digestCheckProcess(options)
 }
 
 export const setPageScale = function (scale) {
