@@ -253,7 +253,8 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     if(isStampAnnot)
     {
         div.setAttribute("name","seal_img_div");
-        addEventOnSealDiv(div, SES_Signature, signedInfo);
+        div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
+        div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
     let img = document.createElement('img');
     img.src = imgSrc;
