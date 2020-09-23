@@ -10,11 +10,13 @@ import Base64 from "@lapo/asn1js/base64";
 
 export const digestByteArray = function(data,hashedBase64,checkMethod){
     const hashedHex = Uint8ArrayToHexString(Base64.decode(hashedBase64));
-    if(checkMethod.indexOf("1.2.156.10197.1.401")>=0 || checkMethod.indexOf("sm3")>=0){
+    checkMethod = checkMethod.toLowerCase()
+    if(checkMethod === "1.2.156.10197.1.401" || checkMethod === "sm3"){
+        console.log(checkMethod)
         return hashedHex==sm3(Uint8ArrayToHexString(data));
-    }else if(checkMethod.indexOf("md5")>=0){
+    }else if(checkMethod === "md5"){
         return hashedHex==md5(data);
-    }else if(checkMethod.indexOf("sha1")>=0){
+    }else if(checkMethod === "sha1"){
         return hashedHex==sha1(data);
     }else{
         return "";
