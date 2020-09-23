@@ -251,20 +251,28 @@ export const decodeHtml = function(s){
 
 let FONT_FAMILY = {
     '楷体': '楷体, KaiTi, Kai, simkai',
-    'KaiTi': '楷体, KaiTi, Kai, simkai',
+    'kaiti': '楷体, KaiTi, Kai, simkai',
     'Kai': '楷体, KaiTi, Kai',
+    'simsun': 'SimSun, simsun, Songti SC',
     '宋体': 'SimSun, simsun, Songti SC',
     '黑体': 'SimHei, STHeiti, simhei',
     '仿宋': 'FangSong, STFangsong, simfang',
     '小标宋体': 'sSun',
-    '方正小标宋_GBK': 'sSun',
-    '仿宋_GB2312': 'FangSong, STFangsong, simfang',
-    '楷体_GB2312': '楷体, KaiTi, Kai, simkai',
+    '方正小标宋_gbk': 'sSun',
+    '仿宋_gb2312': 'FangSong, STFangsong, simfang',
+    '楷体_gb2312': '楷体, KaiTi, Kai, simkai',
+    'couriernew': 'Courier New',
+    'courier new': 'Courier New',
 };
 
 export const getFontFamily = function (font) {
-    if (FONT_FAMILY[font]) {
-        font = FONT_FAMILY[font];
+    if (FONT_FAMILY[font.toLowerCase()]) {
+        font = FONT_FAMILY[font.toLowerCase()];
+    }
+    for (let key of Object.keys(FONT_FAMILY)) {
+        if (font.toLowerCase().indexOf(key.toLowerCase()) != -1) {
+            return FONT_FAMILY[key]
+        }
     }
     return font;
 }
