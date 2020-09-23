@@ -145,7 +145,6 @@
 <script>
 
 import {parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale} from "@/utils/ofd/ofd";
-import * as JSZipUtils from "jszip-utils";
 
 export default {
   name: 'HelloWorld',
@@ -260,13 +259,7 @@ export default {
           ofdFile = '2.ofd';
           break;
       }
-      let that = this;
-      JSZipUtils.getBinaryContent(ofdFile, function (err, data) {
-        if (err) {
-          throw err; // or handle err
-        }
-        that.getOfdDocumentObj(data, that.screenWidth);
-      });
+      this.getOfdDocumentObj(ofdFile, this.screenWidth);
 
     },
 

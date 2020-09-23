@@ -31,8 +31,26 @@ import {
 } from "@/utils/ofd/ofd_parser";
 import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser"
 import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
+import * as JSZipUtils from "jszip-utils";
 
 export const parseOfdDocument = function (options) {
+    if (options.ofd instanceof File || options.ofd instanceof ArrayBuffer) {
+        doParseOFD(options);
+    } else {
+        JSZipUtils.getBinaryContent(options.ofd, function (err, data) {
+            if (err) {
+                if (options.fail) {
+                    options.fail(err);
+                }
+            } else {
+                options.ofd = data;
+                doParseOFD(options);
+            }
+        });
+    }
+}
+
+const doParseOFD = function (options) {
     pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoot, getDocument,
         getDocumentRes, getPublicRes, getTemplatePage, getPage)
         .then(res => {
