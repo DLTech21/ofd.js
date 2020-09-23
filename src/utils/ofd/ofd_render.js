@@ -174,8 +174,7 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
     }
 }
 
-const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
-    stampAnnotBoundary = converterBox(stampAnnotBoundary);
+const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
     let fillColor = null;
     let strokeColor = null;
     let lineWith = 0;

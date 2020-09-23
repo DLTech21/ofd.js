@@ -109,6 +109,7 @@ export const setMaxPageScal = function (scale) {
 }
 
 export const setPageScal = function (scale) {
+    scale = Math.floor(scale);
     Scale = scale > 1 ? scale: 1;
     Scale = Scale > MaxScale ? MaxScale: Scale;
 }

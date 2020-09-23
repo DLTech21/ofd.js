@@ -373,6 +373,9 @@ export default {
           },1000);
         }
 
+        if (!global.VerifyRet) {
+          div.setAttribute('class', 'gray');
+        }
       });
     }
 
@@ -534,4 +537,5 @@ export default {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 </style>
