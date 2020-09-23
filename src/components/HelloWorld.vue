@@ -38,7 +38,7 @@
       </div>
 
     </el-header>
-    <el-main style="height: auto;background: #808080;;padding: 0">
+    <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading">
       <div
           style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
         <div class="text-icon" @click="demo(1)">
@@ -150,6 +150,7 @@ export default {
   name: 'HelloWorld',
   data() {
     return {
+      loading: false,
       pageIndex: 1,
       pageCount: 0,
       scale: 0,
@@ -286,6 +287,7 @@ export default {
     getOfdDocumentObj(file, screenWidth) {
       let that = this;
       let t = new Date().getTime();
+      this.loading = true;
       parseOfdDocument({
         ofd: file,
         success(res) {
@@ -298,10 +300,21 @@ export default {
           console.log('xml转svg', t2 - t1)
           that.displayOfdDiv(divs);
           let t3 = new Date().getTime();
-          console.log('svg渲染到页面', t3 - t2)
+          console.log('svg渲染到页面', t3 - t2);
+          that.loading = false;
         },
         fail(error) {
+          that.loading = false;
           console.log(error)
+          that.$alert('OFD打开失败', error, {
+            confirmButtonText: '确定',
+            callback: action => {
+              this.$message({
+                type: 'info',
+                message: `action: ${ action }`
+              });
+            }
+          });
         }
       });
     },
