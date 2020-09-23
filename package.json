@@ -1,11 +1,13 @@
 {
   "name": "ofd.js",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "lib/ofd.umd.min.js",
   "author": "dltech21",
   "description": "ofd渲染",
   "keywords": [
-    "ofd"
+    "ofd",
+    "ofd.js",
+    "ofd渲染"
   ],
   "private": false,
   "scripts": {

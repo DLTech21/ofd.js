@@ -20,7 +20,7 @@ import {parseOfdDocument, renderOfd} from "ofd.js";
 ```
 
 ```
-其中ofd传入的file支持本地文件或二进制、screenWidth为屏幕宽度
+其中ofd传入的file支持本地文件、二进制或者url、screenWidth为屏幕宽度
 parseOfdDocument({
         ofd: file,
         success(res) {
