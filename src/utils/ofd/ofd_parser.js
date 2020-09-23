@@ -78,16 +78,65 @@ export const getDocRoot = async function (zip) {
 export const getDocument = async function ([zip, doc, docRoot, stampAnnot]) {
     const data = await getJsonFromXmlContent(zip, docRoot);
     const documentObj = data['json']['ofd:Document'];
-    return [zip, doc, documentObj, stampAnnot];
+    let annotations = documentObj['ofd:Annotations'];
+    let array = [];
+    let annoBase;
+    if (annotations) {
+        if (annotations.indexOf('/') !== -1) {
+            annoBase = annotations.substring(0, annotations.indexOf('/'));
+        }
+        if (annotations.indexOf(doc) === -1) {
+            annotations = `${doc}/${annotations}`;
+        }
+        annotations = await getJsonFromXmlContent(zip, annotations);
+        array = array.concat(annotations['json']['ofd:Annotations']['ofd:Page']);
+    }
+    const annotationObjs = await getAnnotations(annoBase, array, doc, zip)
+    return [zip, doc, documentObj, stampAnnot, annotationObjs];
 }
 
-export const getDocumentRes = async function ([zip, doc, Document, stampAnnot]) {
+const getAnnotations = async function (annoBase, annotations, doc, zip) {
+    let annotationObjs = {};
+    for (let anno of annotations) {
+        if (!anno) {
+            continue
+        }
+        const pageId = anno['@_PageID'];
+        let fileLoc = anno['ofd:FileLoc'];
+        if (annoBase && fileLoc.indexOf(annoBase) === -1) {
+            fileLoc = `${annoBase}/${fileLoc}`;
+        }
+        if (fileLoc.indexOf(doc) === -1) {
+            fileLoc = `${doc}/${fileLoc}`;
+        }
+        if (zip.files[fileLoc]) {
+            const data = await getJsonFromXmlContent(zip, fileLoc);
+            let array = [];
+            array = array.concat(data['json']['ofd:PageAnnot']['ofd:Annot']);
+            if (!annotationObjs[pageId]) {
+                annotationObjs[pageId] = [];
+            }
+            for (let annot of array) {
+                if (!annot) {
+                    continue
+                }
+                const type = annot['@_Type'];
+                const appearance = annot['ofd:Appearance'];
+                let appearanceObj = {type, appearance};
+                annotationObjs[pageId].push(appearanceObj);
+            }
+        }
+    }
+    return annotationObjs;
+}
+
+export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, annotationObjs]) {
     let documentResPath = Document['ofd:CommonData']['ofd:DocumentRes'];
     let fontResObj = {};
     let drawParamResObj = {};
     let multiMediaResObj = {};
     if (documentResPath) {
-        if (documentResPath.indexOf('/') == -1) {
+        if (documentResPath.indexOf(doc) == -1) {
             documentResPath = `${doc}/${documentResPath}`;
         }
         if (zip.files[documentResPath]) {
@@ -98,10 +147,10 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot]) 
             multiMediaResObj = await getMultiMediaRes(zip, documentResObj, doc);
         }
     }
-    return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-export const getPublicRes = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPublicRes = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
     let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
     if (publicResPath) {
         if (publicResPath.indexOf(doc) == -1) {
@@ -118,10 +167,10 @@ export const getPublicRes = async function ([zip, doc, Document, stampAnnot, fon
             multiMediaResObj = Object.assign(multiMediaResObj, multiMediaObj);
         }
     }
-    return [zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
     let templatePages = Document['ofd:CommonData']['ofd:TemplatePage'];
     let array = [];
     array = array.concat(templatePages);
@@ -132,10 +181,10 @@ export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, 
             tpls[Object.keys(pageObj)[0]] = pageObj[Object.keys(pageObj)[0]];
         }
     }
-    return [zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj];
 }
 
-export const getPage = async function ([zip, doc, Document, stampAnnot, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPage = async function ([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
     let pages = Document['ofd:Pages']['ofd:Page'];
     let array = [];
     array = array.concat(pages);
@@ -157,6 +206,7 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, tpls, fo
         'pages': res,
         'tpls': tpls,
         'stampAnnot': stampAnnot,
+        annotationObjs,
         fontResObj,
         drawParamResObj,
         multiMediaResObj
