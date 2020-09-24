@@ -121,8 +121,9 @@ const getAnnotations = async function (annoBase, annotations, doc, zip) {
                     continue
                 }
                 const type = annot['@_Type'];
+                const visible = annot['@_Visible'] ? annot['@_Visible']:true;
                 const appearance = annot['ofd:Appearance'];
-                let appearanceObj = {type, appearance};
+                let appearanceObj = {type, appearance, visible};
                 annotationObjs[pageId].push(appearanceObj);
             }
         }
@@ -197,6 +198,10 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
             if (currentPageStamp) {
                 pageObj[pageId].stamp = currentPageStamp;
             }
+            const annotationObj = annotationObjs[pageId];
+            if (annotationObj) {
+                pageObj[pageId].annotation = annotationObj;
+            }
             res.push(pageObj);
         }
     }
@@ -206,7 +211,6 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
         'pages': res,
         'tpls': tpls,
         'stampAnnot': stampAnnot,
-        annotationObjs,
         fontResObj,
         drawParamResObj,
         multiMediaResObj

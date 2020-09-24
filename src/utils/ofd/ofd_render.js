@@ -129,14 +129,13 @@ export const calPageBoxScale = function (document, page) {
 
 export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
     const pageId = Object.keys(page)[0];
-    let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
     const template = page[pageId]['json']['ofd:Template'];
     if (template) {
         const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false, stampAnnotBoundary);
+        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
     }
     const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false, stampAnnotBoundary);
+    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
     if (page[pageId].stamp) {
         for (const stamp of page[pageId].stamp) {
           if (stamp.type === 'ofd') {
@@ -148,6 +147,25 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
           }
         }
     }
+    if (page[pageId].annotation) {
+        for (const annotation of page[pageId].annotation) {
+            renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj);
+        }
+    }
+}
+
+const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
+    let div = document.createElement('div');
+    div.setAttribute('style', `position:relative;`)
+    let boundary = annotation['appearance']['@_Boundary'];
+    if (boundary) {
+        let divBoundary = converterBox(parseStBox(boundary));
+        div.setAttribute('style', `z-index:-1;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+    }
+    const contentLayer = annotation['appearance'];
+    renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+    pageDiv.appendChild(div);
+
 }
 
 const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj, SES_Signature, signedInfo) {
@@ -166,10 +184,10 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
             const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-            renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot, stampAnnotBoundary);
+            renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot);
         }
         const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot, stampAnnotBoundary);
+        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot);
         pageDiv.appendChild(div);
     }
 }
@@ -273,6 +291,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
 }
 
 export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor) {
+    let defaultFillOpacity = 1;
     let boundary = parseStBox(textObject['@_Boundary']);
     boundary = converterBox(boundary);
     const ctm = textObject['@_CTM'];
@@ -287,6 +306,10 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     const fillColor = textObject['ofd:FillColor'];
     if (fillColor) {
         defaultFillColor = parseColor(fillColor['@_Value']);
+        let alpha = fillColor['@_Alpha'];
+        if (alpha) {
+            defaultFillOpacity = alpha>1? alpha/255:alpha;
+        }
     }
     for (const textCodePoint of textCodePointList) {
         if (!isNaN(textCodePoint.x)) {
@@ -304,6 +327,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
             }
             text.setAttribute('fill', defaultStrokeColor);
             text.setAttribute('fill', defaultFillColor);
+            text.setAttribute('fill-opacity', defaultFillOpacity);
             text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
             svg.appendChild(text);
         }
@@ -313,7 +337,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
     return svg;
 }
 
@@ -378,6 +402,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
     return svg;
 }
