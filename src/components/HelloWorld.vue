@@ -1,6 +1,6 @@
 <template>
   <el-container style="width:100vw; height: 100vh;">
-    <el-header style="display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
+    <el-header style="background:#F5F5F5;display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
       <div class="upload-icon" @click="uploadFile">
         <div class="upload-icon">打开OFD</div>
         <font-awesome-icon icon="cloud-upload-alt"/>
@@ -40,7 +40,7 @@
     </el-header>
     <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading">
       <div
-          style="position: fixed;width: 88px;height: 100%;background: white;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
+          style="position: fixed;width: 88px;height: 100%;background:#F5F5F5;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
         <div class="text-icon" @click="demo(1)">
           <p>电子发票</p>
         </div>
