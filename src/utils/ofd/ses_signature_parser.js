@@ -62,7 +62,6 @@ const decode = function (der, offset) {
         const SES_Signature = decodeSES_Signature(der,offset);
         const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
         const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
-        console.log(SES_Signature_Verify(SES_Signature));
         return {ofdArray, 'type': type.toLowerCase(), SES_Signature,'verifyRet':SES_Signature_Verify(SES_Signature)};
     } catch (e) {
         console.log(e)
@@ -220,7 +219,7 @@ const decodeSES_Signature = function (der, offset) {
                 'signatureAlgID':asn1.sub[2]?.stream.parseOID(asn1.sub[2].stream.pos + asn1.sub[2].header, asn1.sub[2].stream.pos + asn1.sub[2].header + asn1.sub[2].length),
                 'signature':asn1.sub[3]?.stream.hexDump(asn1.sub[3].stream.pos + asn1.sub[3].header, asn1.sub[3].stream.pos + asn1.sub[3].header + asn1.sub[3].length, false),
                 'timpStamp':asn1.sub[4]?.stream.parseTime(asn1.sub[4].stream.pos + asn1.sub[4].header, asn1.sub[4].stream.pos + asn1.sub[4].header + asn1.sub[4].length)
-            }; 
+            };
         } catch (e) {
             console.log(e);
             SES_Signature={};

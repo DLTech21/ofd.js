@@ -20,10 +20,10 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/vue-fontawesome": "^2.0.0",
-    "element-ui": "^2.13.2",
-    "vue": "^2.6.11",
-    "core-js": "^3.6.5",
     "@lapo/asn1js": "^1.2.1",
+    "axios": "^0.20.0",
+    "core-js": "^3.6.5",
+    "element-ui": "^2.13.2",
     "fast-xml-parser": "^3.17.4",
     "js-md5": "^0.7.3",
     "js-sha1": "^0.6.0",
@@ -32,6 +32,7 @@
     "jszip": "^3.5.0",
     "jszip-utils": "^0.1.0",
     "sm-crypto": "^0.2.1",
+    "vue": "^2.6.11",
     "web-streams-polyfill": "^2.1.1"
   },
   "devDependencies": {

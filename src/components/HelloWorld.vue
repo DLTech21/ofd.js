@@ -8,7 +8,12 @@
                @change="fileChanged">
       </div>
 
-      <div style="display: flex" v-if="ofdObj">
+      <div style="display: flex;align-items: center" v-if="ofdObj">
+        <div class="upload-icon" style="margin-left: 10px" @click="downPdf" v-if="ofdBase64">
+          下载PDF
+          <font-awesome-icon icon="download"/>
+        </div>
+
         <div class="scale-icon" style="margin-left: 10px" @click="plus">
           <font-awesome-icon icon="search-plus"/>
         </div>
@@ -145,11 +150,13 @@
 <script>
 
 import {parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale} from "@/utils/ofd/ofd";
+import * as JSZipUtils from "jszip-utils";
 
 export default {
   name: 'HelloWorld',
   data() {
     return {
+      ofdBase64: null,
       loading: false,
       pageIndex: 1,
       pageCount: 0,
@@ -217,6 +224,35 @@ export default {
       this.title = title;
     },
 
+    downPdf() {
+      this.$axios({
+        method: "post",
+        url: "https://51shouzu.xyz/api/ofd/convertPdf",
+        data: {
+          ofdBase64: this.ofdBase64
+        }
+      }).then(response => {
+        console.log(response.data.data);
+        var binary = atob(response.data.data.replace(/\s/g, ''));
+        var len = binary.length;
+        var buffer = new ArrayBuffer(len);
+        var view = new Uint8Array(buffer);
+        for (var i = 0; i < len; i++) {
+          view[i] = binary.charCodeAt(i);
+        }
+        var blob = new Blob( [view], { type: "application/pdf" });
+        var url = URL.createObjectURL(blob);
+        let link = document.createElement('a')
+        link.style.display = 'none'
+        link.href = url
+        link.setAttribute('download', 'ofd.pdf')
+        document.body.appendChild(link)
+        link.click()
+
+      }).catch(error => console.log(error, "error"));
+
+    },
+
     plus() {
       setPageScale(++this.scale);
       const divs = renderOfdByScale(this.ofdObj);
@@ -273,6 +309,15 @@ export default {
           ofdFile = '2.ofd';
           break;
       }
+      let that = this;
+      JSZipUtils.getBinaryContent(ofdFile, function (err, data) {
+        if (err) {
+          console.log(err)
+        } else {
+          let base64String = btoa(String.fromCharCode.apply(null, new Uint8Array(data)));
+          that.ofdBase64 = base64String;
+        }
+      });
       this.getOfdDocumentObj(ofdFile, this.screenWidth);
 
     },
@@ -291,6 +336,11 @@ export default {
       if (this.file.size > 5 * 1024 * 1024) {
         // this.$toast('error', "文件大小需 < 5M");
         return;
+      }
+      let reader = new FileReader();
+      reader.readAsDataURL(this.file);
+      reader.onload = function (e) {
+        this.ofdBase64 = e.target.result.split(',')[1];
       }
       this.getOfdDocumentObj(this.file, this.screenWidth);
       this.$refs.file.value = null;
@@ -348,7 +398,6 @@ export default {
       try {
         global.HashRet=null;
         global.VerifyRet=signedInfo.VerifyRet;
-        console.log(signedInfo);
         div.addEventListener("click",function(){
           document.getElementById('sealInfoDiv').hidden = false;
           document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
