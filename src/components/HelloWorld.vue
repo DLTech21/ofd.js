@@ -225,6 +225,8 @@ export default {
     },
 
     downPdf() {
+      let that = this;
+      this.loading = true;
       this.$axios({
         method: "post",
         url: "https://51shouzu.xyz/api/ofd/convertPdf",
@@ -232,7 +234,7 @@ export default {
           ofdBase64: this.ofdBase64
         }
       }).then(response => {
-        console.log(response.data.data);
+        that.loading = false;
         var binary = atob(response.data.data.replace(/\s/g, ''));
         var len = binary.length;
         var buffer = new ArrayBuffer(len);
@@ -249,8 +251,18 @@ export default {
         document.body.appendChild(link)
         link.click()
 
-      }).catch(error => console.log(error, "error"));
-
+      }).catch(error => {
+        console.log(error, "error")
+        that.$alert('OFD打开失败', error, {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
+      });
     },
 
     plus() {
@@ -368,7 +380,6 @@ export default {
         },
         fail(error) {
           that.loading = false;
-          console.log(error)
           that.$alert('OFD打开失败', error, {
             confirmButtonText: '确定',
             callback: action => {
