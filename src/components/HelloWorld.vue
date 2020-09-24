@@ -69,59 +69,59 @@
           <p class="content-title">签章信息</p>
           <div class="subcontent">
             <span class="title">签章人</span>
-            <span class="value" id="spSigner">Signer</span>
+            <span class="value" id="spSigner">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">签章提供者</span>
-            <span class="value" id="spProvider">Provider</span>
+            <span class="value" id="spProvider">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">原文摘要值</span>
             <span class="value" id="spHashedValue" @click="showMore('原文摘要值', 'spHashedValue')"
-                  style="cursor: pointer">HashedValue</span>
+                  style="cursor: pointer">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">签名值</span>
             <span class="value" id="spSignedValue" @click="showMore('签名值', 'spSignedValue')"
-                  style="cursor: pointer">SignedValue</span>
+                  style="cursor: pointer">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">签名算法</span>
-            <span class="value" id="spSignMethod">SignMethod</span>
+            <span class="value" id="spSignMethod">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">版本号</span>
-            <span class="value" id="spVersion">Version</span>
+            <span class="value" id="spVersion">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">验签结果</span>
-            <span class="value" id="VerifyRet">VerifyRet</span>
+            <span class="value" id="VerifyRet">[无效的签章结构]</span>
           </div>
 
           <p class="content-title">印章信息</p>
           <div class="subcontent">
             <span class="title">印章标识</span>
-            <span class="value" id="spSealID">SealID</span>
+            <span class="value" id="spSealID">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">印章名称</span>
-            <span class="value" id="spSealName">SealName</span>
+            <span class="value" id="spSealName">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">印章类型</span>
-            <span class="value" id="spSealType">SealType</span>
+            <span class="value" id="spSealType">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">有效时间</span>
-            <span class="value" id="spSealAuthTime">从NotBefore到NotAfter</span>
+            <span class="value" id="spSealAuthTime">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">制章日期</span>
-            <span class="value" id="spSealMakeTime">MakeTime</span>
+            <span class="value" id="spSealMakeTime">[无效的签章结构]</span>
           </div>
           <div class="subcontent">
             <span class="title">印章版本</span>
-            <span class="value" id="spSealVersion">Version</span>
+            <span class="value" id="spSealVersion">[无效的签章结构]</span>
           </div>
         </div>
         <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X"
@@ -196,6 +196,19 @@ export default {
 
     closeSealInfoDialog() {
       this.$refs.sealInfoDiv.setAttribute('style', 'display: none');
+      document.getElementById('spSigner').innerText = "[无效的签章结构]";
+      document.getElementById('spProvider').innerText = "[无效的签章结构]";
+      document.getElementById('spHashedValue').innerText = "[无效的签章结构]";
+      document.getElementById('spSignedValue').innerText = "[无效的签章结构]";
+      document.getElementById('spSignMethod').innerText = "[无效的签章结构]";
+      document.getElementById('spSealID').innerText = "[无效的签章结构]";
+      document.getElementById('spSealName').innerText = "[无效的签章结构]";
+      document.getElementById('spSealType').innerText = "[无效的签章结构]";
+      document.getElementById('spSealAuthTime').innerText = "[无效的签章结构]";
+      document.getElementById('spSealMakeTime').innerText = "[无效的签章结构]";
+      document.getElementById('spSealVersion').innerText = "[无效的签章结构]";
+      document.getElementById('spVersion').innerText = "[无效的签章结构]";
+      document.getElementById('VerifyRet').innerText = "[无效的签章结构]";
     },
 
     showMore(title, id) {
@@ -332,51 +345,55 @@ export default {
     },
 
     addEventOnSealDiv(div, SES_Signature, signedInfo) {
-      global.HashRet=null;
-      div.addEventListener("click",function(){
-        document.getElementById('sealInfoDiv').hidden = false;
-        document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
-        if(SES_Signature.toSign.version<4){
-          document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
-          document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
-          document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
-          document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
-          document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');
-          document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-          document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-          document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-          document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-          document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-          document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
-        }else{
-          document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
-          document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-          document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
-          document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
-          document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');
-          document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-          document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-          document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-          document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-          document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-          document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
-        }
-        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-        global.VerifyRet=signedInfo['VerifyRet'];
-        document.getElementById('VerifyRet').innerText = "文件摘要值后台验证中，请稍等... "+(signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败");
-        if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
-          setTimeout(function(){
-            const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
-            global.HashRet = digestCheck(global.toBeChecked.get(signedInfo['signatureID']));
-            const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
-            document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
-          },1000);
-        }
-
-        if (!global.VerifyRet) {
-          div.setAttribute('class', 'gray');
-        }
-      });
+      try {
+        global.HashRet=null;
+        global.VerifyRet=signedInfo.VerifyRet;
+        console.log(signedInfo);
+        div.addEventListener("click",function(){
+          document.getElementById('sealInfoDiv').hidden = false;
+          document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
+          if(SES_Signature.realVersion<4){
+            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo.Provider['@_ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+          }else{
+            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+            document.getElementById('spProvider').innerText = signedInfo.Provider['@_ProviderName'];
+            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
+            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
+            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
+            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
+            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
+          }
+          document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
+          document.getElementById('VerifyRet').innerText = "文件摘要值后台验证中，请稍等... "+(global.VerifyRet?"签名值验证成功":"签名值验证失败");
+          if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
+            setTimeout(function(){
+              const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
+              global.HashRet = digestCheck(global.toBeChecked.get(signedInfo.signatureID));
+              const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
+              document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
+            },1000);
+          }
+        });
+      } catch (e) {
+        console.log(e);
+      }
+      if (!global.VerifyRet) {
+        div.setAttribute('class', 'gray');
+      }
     }
 
   }
