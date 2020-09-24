@@ -1,6 +1,6 @@
 <template>
   <el-container style="width:100vw; height: 100vh;">
-    <el-header style="background:#F5F5F5;display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;padding-left: 90px">
+    <el-header style="background:#F5F5F5;display: flex; height: 40px; border: 1px solid #e8e8e8; align-items: center;">
       <div class="upload-icon" @click="uploadFile">
         <div class="upload-icon">打开OFD</div>
         <font-awesome-icon icon="cloud-upload-alt"/>
@@ -426,7 +426,7 @@ export default {
   align-items: center;
   width: 33px;
   height: 28px;
-  background-color: white;
+  background-color: #F5F5F5;;
   border-radius: 1px;
   font-weight: 500;
   font-size: 12px;
