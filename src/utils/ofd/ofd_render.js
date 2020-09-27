@@ -29,7 +29,6 @@ import {
     setPageScal,
     converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
-import ar from "element-ui/src/locale/lang/ar";
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -223,15 +222,6 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     let lineWith = converterDpi(0.353);
     let drawParam = layer['@_DrawParam'];
     if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-        if (drawParamResObj[drawParam]['FillColor']) {
-            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
-        }
-        if (drawParamResObj[drawParam]['StrokeColor']) {
-            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
-        }
-        if (drawParamResObj[drawParam]['LineWidth']) {
-            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
-        }
         if (drawParamResObj[drawParam]['relative']) {
             drawParam = drawParamResObj[drawParam]['relative'];
             if (drawParamResObj[drawParam]['FillColor']) {
@@ -243,6 +233,15 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
             if (drawParamResObj[drawParam]['LineWidth']) {
                 lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
             }
+        }
+        if (drawParamResObj[drawParam]['FillColor']) {
+            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        }
+        if (drawParamResObj[drawParam]['StrokeColor']) {
+            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        }
+        if (drawParamResObj[drawParam]['LineWidth']) {
+            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
         }
     }
     const imageObjects = layer['ofd:ImageObject'];
