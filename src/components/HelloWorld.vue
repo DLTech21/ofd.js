@@ -349,10 +349,11 @@ export default {
         // this.$toast('error', "文件大小需 < 5M");
         return;
       }
+      let that = this;
       let reader = new FileReader();
       reader.readAsDataURL(this.file);
       reader.onload = function (e) {
-        this.ofdBase64 = e.target.result.split(',')[1];
+        that.ofdBase64 = e.target.result.split(',')[1];
       }
       this.getOfdDocumentObj(this.file, this.screenWidth);
       this.$refs.file.value = null;
