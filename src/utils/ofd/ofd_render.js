@@ -29,6 +29,7 @@ import {
     setPageScal,
     converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
+import ar from "element-ui/src/locale/lang/ar";
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -131,11 +132,23 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
     const pageId = Object.keys(page)[0];
     const template = page[pageId]['json']['ofd:Template'];
     if (template) {
-        const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+        let array = [];
+        const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+        array = array.concat(layers);
+        for (let layer of array) {
+            if (layer) {
+                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+            }
+        }
     }
-    const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+    const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+    let array = [];
+    array = array.concat(contentLayers);
+    for (let contentLayer of array) {
+        if (contentLayer) {
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+        }
+    }
     if (page[pageId].stamp) {
         for (const stamp of page[pageId].stamp) {
           if (stamp.type === 'ofd') {
@@ -183,11 +196,23 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
-            const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-            renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot);
+            const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+            let array = [];
+            array = array.concat(layers);
+            for (let layer of array) {
+                if (layer) {
+                    renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot);
+                }
+            }
         }
-        const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot);
+        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        let array = [];
+        array = array.concat(contentLayers);
+        for (let contentLayer of array) {
+            if (contentLayer) {
+                renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot);
+            }
+        }
         pageDiv.appendChild(div);
     }
 }
