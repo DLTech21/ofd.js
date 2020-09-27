@@ -247,7 +247,8 @@ const getDrawParam = async function (res) {
                 drawParamResObj[item['@_ID']] = {
                     'LineWidth': item['@_LineWidth'],
                     'FillColor': item['ofd:FillColor'] ? item['ofd:FillColor']['@_Value'] : '',
-                    'StrokeColor': item['ofd:StrokeColor'] ? item['ofd:StrokeColor']['@_Value'] : ""
+                    'StrokeColor': item['ofd:StrokeColor'] ? item['ofd:StrokeColor']['@_Value'] : "",
+                    'relative': item['@_Relative'],
                 };
             }
         }

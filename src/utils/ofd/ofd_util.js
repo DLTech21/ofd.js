@@ -160,11 +160,17 @@ export const deltaFormatter = function (delta) {
     }
 }
 
-export const calTextPoint = function (textCode) {
+export const calTextPoint = function (textCodes) {
     let x = 0;
     let y = 0;
     let textCodePointList = [];
-    // for (let textCode of textCodes) {
+    if (!textCodes) {
+        return textCodePointList;
+    }
+    for (let textCode of textCodes) {
+        if (!textCode) {
+            continue
+        }
         x = parseFloat(textCode['@_X']);
         y = parseFloat(textCode['@_Y']);
 
@@ -200,7 +206,7 @@ export const calTextPoint = function (textCode) {
                 textCodePointList.push(textCodePoint);
             }
         }
-    // }
+    }
     return textCodePointList;
 }
 

@@ -195,12 +195,30 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
 const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
     let fillColor = null;
     let strokeColor = null;
-    let lineWith = 0;
-    const drawParam = layer['@_DrawParam'];
+    let lineWith = converterDpi(0.353);
+    let drawParam = layer['@_DrawParam'];
     if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-        fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
-        strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
-        lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        if (drawParamResObj[drawParam]['FillColor']) {
+            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        }
+        if (drawParamResObj[drawParam]['StrokeColor']) {
+            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        }
+        if (drawParamResObj[drawParam]['LineWidth']) {
+            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        }
+        if (drawParamResObj[drawParam]['relative']) {
+            drawParam = drawParamResObj[drawParam]['relative'];
+            if (drawParamResObj[drawParam]['FillColor']) {
+                fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+            }
+            if (drawParamResObj[drawParam]['StrokeColor']) {
+                strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+            }
+            if (drawParamResObj[drawParam]['LineWidth']) {
+                lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+            }
+        }
     }
     const imageObjects = layer['ofd:ImageObject'];
     let imageObjectArray = [];
@@ -216,7 +234,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     pathObjectArray = pathObjectArray.concat(pathObjects);
     for (const pathObject of pathObjectArray) {
         if (pathObject) {
-            let svg = renderPathObject(drawParamResObj, pathObject, null, strokeColor, lineWith, isStampAnnot)
+            let svg = renderPathObject(drawParamResObj, pathObject, fillColor, strokeColor, lineWith, isStampAnnot)
             pageDiv.appendChild(svg);
         }
     }
@@ -299,8 +317,9 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     const font = textObject['@_Font'];
     const weight = textObject['@_Weight'];
     const size = converterDpi(parseFloat(textObject['@_Size']));
-    const textCode = textObject['ofd:TextCode'];
-    const textCodePointList = calTextPoint(textCode);
+    let array = [];
+    array = array.concat(textObject['ofd:TextCode']);
+    const textCodePointList = calTextPoint(array);
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
     const fillColor = textObject['ofd:FillColor'];
@@ -312,7 +331,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
         }
     }
     for (const textCodePoint of textCodePointList) {
-        if (!isNaN(textCodePoint.x)) {
+        if (textCodePoint && !isNaN(textCodePoint.x)) {
             let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', textCodePoint.x);
             text.setAttribute('y', textCodePoint.y);
@@ -382,7 +401,9 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         }
     }
     strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
-    fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
+    if (pathObject['@_Fill']) {
+        fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
+    }
     path.setAttribute('style', `${strokeStyle};${fillStyle}`)
     let d = '';
     for (const point of points) {
