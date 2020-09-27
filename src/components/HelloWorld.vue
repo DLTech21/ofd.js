@@ -44,8 +44,8 @@
 
     </el-header>
     <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading">
-      <div
-          style="position: fixed;width: 88px;height: 100%;background:#F5F5F5;border: 1px solid #e8e8e8;align-items: center;display: flex;flex-direction: column">
+      <div id="leftMenu"
+          class="left-section">
         <div class="text-icon" @click="demo(1)">
           <p>电子发票</p>
         </div>
@@ -62,8 +62,7 @@
           <p>多页文档</p>
         </div>
       </div>
-      <div
-          style="padding-top: 20px;margin-left:88px;display: flex;flex-direction: column;align-items: center;justify-content: center;background: #808080;overflow: hidden"
+      <div class="main-section"
           id="content" ref="contentDiv" @mousewheel="scrool">
       </div>
     </el-main>
@@ -165,7 +164,7 @@ export default {
       value: null,
       dialogFormVisible: false,
       ofdObj: null,
-      screenWidth: document.body.clientWidth - 88,
+      screenWidth: document.body.clientWidth,
     }
   },
 
@@ -174,6 +173,7 @@ export default {
   },
 
   mounted() {
+    this.screenWidth = document.body.clientWidth - document.getElementById('leftMenu').getBoundingClientRect().width;
     let that = this;
     this.$refs.contentDiv.addEventListener('scroll', this.scrool);
     window.onresize = () => {
@@ -579,6 +579,40 @@ export default {
   font-family: simsun;
 }
 
+.subcontent .title {
+  font-weight: 600;
+}
+
+.subcontent .value {
+  font-weight: 400;
+  -webkit-line-clamp: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.left-section {
+  position: fixed;
+  width: 88px;
+  height: 100%;
+  background:#F5F5F5;
+  border: 1px solid #e8e8e8;
+  align-items: center;
+  display: flex;
+  flex-direction: column
+}
+
+.main-section {
+  padding-top: 20px;
+  margin-left:88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #808080;
+  overflow: hidden
+}
+
 @media (max-width: 767px) {
   .SealContainer-layout {
     position: relative;
@@ -601,18 +635,27 @@ export default {
     margin-bottom: 10px;
     font-family: simsun;
   }
-}
 
-.subcontent .title {
-  font-weight: 600;
-}
+  .left-section {
+    position: fixed;
+    width: 0px;
+    height: 100%;
+    background:#F5F5F5;
+    border: 1px solid #e8e8e8;
+    align-items: center;
+    display: none;
+    flex-direction: column;
+  }
 
-.subcontent .value {
-  font-weight: 400;
-  -webkit-line-clamp: 1;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  .main-section {
+    padding-top: 20px;
+    margin-left:0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #808080;
+    overflow: hidden
+  }
 }
-
 </style>

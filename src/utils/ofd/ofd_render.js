@@ -78,6 +78,7 @@ export const calPageBox = function (screenWidth, document, page) {
     }
     let array = box.split(' ');
     const scale = ((screenWidth - 5) / parseFloat(array[2])).toFixed(1);
+    console.log(scale)
     setMaxPageScal(scale);
     setPageScal(scale);
     box = parseStBox( box);
@@ -322,8 +323,8 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
                 text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
             }
             if (hScale) {
-                text.setAttribute('transform', `scale(${hScale}, 1)`)
-                text.setAttribute('transform-origin', `${textCodePoint.x}`);
+                text.setAttribute('transform', `matrix(${hScale}, 0, 0, 1, ${(1-hScale)*textCodePoint.x}, 0)`)
+                // text.setAttribute('transform-origin', `${textCodePoint.x}`);
             }
             text.setAttribute('fill', defaultStrokeColor);
             text.setAttribute('fill', defaultFillColor);
