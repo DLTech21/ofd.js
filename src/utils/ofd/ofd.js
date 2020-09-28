@@ -21,12 +21,8 @@
 import {calPageBox, calPageBoxScale, renderPage} from "@/utils/ofd/ofd_render";
 import {pipeline} from "@/utils/ofd/pipeline";
 import {
-    getDocRoot,
-    getDocument,
-    getDocumentRes,
-    getPage,
-    getPublicRes,
-    getTemplatePage,
+    getDocRoots,
+    parseSingleDoc,
     unzipOfd
 } from "@/utils/ofd/ofd_parser";
 import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser"
@@ -51,14 +47,14 @@ export const parseOfdDocument = function (options) {
 }
 
 const doParseOFD = function (options) {
-    pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoot, getDocument,
-        getDocumentRes, getPublicRes, getTemplatePage, getPage)
+    pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoots, parseSingleDoc)
         .then(res => {
             if (options.success) {
                 options.success(res);
             }
         })
         .catch(res => {
+            console.log(res)
             if (options.fail) {
                 options.fail(res);
             }

@@ -37,49 +37,65 @@ export const unzipOfd = function (file) {
     });
 }
 
-export const getDocRoot = async function (zip) {
+export const getDocRoots = async function (zip) {
     const data = await getJsonFromXmlContent(zip, 'OFD.xml');
     const docbodys = data['json']['ofd:OFD']['ofd:DocBody'];
     let array = [];
     array = array.concat(docbodys);
+    return [zip, array]
+}
+
+export const parseSingleDoc = async function ([zip, array]) {
+    let docs = [];
     for (let docbody of array) {
         if (docbody) {
-            let docRoot = docbody['ofd:DocRoot'];
-            docRoot = replaceFirstSlash(docRoot);
-            const doc = docRoot.split('/')[0];
-            const signatures = data['json']['ofd:OFD']['ofd:DocBody']['ofd:Signatures'];
-            const stampAnnot = await getSignature(zip, signatures, doc);
-            let stampAnnotArray = {};
-            for (const stamp of stampAnnot) {
-                if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
-                    if (stamp.sealObj.type === 'ofd') {
-                        const stampObj = await getSealDocumentObj(stamp);
-                        stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
-                        //console.log(stamp.stampAnnot.boundary)
-                        stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
-                        if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
-                            stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
+            let res = await doGetDocRoot(zip, docbody);
+            res = await getDocument(res);
+            res = await getDocumentRes(res);
+            res = await getPublicRes(res);
+            res = await getTemplatePage(res);
+            res = await getPage(res);
+            docs.push(res);
+        }
+    }
+    return docs;
+}
+
+export const doGetDocRoot = async function (zip, docbody) {
+    let docRoot = docbody['ofd:DocRoot'];
+    docRoot = replaceFirstSlash(docRoot);
+    const doc = docRoot.split('/')[0];
+    const signatures = docbody['ofd:Signatures'];
+    const stampAnnot = await getSignature(zip, signatures, doc);
+    let stampAnnotArray = {};
+    for (const stamp of stampAnnot) {
+        if (stamp.sealObj && Object.keys(stamp.sealObj).length > 0) {
+            if (stamp.sealObj.type === 'ofd') {
+                const stampObj = await getSealDocumentObj(stamp);
+                stamp.stampAnnot.boundary = parseStBox(stamp.stampAnnot['@_Boundary']);
+                //console.log(stamp.stampAnnot.boundary)
+                stamp.stampAnnot.pageRef = stamp.stampAnnot['@_PageRef'];
+                if (!stampAnnotArray[stamp.stampAnnot['@_PageRef']]) {
+                    stampAnnotArray[stamp.stampAnnot['@_PageRef']] = [];
+                }
+                stampAnnotArray[stamp.stampAnnot['@_PageRef']].push({type: 'ofd', obj: stampObj, stamp});
+            } else if (stamp.sealObj.type === 'png') {
+                let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
+                let stampArray = [];
+                stampArray = stampArray.concat(stamp.stampAnnot);
+                for (const annot of stampArray) {
+                    if (annot) {
+                        const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': parseStBox(annot['@_Boundary']), 'clip': parseStBox(annot['@_Clip'])};
+                        if (!stampAnnotArray[annot['@_PageRef']]) {
+                            stampAnnotArray[annot['@_PageRef']] = [];
                         }
-                        stampAnnotArray[stamp.stampAnnot['@_PageRef']].push({type: 'ofd', obj: stampObj, stamp});
-                    } else if (stamp.sealObj.type === 'png') {
-                        let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
-                        let stampArray = [];
-                        stampArray = stampArray.concat(stamp.stampAnnot);
-                        for (const annot of stampArray) {
-                            if (annot) {
-                                const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': parseStBox(annot['@_Boundary']), 'clip': parseStBox(annot['@_Clip'])};
-                                if (!stampAnnotArray[annot['@_PageRef']]) {
-                                    stampAnnotArray[annot['@_PageRef']] = [];
-                                }
-                                stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj, stamp});
-                            }
-                        }
+                        stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj, stamp});
                     }
                 }
             }
-            return [zip, doc, docRoot, stampAnnotArray];
         }
     }
+    return [zip, doc, docRoot, stampAnnotArray];
 }
 
 export const getDocument = async function ([zip, doc, docRoot, stampAnnot]) {

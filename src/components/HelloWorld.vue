@@ -367,11 +367,12 @@ export default {
       parseOfdDocument({
         ofd: file,
         success(res) {
+          console.log(res)
           let t1 = new Date().getTime();
           console.log('解析ofd',t1 - t);
-          that.ofdObj = res;
-          that.pageCount = res.pages.length;
-          const divs = renderOfd(screenWidth, res);
+          that.ofdObj = res[0];
+          that.pageCount = res[0].pages.length;
+          const divs = renderOfd(screenWidth, res[0]);
           let t2 = new Date().getTime();
           console.log('xml转svg', t2 - t1)
           that.displayOfdDiv(divs);
