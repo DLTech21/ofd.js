@@ -323,7 +323,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     const ph = parseFloat(pageHeight.replace('px', ''));
     const w = boundary.w > pw ? pw : boundary.w;
     const h = boundary.h > ph ? ph : boundary.h;
-    let c;
+    let c = '';
     if (clip) {
         clip = converterBox(clip);
         c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
@@ -425,7 +425,10 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         }
     }
     strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
-    if (pathObject['@_Fill']) {
+    if (pathObject['@_Stroke'] == 'false') {
+        strokeStyle = ``;
+    }
+    if (pathObject['@_Fill'] != 'false') {
         fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
     }
     path.setAttribute('style', `${strokeStyle};${fillStyle}`)
