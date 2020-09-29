@@ -281,13 +281,13 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
         const height = multiMediaResObj[resId].height;
-        return renderImageOnCanvas(img, width, height, boundary);
+        return renderImageOnCanvas(img, width, height, boundary, imageObject['@_ID']);
     } else {
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false);
+        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['@_ID']);
     }
 }
 
-const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
+const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid){
     const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
     for (var i = 0; i < img.length; i++) {
         arr[4 * i] = img[i];
@@ -301,12 +301,12 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
     canvas.height = imgHeight;
     let context = canvas.getContext('2d');
     context.putImageData(imageData, 0, 0);
-    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px`)
+    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px;z-index: ${oid}`)
     canvas.style.position = 'absolute';
     return canvas;
 }
 
-export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo) {
+export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid) {
     let div = document.createElement('div');
     if(isStampAnnot)
     {
@@ -328,7 +328,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         clip = converterBox(clip);
         c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
     }
-    div.setAttribute('style', `cursor: pointer; overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+    div.setAttribute('style', `cursor: pointer; overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c};z-index: ${oid}`)
     return div;
 }
 
@@ -380,7 +380,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_Id']}`);
     return svg;
 }
 
@@ -450,6 +450,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_Id']}`);
     return svg;
 }

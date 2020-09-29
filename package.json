@@ -1,6 +1,6 @@
 {
   "name": "ofd.js",
-  "version": "0.1.8",
+  "version": "0.2.1",
   "main": "lib/ofd.umd.min.js",
   "author": "dltech21",
   "description": "ofd渲染",
