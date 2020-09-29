@@ -22,7 +22,6 @@ import {pipeline} from "@/utils/ofd/pipeline";
 import JsZip from "jszip";
 import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd/ofd_util";
 let parser = require('fast-xml-parser');
-
 import {Jbig2Image} from '../jbig2/jbig2';
 import {parseSesSignature} from "@/utils/ofd/ses_signature_parser";
 
@@ -113,8 +112,10 @@ export const getDocument = async function ([zip, doc, docRoot, stampAnnot]) {
         if (annotations.indexOf(doc) === -1) {
             annotations = `${doc}/${annotations}`;
         }
-        annotations = await getJsonFromXmlContent(zip, annotations);
-        array = array.concat(annotations['json']['ofd:Annotations']['ofd:Page']);
+        if (zip.files[annotations]) {
+            annotations = await getJsonFromXmlContent(zip, annotations);
+            array = array.concat(annotations['json']['ofd:Annotations']['ofd:Page']);
+        }
     }
     const annotationObjs = await getAnnotations(annoBase, array, doc, zip)
     return [zip, doc, documentObj, stampAnnot, annotationObjs];
@@ -410,6 +411,7 @@ const getSealDocumentObj = function (stampAnnot) {
 }
 
 const getJsonFromXmlContent = async function (zip, xmlName) {
+    console.log(xmlName)
     return new Promise((resolve, reject) => {
         zip.files[xmlName].async('string').then(function (content) {
             let ops = {
