@@ -411,7 +411,6 @@ const getSealDocumentObj = function (stampAnnot) {
 }
 
 const getJsonFromXmlContent = async function (zip, xmlName) {
-    console.log(xmlName)
     return new Promise((resolve, reject) => {
         zip.files[xmlName].async('string').then(function (content) {
             let ops = {
