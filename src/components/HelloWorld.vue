@@ -392,11 +392,27 @@ export default {
       this.file = this.$refs.file.files[0];
       let ext = this.file.name.replace(/.+\./, "");
       if (["ofd"].indexOf(ext) === -1) {
-        // this.$toast('error', "仅支持png、jpg、jpeg的图片类型");
+        this.$alert('error', '仅支持ofd类型', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
-      if (this.file.size > 5 * 1024 * 1024) {
-        // this.$toast('error', "文件大小需 < 5M");
+      if (this.file.size > 20 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 20M', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
       let that = this;
@@ -417,11 +433,27 @@ export default {
       this.pdfFile = this.$refs.pdfFile.files[0];
       let ext = this.pdfFile.name.replace(/.+\./, "");
       if (["pdf"].indexOf(ext) === -1) {
-        // this.$toast('error', "仅支持png、jpg、jpeg的图片类型");
+        this.$alert('error', '仅支持pdf类型', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
-      if (this.pdfFile.size > 10 * 1024 * 1024) {
-        // this.$toast('error', "文件大小需 < 5M");
+      if (this.pdfFile.size > 20 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 20M', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
       let that = this;
