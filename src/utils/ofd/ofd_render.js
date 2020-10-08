@@ -380,7 +380,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_Id']}`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_ID']}`);
     return svg;
 }
 
@@ -450,6 +450,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_Id']}`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_ID']}`);
     return svg;
 }
