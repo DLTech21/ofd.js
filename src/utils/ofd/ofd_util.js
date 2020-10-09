@@ -99,10 +99,23 @@ const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
 }
-let Scale = 6.8;
+
+let MaxScale = 10;
+
+let Scale = MaxScale ;
+
+export const setMaxPageScal = function (scale) {
+    MaxScale = scale > 5 ? 5 : scale;
+}
 
 export const setPageScal = function (scale) {
-    Scale = scale > 5 ? 5: scale;
+    // scale = Math.ceil(scale);
+    Scale = scale > 1 ? scale: 1;
+    Scale = Scale > MaxScale ? MaxScale: Scale;
+}
+
+export const getPageScal = function () {
+    return Scale;
 }
 
 export const converterDpi = function (width) {
@@ -147,11 +160,17 @@ export const deltaFormatter = function (delta) {
     }
 }
 
-export const calTextPoint = function (textCode) {
+export const calTextPoint = function (textCodes) {
     let x = 0;
     let y = 0;
     let textCodePointList = [];
-    // for (let textCode of textCodes) {
+    if (!textCodes) {
+        return textCodePointList;
+    }
+    for (let textCode of textCodes) {
+        if (!textCode) {
+            continue
+        }
         x = parseFloat(textCode['@_X']);
         y = parseFloat(textCode['@_Y']);
 
@@ -187,7 +206,7 @@ export const calTextPoint = function (textCode) {
                 textCodePointList.push(textCodePoint);
             }
         }
-    // }
+    }
     return textCodePointList;
 }
 
@@ -239,17 +258,28 @@ export const decodeHtml = function(s){
 
 let FONT_FAMILY = {
     '楷体': '楷体, KaiTi, Kai, simkai',
-    'KaiTi': '楷体, KaiTi, Kai, simkai',
+    'kaiti': '楷体, KaiTi, Kai, simkai',
     'Kai': '楷体, KaiTi, Kai',
+    'simsun': 'SimSun, simsun, Songti SC',
     '宋体': 'SimSun, simsun, Songti SC',
-    '黑体': 'SimHei, STHeiti',
-    '仿宋': 'FangSong, STFangsong',
+    '黑体': 'SimHei, STHeiti, simhei',
+    '仿宋': 'FangSong, STFangsong, simfang',
     '小标宋体': 'sSun',
+    '方正小标宋_gbk': 'sSun',
+    '仿宋_gb2312': 'FangSong, STFangsong, simfang',
+    '楷体_gb2312': '楷体, KaiTi, Kai, simkai',
+    'couriernew': 'Courier New',
+    'courier new': 'Courier New',
 };
 
 export const getFontFamily = function (font) {
-    if (FONT_FAMILY[font]) {
-        font = FONT_FAMILY[font];
+    if (FONT_FAMILY[font.toLowerCase()]) {
+        font = FONT_FAMILY[font.toLowerCase()];
+    }
+    for (let key of Object.keys(FONT_FAMILY)) {
+        if (font.toLowerCase().indexOf(key.toLowerCase()) != -1) {
+            return FONT_FAMILY[key]
+        }
     }
     return font;
 }
@@ -293,31 +323,21 @@ export const converterBox = function (box) {
     };
 }
 
-var hexDigits = "0123456789ABCDEF";
-function hexByte(b) {
-    return hexDigits.charAt((b >> 4) & 0xF) + hexDigits.charAt(b & 0xF);
-};
-
 export const Uint8ArrayToHexString = function (arr) {
-    if(typeof arr === 'string') {  
-        return arr;  
-    }  
-    var str = '',  
-        _arr = arr;  
-    for(var i = 0; i < _arr.length; i++) {  
-        var one = hexByte(_arr[i]),  
-            v = one.match(/^1+?(?=0)/);  
-        if(v && one.length == 8) {  
-            var bytesLength = v[0].length;  
-            var store = hexByte(_arr[i]).slice(7 - bytesLength);  
-            for(var st = 1; st < bytesLength; st++) {  
-                store += hexByte(_arr[st + i]).slice(2);  
-            }  
-            str += String.fromCharCode(parseInt(store, 2));  
-            i += bytesLength - 1;  
-        } else {  
-            str += String.fromCharCode(_arr[i]);  
-        }  
-    }  
-    return str;
+    let words = [];
+    let j = 0;
+    for (let i = 0; i < arr.length * 2; i += 2) {
+        words[i >>> 3] |= parseInt(arr[j], 10) << (24 - (i % 8) * 4);
+        j++;
+    }
+
+    // 转换到16进制
+    let hexChars = [];
+    for (let i = 0; i < arr.length; i++) {
+        let bite = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+        hexChars.push((bite >>> 4).toString(16));
+        hexChars.push((bite & 0x0f).toString(16));
+    }
+
+    return hexChars.join('');
 }

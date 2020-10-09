@@ -27,7 +27,7 @@ import {
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox,
+    converterBox, setMaxPageScal,
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -77,8 +77,49 @@ export const calPageBox = function (screenWidth, document, page) {
         }
     }
     let array = box.split(' ');
-    const scale = ((screenWidth - 5) / parseFloat(array[2])).toFixed(1);
-    setPageScal(scale > 0 ? scale : 1);
+    const scale = ((screenWidth - 10) / parseFloat(array[2])).toFixed(1);
+    setMaxPageScal(scale);
+    setPageScal(scale);
+    box = parseStBox( box);
+    box = converterBox(box)
+    return box;
+}
+
+export const calPageBoxScale = function (document, page) {
+    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    let box;
+    if (area) {
+        const physicalBox = area['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = area['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = area['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    } else {
+        let documentArea = document['ofd:CommonData']['ofd:PageArea']
+        const physicalBox = documentArea['ofd:PhysicalBox']
+        if (physicalBox) {
+            box = (physicalBox);
+        } else {
+            const applicationBox = documentArea['ofd:ApplicationBox']
+            if (applicationBox) {
+                box = (applicationBox);
+            } else {
+                const contentBox = documentArea['ofd:ContentBox']
+                if (contentBox) {
+                    box = (contentBox);
+                }
+            }
+        }
+    }
     box = parseStBox( box);
     box = converterBox(box)
     return box;
@@ -88,14 +129,25 @@ export const calPageBox = function (screenWidth, document, page) {
 
 export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
     const pageId = Object.keys(page)[0];
-    let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
     const template = page[pageId]['json']['ofd:Template'];
     if (template) {
-        const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false, stampAnnotBoundary);
+        let array = [];
+        const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+        array = array.concat(layers);
+        for (let layer of array) {
+            if (layer) {
+                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+            }
+        }
     }
-    const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false, stampAnnotBoundary);
+    const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+    let array = [];
+    array = array.concat(contentLayers);
+    for (let contentLayer of array) {
+        if (contentLayer) {
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+        }
+    }
     if (page[pageId].stamp) {
         for (const stamp of page[pageId].stamp) {
           if (stamp.type === 'ofd') {
@@ -107,6 +159,25 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
           }
         }
     }
+    if (page[pageId].annotation) {
+        for (const annotation of page[pageId].annotation) {
+            renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj);
+        }
+    }
+}
+
+const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
+    let div = document.createElement('div');
+    div.setAttribute('style', `position:relative;`)
+    let boundary = annotation['appearance']['@_Boundary'];
+    if (boundary) {
+        let divBoundary = converterBox(parseStBox(boundary));
+        div.setAttribute('style', `z-index:-1;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+    }
+    const contentLayer = annotation['appearance'];
+    renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+    pageDiv.appendChild(div);
+
 }
 
 const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj, SES_Signature, signedInfo) {
@@ -120,63 +191,58 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
         let div = document.createElement('div');
         div.setAttribute("name","seal_img_div");
         div.setAttribute('style', `cursor: pointer; position:relative; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
-        addEventOnSealDiv(div, SES_Signature, signedInfo);
+        div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
+        div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
         const template = page[pageId]['json']['ofd:Template'];
         if (template) {
-            const layer = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-            renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot, stampAnnotBoundary);
+            const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+            let array = [];
+            array = array.concat(layers);
+            for (let layer of array) {
+                if (layer) {
+                    renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, layer,  isStampAnnot);
+                }
+            }
         }
-        const contentLayer = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot, stampAnnotBoundary);
+        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        let array = [];
+        array = array.concat(contentLayers);
+        for (let contentLayer of array) {
+            if (contentLayer) {
+                renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, isStampAnnot);
+            }
+        }
         pageDiv.appendChild(div);
     }
 }
 
-const addEventOnSealDiv = function (div, SES_Signature, signedInfo) {
-    div.addEventListener("click",function(){
-        document.getElementById('sealInfoDiv').hidden = false;
-        document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
-        if(SES_Signature.toSign.version<4){
-            console.log(signedInfo);
-            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
-            document.getElementById('spProvider').innerText = signedInfo['Provider']['ofd:ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
-            document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');;
-            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
-        }else{
-            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
-            document.getElementById('spProvider').innerText = signedInfo['Provider']['@_ProviderName'];
-            document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');;
-            document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');;
-            document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');;
-            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
-            document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
-            document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
-            document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
-        }
-        document.getElementById('spVersion').innerText = SES_Signature.toSign.version;
-        document.getElementById('VerifyRet').innerText = signedInfo['VerifyRet']?"签名值验证成功":"签名值验证失败";
-    });
-}
-
-const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, stampAnnotBoundary) {
-    stampAnnotBoundary = converterBox(stampAnnotBoundary);
+const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
     let fillColor = null;
     let strokeColor = null;
-    let lineWith = 0;
-    const drawParam = layer['@_DrawParam'];
+    let lineWith = converterDpi(0.353);
+    let drawParam = layer['@_DrawParam'];
     if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-        fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
-        strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
-        lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        if (drawParamResObj[drawParam]['relative']) {
+            drawParam = drawParamResObj[drawParam]['relative'];
+            if (drawParamResObj[drawParam]['FillColor']) {
+                fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+            }
+            if (drawParamResObj[drawParam]['StrokeColor']) {
+                strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+            }
+            if (drawParamResObj[drawParam]['LineWidth']) {
+                lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+            }
+        }
+        if (drawParamResObj[drawParam]['FillColor']) {
+            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        }
+        if (drawParamResObj[drawParam]['StrokeColor']) {
+            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        }
+        if (drawParamResObj[drawParam]['LineWidth']) {
+            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        }
     }
     const imageObjects = layer['ofd:ImageObject'];
     let imageObjectArray = [];
@@ -192,7 +258,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     pathObjectArray = pathObjectArray.concat(pathObjects);
     for (const pathObject of pathObjectArray) {
         if (pathObject) {
-            let svg = renderPathObject(drawParamResObj, pathObject, null, strokeColor, lineWith, isStampAnnot, stampAnnotBoundary)
+            let svg = renderPathObject(drawParamResObj, pathObject, fillColor, strokeColor, lineWith, isStampAnnot)
             pageDiv.appendChild(svg);
         }
     }
@@ -201,7 +267,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     textObjectArray = textObjectArray.concat(textObjects);
     for (const textObject of textObjectArray) {
         if (textObject) {
-            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor, isStampAnnot, stampAnnotBoundary);
+            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor);
             pageDiv.appendChild(svg);
         }
     }
@@ -215,13 +281,13 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
         const height = multiMediaResObj[resId].height;
-        return renderImageOnCanvas(img, width, height, boundary);
+        return renderImageOnCanvas(img, width, height, boundary, imageObject['@_ID']);
     } else {
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false);
+        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['@_ID']);
     }
 }
 
-const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
+const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid){
     const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
     for (var i = 0; i < img.length; i++) {
         arr[4 * i] = img[i];
@@ -235,17 +301,18 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary){
     canvas.height = imgHeight;
     let context = canvas.getContext('2d');
     context.putImageData(imageData, 0, 0);
-    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px`)
+    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px;z-index: ${oid}`)
     canvas.style.position = 'absolute';
     return canvas;
 }
 
-export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo) {
+export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid) {
     let div = document.createElement('div');
     if(isStampAnnot)
     {
         div.setAttribute("name","seal_img_div");
-        addEventOnSealDiv(div, SES_Signature, signedInfo);
+        div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
+        div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
     let img = document.createElement('img');
     img.src = imgSrc;
@@ -256,16 +323,17 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     const ph = parseFloat(pageHeight.replace('px', ''));
     const w = boundary.w > pw ? pw : boundary.w;
     const h = boundary.h > ph ? ph : boundary.h;
-    let c;
+    let c = '';
     if (clip) {
         clip = converterBox(clip);
         c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
     }
-    div.setAttribute('style', `cursor: pointer; overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c}`)
+    div.setAttribute('style', `cursor: pointer; overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c};z-index: ${oid}`)
     return div;
 }
 
-export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, isStampAnnot, stampAnnotBoundary) {
+export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor) {
+    let defaultFillOpacity = 1;
     let boundary = parseStBox(textObject['@_Boundary']);
     boundary = converterBox(boundary);
     const ctm = textObject['@_CTM'];
@@ -273,16 +341,21 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     const font = textObject['@_Font'];
     const weight = textObject['@_Weight'];
     const size = converterDpi(parseFloat(textObject['@_Size']));
-    const textCode = textObject['ofd:TextCode'];
-    const textCodePointList = calTextPoint(textCode);
+    let array = [];
+    array = array.concat(textObject['ofd:TextCode']);
+    const textCodePointList = calTextPoint(array);
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
     const fillColor = textObject['ofd:FillColor'];
     if (fillColor) {
         defaultFillColor = parseColor(fillColor['@_Value']);
+        let alpha = fillColor['@_Alpha'];
+        if (alpha) {
+            defaultFillOpacity = alpha>1? alpha/255:alpha;
+        }
     }
     for (const textCodePoint of textCodePointList) {
-        if (!isNaN(textCodePoint.x)) {
+        if (textCodePoint && !isNaN(textCodePoint.x)) {
             let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', textCodePoint.x);
             text.setAttribute('y', textCodePoint.y);
@@ -292,11 +365,12 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
                 text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
             }
             if (hScale) {
-                text.setAttribute('transform', `scale(${hScale}, 1)`)
-                text.setAttribute('transform-origin', `${textCodePoint.x}`);
+                text.setAttribute('transform', `matrix(${hScale}, 0, 0, 1, ${(1-hScale)*textCodePoint.x}, 0)`)
+                // text.setAttribute('transform-origin', `${textCodePoint.x}`);
             }
             text.setAttribute('fill', defaultStrokeColor);
             text.setAttribute('fill', defaultFillColor);
+            text.setAttribute('fill-opacity', defaultFillOpacity);
             text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
             svg.appendChild(text);
         }
@@ -306,11 +380,11 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_ID']}`);
     return svg;
 }
 
-export const renderPathObject = function (drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, stampAnnotBoundary) {
+export const renderPathObject = function (drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot) {
     let boundary = parseStBox(pathObject['@_Boundary']);
     boundary = converterBox(boundary);
     let lineWidth = pathObject['@_LineWidth'];
@@ -351,7 +425,12 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         }
     }
     strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;`;
-    fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
+    if (pathObject['@_Stroke'] == 'false') {
+        strokeStyle = ``;
+    }
+    if (pathObject['@_Fill'] != 'false') {
+        fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
+    }
     path.setAttribute('style', `${strokeStyle};${fillStyle}`)
     let d = '';
     for (const point of points) {
@@ -371,6 +450,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_ID']}`);
     return svg;
 }

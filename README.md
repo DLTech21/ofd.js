@@ -9,16 +9,27 @@
 
 [体验地址](https://51shouzu.xyz/ofd/)
 
-## 接口使用（暂时提供）
+## Usage with npm
 
 ```
-其中ofd传入的file支持本地文件或二进制、screenWidth为屏幕宽度
+npm i ofd.js
+```
+
+```
+import {parseOfdDocument, renderOfd} from "ofd.js";
+```
+
+```
+其中ofd传入的file支持本地文件、二进制或者url、screenWidth为屏幕宽度
 parseOfdDocument({
         ofd: file,
         success(res) {
           //输出ofd每页的div
           const divs = renderOfd(screenWidth, res);
-          
+          //获取签章div的信息, 具体看demo
+          for(let ele of document.getElementsByName('seal_img_div')) {
+             this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
+          }
         },
         fail(error) {
           console.log(error)
