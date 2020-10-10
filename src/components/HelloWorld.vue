@@ -403,8 +403,8 @@ export default {
         });
         return;
       }
-      if (this.file.size > 20 * 1024 * 1024) {
-        this.$alert('error', '文件大小需 < 20M', {
+      if (this.file.size > 100 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 100M', {
           confirmButtonText: '确定',
           callback: action => {
             this.$message({
@@ -444,8 +444,8 @@ export default {
         });
         return;
       }
-      if (this.pdfFile.size > 20 * 1024 * 1024) {
-        this.$alert('error', '文件大小需 < 20M', {
+      if (this.pdfFile.size > 100 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 100M', {
           confirmButtonText: '确定',
           callback: action => {
             this.$message({
