@@ -24,7 +24,7 @@
     "axios": "^0.20.0",
     "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
-    "fast-xml-parser": "^3.17.4",
+    "ofd-xml-parser": "^0.0.1",
     "js-md5": "^0.7.3",
     "js-sha1": "^0.6.0",
     "jsrsasign": "^9.1.9",
