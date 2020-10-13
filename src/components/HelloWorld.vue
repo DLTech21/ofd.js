@@ -8,6 +8,13 @@
                @change="fileChanged">
       </div>
 
+      <div class="upload-icon" @click="uploadPdfFile">
+        <div class="upload-icon">PDF2OFD</div>
+        <font-awesome-icon icon="cloud-upload-alt"/>
+        <input type="file" ref="pdfFile" class="hidden" accept=".pdf"
+               @change="pdfFileChanged">
+      </div>
+
       <div style="display: flex;align-items: center" v-if="ofdObj">
         <div class="upload-icon" style="margin-left: 10px" @click="downPdf" v-if="ofdBase64">
           下载PDF
@@ -155,6 +162,7 @@ export default {
   name: 'HelloWorld',
   data() {
     return {
+      pdfFile: null,
       ofdBase64: null,
       loading: false,
       pageIndex: 1,
@@ -169,6 +177,7 @@ export default {
   },
 
   created() {
+    this.pdfFile = null;
     this.file = null;
   },
 
@@ -222,6 +231,47 @@ export default {
       this.dialogFormVisible = true;
       this.value = document.getElementById(id).innerText;
       this.title = title;
+    },
+
+    downOfd(pdfBase64) {
+      let that = this;
+      this.loading = true;
+      this.$axios({
+        method: "post",
+        url: "https://51shouzu.xyz/api/ofd/convertOfd",
+        data: {
+          pdfBase64,
+        }
+      }).then(response => {
+        that.loading = false;
+        var binary = atob(response.data.data.replace(/\s/g, ''));
+        var len = binary.length;
+        var buffer = new ArrayBuffer(len);
+        var view = new Uint8Array(buffer);
+        for (var i = 0; i < len; i++) {
+          view[i] = binary.charCodeAt(i);
+        }
+        var blob = new Blob( [view], null);
+        var url = URL.createObjectURL(blob);
+        let link = document.createElement('a')
+        link.style.display = 'none'
+        link.href = url
+        link.setAttribute('download', 'ofd.ofd')
+        document.body.appendChild(link)
+        link.click()
+
+      }).catch(error => {
+        console.log(error, "error")
+        that.$alert('PDF打开失败', error, {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
+      });
     },
 
     downPdf() {
@@ -342,11 +392,27 @@ export default {
       this.file = this.$refs.file.files[0];
       let ext = this.file.name.replace(/.+\./, "");
       if (["ofd"].indexOf(ext) === -1) {
-        // this.$toast('error', "仅支持png、jpg、jpeg的图片类型");
+        this.$alert('error', '仅支持ofd类型', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
-      if (this.file.size > 5 * 1024 * 1024) {
-        // this.$toast('error', "文件大小需 < 5M");
+      if (this.file.size > 100 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 100M', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
         return;
       }
       let that = this;
@@ -357,6 +423,47 @@ export default {
       }
       this.getOfdDocumentObj(this.file, this.screenWidth);
       this.$refs.file.value = null;
+    },
+
+    uploadPdfFile() {
+      this.pdfFile = null;
+      this.$refs.pdfFile.click();
+    },
+    pdfFileChanged() {
+      this.pdfFile = this.$refs.pdfFile.files[0];
+      let ext = this.pdfFile.name.replace(/.+\./, "");
+      if (["pdf"].indexOf(ext) === -1) {
+        this.$alert('error', '仅支持pdf类型', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
+        return;
+      }
+      if (this.pdfFile.size > 100 * 1024 * 1024) {
+        this.$alert('error', '文件大小需 < 100M', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `action: ${ action }`
+            });
+          }
+        });
+        return;
+      }
+      let that = this;
+      let reader = new FileReader();
+      reader.readAsDataURL(this.pdfFile);
+      reader.onload = function (e) {
+        let pdfBase64 = e.target.result.split(',')[1];
+        that.downOfd(pdfBase64);
+      }
+      this.$refs.pdfFile.value = null;
     },
 
 
@@ -526,6 +633,7 @@ export default {
 }
 
 .SealContainer {
+  z-index: 99999;
   position: fixed;
   left: 0;
   top: 0;

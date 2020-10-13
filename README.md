@@ -1,5 +1,7 @@
 # ofd.js
 
+### 在使用ofd.js前请务必悉知  [《ofd.js免责声明》](https://github.com/DLTech21/ofd.js/blob/master/%E5%85%8D%E8%B4%A3%E5%A3%B0%E6%98%8E.md)
+
 ![-](https://img.shields.io/badge/language-js-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
 目前方案采用：svg及canvas渲染实现，百分百纯前端渲染
@@ -35,6 +37,90 @@ parseOfdDocument({
           console.log(error)
         }
       });
+```
+
+## 服务接口
+
+### OFD转PDF
+
+URL：http://donal-tong.ticp.io/api/ofd/convertPdf
+
+请求方式：POST
+
+报文格式：Content-Type: application/json
+
+请求参数：
+
+| 参数        | 说明                                                         | 类型    | 是否必填 |
+| ----------- | ------------------------------------------------------------ | ------- | -------- |
+| ofdBase64   | 待转换的OFD版式文件，BASE64编码的字符串                  | String  | 是       |
+
+
+请求参数示例：
+
+```json
+{
+    "ofdBase64":"{{ofdBase64}}"
+}
+```
+
+返回数据：
+
+| 数据    | 说明                                                   |
+| ------- | ------------------------------------------------------ |
+| code    | 返回码。"0"表示成功，其余表示失败，失败原因参考message |
+| message | 请求结果信息                                           |
+| data    | 转后的pdf文件，BASE64编码的字符串            |
+
+返回数据示例：
+
+```json
+{
+	"code": "0",
+	"data": "xxx",
+	"message": "成功"
+}
+```
+
+### PDF转OFD
+
+URL：http://donal-tong.ticp.io/api/ofd/convertOfd
+
+请求方式：POST
+
+报文格式：Content-Type: application/json
+
+请求参数：
+
+| 参数        | 说明                                                         | 类型    | 是否必填 |
+| ----------- | ------------------------------------------------------------ | ------- | -------- |
+| pdfBase64   | 待转换的Pdf，BASE64编码的字符串                  | String  | 是       |
+
+
+请求参数示例：
+
+```json
+{
+    "pdfBase64":"{{pdfBase64}}"
+}
+```
+
+返回数据：
+
+| 数据    | 说明                                                   |
+| ------- | ------------------------------------------------------ |
+| code    | 返回码。"0"表示成功，其余表示失败，失败原因参考message |
+| message | 请求结果信息                                           |
+| data    | 转后的ofd文件，BASE64编码的字符串            |
+
+返回数据示例：
+
+```json
+{
+	"code": "0",
+	"data": "xxx",
+	"message": "成功"
+}
 ```
 
 ## 愿景
