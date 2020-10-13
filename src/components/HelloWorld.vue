@@ -633,6 +633,7 @@ export default {
 }
 
 .SealContainer {
+  z-index: 99999;
   position: fixed;
   left: 0;
   top: 0;
