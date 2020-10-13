@@ -281,9 +281,9 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
         const height = multiMediaResObj[resId].height;
-        return renderImageOnCanvas(img, width, height, boundary, imageObject['@_ID']);
+        return renderImageOnCanvas(img, width, height, boundary, imageObject['pfIndex']);
     } else {
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['@_ID']);
+        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['pfIndex']);
     }
 }
 
@@ -380,7 +380,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_ID']}`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['pfIndex']}`);
     return svg;
 }
 
@@ -450,6 +450,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_ID']}`);
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['pfIndex']}`);
     return svg;
 }

@@ -21,7 +21,7 @@
 import {pipeline} from "@/utils/ofd/pipeline";
 import JsZip from "jszip";
 import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd/ofd_util";
-let parser = require('fast-xml-parser');
+let parser = require('ofd-xml-parser');
 import {Jbig2Image} from '../jbig2/jbig2';
 import {parseSesSignature} from "@/utils/ofd/ses_signature_parser";
 
