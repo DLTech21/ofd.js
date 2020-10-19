@@ -129,14 +129,17 @@ const getAnnotations = async function (annoBase, annotations, doc, zip) {
         }
         const pageId = anno['@_PageID'];
         let fileLoc = anno['ofd:FileLoc'];
+        fileLoc = replaceFirstSlash(fileLoc);
         if (annoBase && fileLoc.indexOf(annoBase) === -1) {
             fileLoc = `${annoBase}/${fileLoc}`;
         }
         if (fileLoc.indexOf(doc) === -1) {
             fileLoc = `${doc}/${fileLoc}`;
         }
+
         if (zip.files[fileLoc]) {
             const data = await getJsonFromXmlContent(zip, fileLoc);
+
             let array = [];
             array = array.concat(data['json']['ofd:PageAnnot']['ofd:Annot']);
             if (!annotationObjs[pageId]) {
