@@ -169,11 +169,11 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
 
 const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
     let div = document.createElement('div');
-    div.setAttribute('style', `position:relative;`)
+    div.setAttribute('style', `overflow: hidden;z-index:${annotation['pfIndex']};position:relative;`)
     let boundary = annotation['appearance']['@_Boundary'];
     if (boundary) {
         let divBoundary = converterBox(parseStBox(boundary));
-        div.setAttribute('style', `z-index:-1;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+        div.setAttribute('style', `overflow: hidden;z-index:${annotation['pfIndex']};position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
     }
     const contentLayer = annotation['appearance'];
     renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);

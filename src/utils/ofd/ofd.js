@@ -47,6 +47,7 @@ export const parseOfdDocument = function (options) {
 }
 
 const doParseOFD = function (options) {
+    global.xmlParseFlag = 0;
     pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoots, parseSingleDoc)
         .then(res => {
             if (options.success) {
