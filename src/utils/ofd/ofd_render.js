@@ -287,7 +287,7 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
         return renderImageOnCanvas(img, width, height, boundary, imageObject['pfIndex']);
     } else {
         const ctm = imageObject['@_CTM'];
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['pfIndex'], ctm);
+        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['@_ID'], ctm);
     }
 }
 
@@ -320,8 +320,10 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     }
     let img = document.createElement('img');
     img.src = imgSrc;
-    // img.setAttribute('width', '100%');
-    // img.setAttribute('height', '100%');
+    if (isStampAnnot) {
+        img.setAttribute('width', '100%');
+        img.setAttribute('height', '100%');
+    }
     if (ctm) {
         const ctms = parseCtm(ctm);
         img.setAttribute('width', `${converterDpi(ctms[0])}px`);
@@ -441,7 +443,25 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     if (pathObject['@_Fill'] != 'false') {
         fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};`;
     }
-    path.setAttribute('style', `${strokeStyle};${fillStyle}`)
+    let strokeJoinStyle = '';
+    if (pathObject['@_Join']) {
+        strokeJoinStyle = `stroke-linejoin:${pathObject['@_Join']}`;
+    }
+    let strokeCapStyle = '';
+    if (pathObject['@_Cap']) {
+        strokeCapStyle = `stroke-linecap:${pathObject['@_Cap']}`;
+    }
+    let strokeDashStyle = '';
+    if (pathObject['@_DashPattern']) {
+        let dash = pathObject['@_DashPattern'];
+        const dashs = parseCtm(dash);
+        let offset = 0;
+        if (pathObject['@_DashOffset']) {
+            offset = pathObject['@_DashOffset'];
+        }
+        strokeDashStyle = `stroke-dasharray:${converterDpi(dashs[0])},${converterDpi(dashs[1])};stroke-dashoffset:${converterDpi(offset)}px`;
+    }
+    path.setAttribute('style', `${strokeStyle};${fillStyle};${strokeJoinStyle};${strokeCapStyle};${strokeDashStyle}`)
     let d = '';
     for (const point of points) {
         if (point.type === 'M') {
