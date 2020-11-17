@@ -61,6 +61,29 @@ export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
             }
             i = i + 7;
             pointList.push(point);
+        } else if (array[i] === 'Q') {
+            let point = {
+                'type': 'Q',
+                'x1': parseFloat(array[i + 1]),
+                'y1': parseFloat(array[i + 2]),
+                'x2': parseFloat(array[i + 3]),
+                'y2': parseFloat(array[i + 4]),
+            }
+            i = i + 5;
+            pointList.push(point);
+        } else if (array[i] === 'A') {
+            let point = {
+                'type': 'A',
+                'rx': parseFloat(array[i + 1]),
+                'ry': parseFloat(array[i + 2]),
+                'rotation': parseFloat(array[i + 3]),
+                'arc': parseFloat(array[i + 4]),
+                'sweep': parseFloat(array[i + 5]),
+                'x': parseFloat(array[i + 6]),
+                'y':  parseFloat(array[i + 7]),
+            }
+            i = i + 8;
+            pointList.push(point);
         } else {
             i++;
         }
@@ -88,6 +111,27 @@ export const calPathPoint = function (abbreviatedPoint) {
                 'type': 'B', 'x1': converterDpi(x1), 'y1': converterDpi(y1),
                 'x2': converterDpi(x2), 'y2': converterDpi(y2),
                 'x3': converterDpi(x3), 'y3': converterDpi(y3)
+            }
+            pointList.push(realPoint);
+        } else if (point.type === 'Q') {
+            let x1 = point.x1, y1 = point.y1;
+            let x2 = point.x2, y2 = point.y2;
+            let realPoint = {
+                'type': 'Q', 'x1': converterDpi(x1), 'y1': converterDpi(y1),
+                'x2': converterDpi(x2), 'y2': converterDpi(y2)
+            }
+            pointList.push(realPoint);
+        } else if (point.type === 'A') {
+            let rx = point.rx, ry = point.ry;
+            let rotation = point.rotation;
+            let arc  = point.arc;
+            let sweep = point.sweep;
+            let x = point.x;
+            let y = point.y;
+            let realPoint = {
+                'type': 'A', 'rx': converterDpi(rx), 'ry': converterDpi(ry),
+                'rotation': rotation, 'arc': arc,
+                'sweep': sweep, 'x': converterDpi(x), 'y': converterDpi(y)
             }
             pointList.push(realPoint);
         }

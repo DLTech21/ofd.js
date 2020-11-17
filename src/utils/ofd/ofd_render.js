@@ -274,6 +274,14 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
             pageDiv.appendChild(svg);
         }
     }
+    const pageBlocks = layer['ofd:PageBlock'];
+    let pageBlockArray = [];
+    pageBlockArray = pageBlockArray.concat(pageBlocks);
+    for (const pageBlock of pageBlockArray) {
+        if (pageBlock) {
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, pageBlock, isStampAnnot);
+        }
+    }
 }
 
 export const renderImageObject = function (pageWidth, pageHeight, multiMediaResObj, imageObject){
@@ -470,6 +478,10 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             d += `L${point.x} ${point.y} `;
         } else if (point.type === 'B') {
             d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3} `;
+        } else if (point.type === 'Q') {
+            d += `Q${point.x1} ${point.y1} ${point.x2} ${point.y2} `;
+        } else if (point.type === 'A') {
+            d += `A${point.rx},${point.ry} ${point.rotation} ${point.arc},${point.sweep} ${point.x},${point.y}`;
         } else if (point.type === 'C') {
             d += `Z`;
         }
