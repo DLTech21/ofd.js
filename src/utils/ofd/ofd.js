@@ -73,7 +73,7 @@ export const renderOfd = function (screenWidth, ofd) {
         let pageDiv = document.createElement('div');
         pageDiv.id = pageId;
         pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
-        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj, ofd.compositeGraphicUnits);
         divArray.push(pageDiv);
     }
     return divArray;
@@ -90,7 +90,7 @@ export const renderOfdByScale = function (ofd) {
         let pageDiv = document.createElement('div');
         pageDiv.id = pageId;
         pageDiv.setAttribute('style', `overflow: hidden;margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
-        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj, ofd.compositeGraphicUnits);
         divArray.push(pageDiv);
     }
     return divArray;

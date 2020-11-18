@@ -165,6 +165,7 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, a
     let fontResObj = {};
     let drawParamResObj = {};
     let multiMediaResObj = {};
+    let compositeGraphicUnits = [];
     if (documentResPath) {
         if (documentResPath.indexOf(doc) == -1) {
             documentResPath = `${doc}/${documentResPath}`;
@@ -175,12 +176,13 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, a
             fontResObj = await getFont(documentResObj);
             drawParamResObj = await getDrawParam(documentResObj);
             multiMediaResObj = await getMultiMediaRes(zip, documentResObj, doc);
+            compositeGraphicUnits = getCompositeObject(documentResObj);
         }
     }
-    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits];
 }
 
-export const getPublicRes = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPublicRes = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits]) {
     let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
     if (publicResPath) {
         if (publicResPath.indexOf(doc) == -1) {
@@ -195,12 +197,13 @@ export const getPublicRes = async function ([zip, doc, Document, stampAnnot, ann
             drawParamResObj = Object.assign(drawParamResObj, drawParamObj);
             let multiMediaObj = await getMultiMediaRes(zip, publicResObj, doc);
             multiMediaResObj = Object.assign(multiMediaResObj, multiMediaObj);
+            compositeGraphicUnits = compositeGraphicUnits.concat(getCompositeObject(publicResObj))
         }
     }
-    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits];
 }
 
-export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits]) {
     let templatePages = Document['ofd:CommonData']['ofd:TemplatePage'];
     let array = [];
     array = array.concat(templatePages);
@@ -211,10 +214,10 @@ export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, 
             tpls[Object.keys(pageObj)[0]] = pageObj[Object.keys(pageObj)[0]];
         }
     }
-    return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj];
+    return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits];
 }
 
-export const getPage = async function ([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
+export const getPage = async function ([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits]) {
     let pages = Document['ofd:Pages']['ofd:Page'];
     let array = [];
     array = array.concat(pages);
@@ -242,7 +245,8 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
         'stampAnnot': stampAnnot,
         fontResObj,
         drawParamResObj,
-        multiMediaResObj
+        multiMediaResObj,
+        compositeGraphicUnits
     };
 }
 
@@ -319,6 +323,21 @@ const getMultiMediaRes = async function (zip, res, doc) {
         }
     }
     return multiMediaResObj;
+}
+
+const getCompositeObject = function (res) {
+    const compositeGraphicUnits = res['ofd:CompositeGraphicUnits'];
+    let compositeGraphicUnitsArray = [];
+    if (compositeGraphicUnits) {
+        let array = [];
+        array = array.concat(compositeGraphicUnits['ofd:CompositeGraphicUnit']);
+        for (const item of array) {
+            if (item) {
+                compositeGraphicUnitsArray.push(item);
+            }
+        }
+    }
+    return compositeGraphicUnitsArray;
 }
 
 const parsePage = async function (zip, obj, doc) {
