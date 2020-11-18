@@ -386,11 +386,34 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
     const fillColor = textObject['ofd:FillColor'];
+    let isAxialShd = false;
     if (fillColor) {
-        defaultFillColor = parseColor(fillColor['@_Value']);
+        if (fillColor['@_Value']) {
+            defaultFillColor = parseColor(fillColor['@_Value']);
+        }
         let alpha = fillColor['@_Alpha'];
         if (alpha) {
             defaultFillOpacity = alpha > 1 ? alpha / 255 : alpha;
+        }
+        const AxialShd = fillColor['ofd:AxialShd'];
+        if (AxialShd) {
+            isAxialShd = true;
+            let linearGradient = document.createElement('linearGradient');
+            linearGradient.setAttribute('id', `${textObject['@_ID']}A`);
+            console.log(AxialShd['@_StartPoint'])
+            linearGradient.setAttribute('x1', '0%');
+            linearGradient.setAttribute('y1', '0%');
+            linearGradient.setAttribute('x2', '100%');
+            linearGradient.setAttribute('y2', '100%');
+            for (const segment of AxialShd['ofd:Segment']) {
+                if (segment) {
+                    let stop = document.createElement('stop');
+                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
+                    stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
+                    linearGradient.appendChild(stop);
+                }
+            }
+            svg.appendChild(linearGradient);
         }
     }
     for (const textCodePoint of textCodePointList) {
@@ -407,9 +430,13 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
                 text.setAttribute('transform', `matrix(${hScale}, 0, 0, 1, ${(1 - hScale) * textCodePoint.x}, 0)`)
                 // text.setAttribute('transform-origin', `${textCodePoint.x}`);
             }
-            text.setAttribute('fill', defaultStrokeColor);
-            text.setAttribute('fill', defaultFillColor);
-            text.setAttribute('fill-opacity', defaultFillOpacity);
+            if (isAxialShd) {
+                text.setAttribute('fill', `url(#${textObject['@_ID']}A)`);
+            } else {
+                text.setAttribute('fill', defaultStrokeColor);
+                text.setAttribute('fill', defaultFillColor);
+                text.setAttribute('fill-opacity', defaultFillOpacity);
+            }
             text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
             svg.appendChild(text);
         }
@@ -452,12 +479,16 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let strokeStyle = '';
     const strokeColor = pathObject['ofd:StrokeColor'];
     if (strokeColor) {
-        defaultStrokeColor = parseColor(strokeColor['@_Value'])
+        if (strokeColor['@_Value']) {
+            defaultStrokeColor = parseColor(strokeColor['@_Value'])
+        }
     }
     let fillStyle = 'fill: none;';
     const fillColor = pathObject['ofd:FillColor'];
     if (fillColor) {
-        defaultFillColor = parseColor(fillColor['@_Value'])
+        if (fillColor['@_Value']) {
+            defaultFillColor = parseColor(fillColor['@_Value'])
+        }
     }
     if (defaultLineWith > 0 && !defaultStrokeColor) {
         defaultStrokeColor = defaultFillColor;
