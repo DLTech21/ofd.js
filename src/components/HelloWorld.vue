@@ -720,7 +720,7 @@ export default {
   align-items: center;
   justify-content: center;
   background: #808080;
-  overflow: hidden
+  overflow: hidden;
 }
 
 @media (max-width: 767px) {
