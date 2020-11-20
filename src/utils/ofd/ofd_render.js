@@ -399,8 +399,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
         if (AxialShd) {
             isAxialShd = true;
             let linearGradient = document.createElement('linearGradient');
-            linearGradient.setAttribute('id', `${textObject['@_ID']}A`);
-            console.log(AxialShd['@_StartPoint'])
+            linearGradient.setAttribute('id', `${textObject['@_ID']}`);
             linearGradient.setAttribute('x1', '0%');
             linearGradient.setAttribute('y1', '0%');
             linearGradient.setAttribute('x2', '100%');
@@ -411,9 +410,11 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
                     stop.setAttribute('offset', `${segment['@_Position']*100}%`);
                     stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
                     linearGradient.appendChild(stop);
+                    defaultFillColor = parseColor(segment['ofd:Color']['@_Value']);
                 }
             }
             svg.appendChild(linearGradient);
+
         }
     }
     for (const textCodePoint of textCodePointList) {
@@ -431,7 +432,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
                 // text.setAttribute('transform-origin', `${textCodePoint.x}`);
             }
             if (isAxialShd) {
-                text.setAttribute('fill', `url(#${textObject['@_ID']}A)`);
+                text.setAttribute('fill', defaultFillColor);
             } else {
                 text.setAttribute('fill', defaultStrokeColor);
                 text.setAttribute('fill', defaultFillColor);
@@ -478,16 +479,58 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     }
     let strokeStyle = '';
     const strokeColor = pathObject['ofd:StrokeColor'];
+    let isStrokeAxialShd = false;
     if (strokeColor) {
         if (strokeColor['@_Value']) {
             defaultStrokeColor = parseColor(strokeColor['@_Value'])
         }
+        const AxialShd = strokeColor['ofd:AxialShd'];
+        if (AxialShd) {
+            isStrokeAxialShd = true;
+            let linearGradient = document.createElement('linearGradient');
+            linearGradient.setAttribute('id', `${pathObject['@_ID']}`);
+            linearGradient.setAttribute('x1', '0%');
+            linearGradient.setAttribute('y1', '0%');
+            linearGradient.setAttribute('x2', '100%');
+            linearGradient.setAttribute('y2', '100%');
+            for (const segment of AxialShd['ofd:Segment']) {
+                if (segment) {
+                    let stop = document.createElement('stop');
+                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
+                    stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
+                    linearGradient.appendChild(stop);
+                    defaultStrokeColor = parseColor(segment['ofd:Color']['@_Value']);
+                }
+            }
+            svg.appendChild(linearGradient);
+        }
     }
     let fillStyle = 'fill: none;';
     const fillColor = pathObject['ofd:FillColor'];
+    let isFillAxialShd = false;
     if (fillColor) {
         if (fillColor['@_Value']) {
             defaultFillColor = parseColor(fillColor['@_Value'])
+        }
+        const AxialShd = fillColor['ofd:AxialShd'];
+        if (AxialShd) {
+            isFillAxialShd = true;
+            let linearGradient = document.createElement('linearGradient');
+            linearGradient.setAttribute('id', `${pathObject['@_ID']}`);
+            linearGradient.setAttribute('x1', '0%');
+            linearGradient.setAttribute('y1', '0%');
+            linearGradient.setAttribute('x2', '100%');
+            linearGradient.setAttribute('y2', '100%');
+            for (const segment of AxialShd['ofd:Segment']) {
+                if (segment) {
+                    let stop = document.createElement('stop');
+                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
+                    stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
+                    linearGradient.appendChild(stop);
+                    defaultFillColor = parseColor(segment['ofd:Color']['@_Value']);
+                }
+            }
+            svg.appendChild(linearGradient);
         }
     }
     if (defaultLineWith > 0 && !defaultStrokeColor) {
