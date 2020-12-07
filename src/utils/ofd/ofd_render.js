@@ -477,7 +477,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         const ctms = parseCtm(ctm);
         path.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
     }
-    let strokeStyle = '';
     const strokeColor = pathObject['ofd:StrokeColor'];
     let isStrokeAxialShd = false;
     if (strokeColor) {
@@ -505,7 +504,6 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             svg.appendChild(linearGradient);
         }
     }
-    let fillStyle = 'fill: none;';
     const fillColor = pathObject['ofd:FillColor'];
     let isFillAxialShd = false;
     if (fillColor) {
@@ -539,27 +537,28 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             defaultStrokeColor = 'rgb(0, 0, 0)';
         }
     }
-    let opacity = '';
     if (compositeObjectAlpha) {
-        opacity = `fill-opacity:${compositeObjectAlpha / 255}`;
+        path.setAttribute('fill-opacity', `${compositeObjectAlpha / 255}`);
     }
-
-    strokeStyle = `stroke:${defaultStrokeColor};stroke-width:${defaultLineWith}px;${opacity}`;
-    if (pathObject['@_Stroke'] == 'false') {
-        strokeStyle = ``;
+    if (pathObject['@_Stroke'] != 'false') {
+        path.setAttribute('stroke', `${defaultStrokeColor}`);
+        path.setAttribute('stroke-width', `${defaultLineWith}px`);
+        // if (isStrokeAxialShd) {
+        //     path.setAttribute('stroke', `url(#${pathObject['@_ID']})`);
+        // }
     }
     if (pathObject['@_Fill'] != 'false') {
-        fillStyle = `fill:${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'};${opacity}`;
+        path.setAttribute('fill', `${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'}`);
+        // if (isFillAxialShd) {
+        //     path.setAttribute('fill', `url(#${pathObject['@_ID']})`);
+        // }
     }
-    let strokeJoinStyle = '';
     if (pathObject['@_Join']) {
-        strokeJoinStyle = `stroke-linejoin:${pathObject['@_Join']}`;
+        path.setAttribute('stroke-linejoin', `${pathObject['@_Join']}`);
     }
-    let strokeCapStyle = '';
     if (pathObject['@_Cap']) {
-        strokeCapStyle = `stroke-linecap:${pathObject['@_Cap']}`;
+        path.setAttribute('stroke-linecap', `${pathObject['@_Cap']}`);
     }
-    let strokeDashStyle = '';
     if (pathObject['@_DashPattern']) {
         let dash = pathObject['@_DashPattern'];
         const dashs = parseCtm(dash);
@@ -567,9 +566,9 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         if (pathObject['@_DashOffset']) {
             offset = pathObject['@_DashOffset'];
         }
-        strokeDashStyle = `stroke-dasharray:${converterDpi(dashs[0])},${converterDpi(dashs[1])};stroke-dashoffset:${converterDpi(offset)}px`;
+        path.setAttribute('stroke-dasharray', `${converterDpi(dashs[0])},${converterDpi(dashs[1])}`);
+        path.setAttribute('stroke-dashoffset', `${converterDpi(offset)}px`);
     }
-    path.setAttribute('style', `${strokeStyle};${fillStyle};${strokeJoinStyle};${strokeCapStyle};${strokeDashStyle}`)
     let d = '';
     for (const point of points) {
         if (point.type === 'M') {
