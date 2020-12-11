@@ -304,8 +304,8 @@ export default {
       let sealTop=parseFloat(seal.style.top);
       let x=(sealLeft-content.childNodes[1].offsetLeft)/this.scale;//公章左侧开始坐标
       let pageHeight=parseFloat(content.childNodes[1].style.height);
-      let y=(sealTop%pageHeight)/this.scale;//获取距离当前页顶部距离
       let page=Math.ceil(sealTop/pageHeight);//获得当前页
+      let y=(sealTop%pageHeight- page * 20)/this.scale;//获取距离当前页顶部距离
       let position={
         x:x,//左边缘位置 毫米
         y:y,//上边缘位置 毫米
