@@ -210,7 +210,7 @@ export default {
        that.displayOfdDiv(divs);*/
 
         let content = document.getElementById("content");
-        let nowleft=content.childNodes[1].offsetLeft;
+        let nowleft=content.childNodes[0].offsetLeft;
         let seal = document.getElementById("seal");
         seal.style.left=(that.docleft+nowleft+this.leftMenu_width)+"px";
       })()
@@ -290,7 +290,7 @@ export default {
         }
         document.onmouseup=function () {
           //计算距离文档左边缘距离
-          that.docleft=parseFloat(seal.style.left)-that.leftMenu_width-content.childNodes[1].offsetLeft;
+          that.docleft=parseFloat(seal.style.left)-that.leftMenu_width-content.childNodes[0].offsetLeft;
           document.onmousemove=null;
           document.onmouseup=null;
         }
@@ -302,8 +302,8 @@ export default {
       let sealimage = document.getElementById("sealimage");//公章图片
       let sealLeft=parseFloat(seal.style.left);
       let sealTop=parseFloat(seal.style.top);
-      let x=(sealLeft-content.childNodes[1].offsetLeft)/this.scale;//公章左侧开始坐标
-      let pageHeight=parseFloat(content.childNodes[1].style.height);
+      let x=(sealLeft-content.childNodes[0].offsetLeft)/this.scale;//公章左侧开始坐标
+      let pageHeight=parseFloat(content.childNodes[0].style.height);
       let page=Math.ceil(sealTop/pageHeight);//获得当前页
       let y=(sealTop%pageHeight- page * 20)/this.scale;//获取距离当前页顶部距离
       let position={
