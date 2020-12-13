@@ -14,7 +14,17 @@
         <input type="file" ref="pdfFile" class="hidden" accept=".pdf"
                @change="pdfFileChanged">
       </div>
-
+      <div class="upload-icon" @click="getSealPosition" v-if="dragseal">
+        <div class="upload-icon">获取签章坐标</div>
+      </div>
+      <div class="upload-icon" @click="print">
+        <font-awesome-icon icon="print"/>
+        <div class="upload-icon">打印</div>
+      </div>
+      <div class="upload-icon" @click="printSecret">
+        <font-awesome-icon icon="print"/>
+        <div class="upload-icon">脱密打印</div>
+      </div>
       <div style="display: flex;align-items: center" v-if="ofdObj">
         <div class="upload-icon" style="margin-left: 10px" @click="downPdf" v-if="ofdBase64">
           下载PDF
@@ -48,11 +58,15 @@
           <font-awesome-icon icon="step-forward"/>
         </div>
       </div>
-
     </el-header>
-    <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading">
+    <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading"  id="main">
       <div id="leftMenu"
           class="left-section">
+
+        <div class="text-icon" @click="zoomSeal()">
+          <p>拖拽签章</p>
+        </div>
+
         <div class="text-icon" @click="demo(1)">
           <p>电子发票</p>
         </div>
@@ -162,6 +176,9 @@ export default {
   name: 'HelloWorld',
   data() {
     return {
+      dragseal:false,//是否显示公章图片位置
+      docleft:0,//公章距离左侧文档边缘的距离
+      leftMenu_width:0,//左侧菜单宽度
       pdfFile: null,
       ofdBase64: null,
       loading: false,
@@ -182,20 +199,122 @@ export default {
   },
 
   mounted() {
-    this.screenWidth = document.body.clientWidth - document.getElementById('leftMenu').getBoundingClientRect().width;
+    this.leftMenu_width=document.getElementById('leftMenu').getBoundingClientRect().width;
+    this.screenWidth = document.body.clientWidth - this.leftMenu_width;
     let that = this;
     this.$refs.contentDiv.addEventListener('scroll', this.scrool);
     window.onresize = () => {
       return (() => {
-        that.screenWidth = (document.body.clientWidth - 88);
-        const divs = renderOfd(that.screenWidth, that.ofdObj);
-        that.displayOfdDiv(divs);
+        /* that.screenWidth = (document.body.clientWidth - 88);
+       const divs = renderOfd(that.screenWidth, that.ofdObj);
+       that.displayOfdDiv(divs);*/
+
+        let content = document.getElementById("content");
+        let nowleft=content.childNodes[0].offsetLeft;
+        let seal = document.getElementById("seal");
+        seal.style.left=(that.docleft+nowleft+this.leftMenu_width)+"px";
       })()
     }
 
   },
 
   methods: {
+    print() {
+      let dom = this.$refs["contentDiv"];
+      let childs = dom.children;
+      this.loading = true;
+      this.progressVisible=true;
+      let list=[];
+      let i=0;
+      for (let ele of childs) {
+        list.push(ele.cloneNode(true));
+        this.percentage=i/childs.length;
+      }
+      if(list.length>0){
+        var mywindow = window.open("打印窗口", "_blank");
+        //给新打开的标签页添加画布内容（这里指的是id=div2img元素的内容）
+        var documentBody = mywindow.document.body;
+        console.log(list.length)
+        for (let canvas of list) {
+          documentBody.appendChild(canvas);
+        }
+        this.progressVisible=false;
+        this.loading = false;
+        //焦点移到新打开的标签页
+        mywindow.focus();
+        //执行打印的方法（注意打印方法是打印的当前窗口内的元素，所以前面才新建一个窗口：print()--打印当前窗口的内容。）
+        mywindow.print();
+        //操作完成之后关闭当前标签页（点击确定或者取消都会关闭）
+        mywindow.close();
+      }
+
+
+    },
+    printSecret() {
+      let sealdivs=document.getElementsByTagName('img')
+      //公章图片
+      for (let ele of sealdivs) {
+        ele.style.filter="grayscale(100%)";
+      }
+      this.print();
+      for (let ele of sealdivs) {
+        ele.style.filter="";
+      }
+    },
+    createSealImg(){//创建公章
+      let contentDiv = document.getElementById('content');
+      var imgdiv=document.createElement("div");
+      imgdiv.setAttribute("class","seal");
+      imgdiv.setAttribute("id","seal");
+      imgdiv.setAttribute("style","display:none;top:0px;position: absolute;z-index: 999999;")
+      contentDiv.appendChild(imgdiv);
+      imgdiv.innerHTML="<img src='./seal.png' id='sealimage' style='opacity:0.9;' height='210px' width='210px'>";
+    },
+    zoomSeal(){//签章
+      this.dragseal=true;//显示获取签章位置的按钮
+      var that=this;
+      let seal = document.getElementById("seal");
+      let content = document.getElementById("content");
+      let sealimage = document.getElementById("sealimage");
+      let main = document.getElementById("main");
+      seal.style.display="block";
+
+      document.onmousemove=function (e) {
+        seal.style.top=main.scrollTop+e.clientY-content.offsetTop-(sealimage.width/2)+"px";
+        seal.style.left=main.scrollLeft-that.leftMenu_width+e.clientX-(sealimage.height/2)+"px";
+      }
+      seal.onmousedown=function () {
+        document.onmousemove=function (e) {
+          seal.style.top= main.scrollTop+e.clientY-content.offsetTop-(sealimage.width/2)+"px";
+          seal.style.left=main.scrollLeft-that.leftMenu_width+e.clientX-(sealimage.height/2)+"px";
+        }
+        document.onmouseup=function () {
+          //计算距离文档左边缘距离
+          that.docleft=parseFloat(seal.style.left)-that.leftMenu_width-content.childNodes[0].offsetLeft;
+          document.onmousemove=null;
+          document.onmouseup=null;
+        }
+      }
+    },
+    getSealPosition(){//获得公章位置信息
+      let seal = document.getElementById("seal");//公章容器
+      let content = document.getElementById("content");//主容器
+      let sealimage = document.getElementById("sealimage");//公章图片
+      let sealLeft=parseFloat(seal.style.left);
+      let sealTop=parseFloat(seal.style.top);
+      let x=(sealLeft-content.childNodes[0].offsetLeft)/this.scale;//公章左侧开始坐标
+      let pageHeight=parseFloat(content.childNodes[0].style.height);
+      let page=Math.ceil(sealTop/pageHeight);//获得当前页
+      let y=(sealTop%pageHeight- page * 20)/this.scale;//获取距离当前页顶部距离
+      let position={
+        x:x,//左边缘位置 毫米
+        y:y,//上边缘位置 毫米
+        page:page,//页
+        width:sealimage.width/this.scale,//公章图片宽度 毫米
+        height:sealimage.height/this.scale//公章图片高度 毫米
+      }
+      alert(JSON.stringify(position));
+    },
     scrool() {
       let scrolled = this.$refs.contentDiv.firstElementChild?.getBoundingClientRect()?.top - 60;
       let top = 0
@@ -483,6 +602,8 @@ export default {
           let t2 = new Date().getTime();
           console.log('xml转svg', t2 - t1)
           that.displayOfdDiv(divs);
+          //创建拖拽签章容器
+          that.createSealImg();
           let t3 = new Date().getTime();
           console.log('svg渲染到页面', t3 - t2);
           that.loading = false;
@@ -721,6 +842,7 @@ export default {
   justify-content: center;
   background: #808080;
   overflow: hidden;
+  position: relative
 }
 
 @media (max-width: 767px) {
