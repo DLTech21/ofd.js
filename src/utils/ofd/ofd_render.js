@@ -175,6 +175,8 @@ const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamRes
     if (boundary) {
         let divBoundary = converterBox(parseStBox(boundary));
         div.setAttribute('style', `overflow: hidden;z-index:${annotation['@_ID'] + fixIndex};position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+    } else {
+        div.setAttribute('style', `overflow: visible;z-index:${annotation['@_ID'] + fixIndex};position:absolute; left: 0px; top: 0px; width: 1px; height: 1px`)
     }
     const contentLayer = annotation['appearance'];
     renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
@@ -269,7 +271,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     textObjectArray = textObjectArray.concat(textObjects);
     for (const textObject of textObjectArray) {
         if (textObject) {
-            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor);
+            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor, drawParamResObj);
             pageDiv.appendChild(svg);
         }
     }
@@ -283,7 +285,15 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
                     const currentCompositeObjectAlpha = compositeObject['@_Alpha'];
                     const currentCompositeObjectBoundary = compositeObject['@_Boundary'];
                     const currentCompositeObjectCTM = compositeObject['@_CTM'];
-                    renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, compositeGraphicUnit['ofd:Content'], false, currentCompositeObjectAlpha, currentCompositeObjectBoundary, currentCompositeObjectCTM);
+                    if (currentCompositeObjectBoundary) {
+                        let divBoundary = converterBox(parseStBox(currentCompositeObjectBoundary));
+                        let div = document.createElement("div");
+                        div.setAttribute('style', `position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+                        pageDiv.appendChild(div);
+                        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, compositeGraphicUnit['ofd:Content'], false, currentCompositeObjectAlpha, null, currentCompositeObjectCTM);
+                    } else {
+                        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, compositeGraphicUnit['ofd:Content'], false, currentCompositeObjectAlpha, currentCompositeObjectBoundary, currentCompositeObjectCTM);    
+                    }
                     break;
                 }
             }
@@ -371,7 +381,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
     return div;
 }
 
-export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor) {
+export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, drawParamResObj) {
     let defaultFillOpacity = 1;
     let boundary = parseStBox(textObject['@_Boundary']);
     boundary = converterBox(boundary);
@@ -387,6 +397,14 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
     svg.setAttribute('version', '1.1');
     const fillColor = textObject['ofd:FillColor'];
     let isAxialShd = false;
+
+    let drawParam = textObject['@_DrawParam'];
+    if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
+        if (drawParamResObj[drawParam]['FillColor']) {
+            defaultFillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        }
+    }
+
     if (fillColor) {
         if (fillColor['@_Value']) {
             defaultFillColor = parseColor(fillColor['@_Value']);
