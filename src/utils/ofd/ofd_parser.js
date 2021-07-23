@@ -294,7 +294,15 @@ const getMultiMediaRes = async function (zip, res, doc) {
     let multiMediaResObj = {};
     if (multiMedias) {
         let array = [];
-        array = array.concat(multiMedias['ofd:MultiMedia']);
+        if(multiMedias instanceof Array){
+			for(var item of multiMedias){
+				if(item){
+					array.push(item['ofd:MultiMedia']);
+				}
+			}
+		}else{
+			array = array.concat(multiMedias['ofd:MultiMedia']);
+		}
         for (const item of array) {
             if (item) {
                 let file = item['ofd:MediaFile'];
