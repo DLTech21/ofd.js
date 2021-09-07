@@ -1,5 +1,9 @@
 # ofd.js
 
+### 获取帮助
+
+如需可以加qq 541815852，备注ofd.js
+
 ### 在使用ofd.js前请务必悉知  [《ofd.js免责声明》](https://github.com/DLTech21/ofd.js/blob/master/%E5%85%8D%E8%B4%A3%E5%A3%B0%E6%98%8E.md)
 
 ![-](https://img.shields.io/badge/language-js-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
