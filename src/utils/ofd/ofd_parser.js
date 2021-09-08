@@ -474,7 +474,17 @@ const parseOtherImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
             const img = 'data:image/png;base64,' + bytes;
-            resolve(img);
+
+            let imgSize = new Image()
+            imgSize.src = img
+            imgSize.onload = function () {
+                resolve({
+                    width: imgSize.width,
+                    height: imgSize.height,
+                    img
+                })
+            }
+            // resolve(img);
         }, function error(e) {
             reject(e);
         })

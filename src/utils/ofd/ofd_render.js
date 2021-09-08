@@ -27,7 +27,7 @@ import {
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox, setMaxPageScal,
+    converterBox, setMaxPageScal, getImageSize,
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -334,23 +334,31 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid) {
 }
 
 export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid, ctm, compositeObjectBoundary) {
-    let div = document.createElement('div');
+    let div = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     if (isStampAnnot) {
         div.setAttribute("name", "seal_img_div");
         div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
-    let img = document.createElement('img');
-    img.src = imgSrc;
+    let img = document.createElement('image');
+    let imgW = 1;
+    let imgH = 1;
+    if (typeof imgSrc === 'object') {
+        img.setAttribute('xlink:href', imgSrc.img);
+        imgW = imgSrc.width;
+        imgH = imgSrc.height;
+    } else {
+        img.setAttribute('xlink:href', imgSrc);
+    }
     if (isStampAnnot) {
         img.setAttribute('width', '100%');
         img.setAttribute('height', '100%');
     }
     if (ctm) {
         const ctms = parseCtm(ctm);
-        img.setAttribute('width', `${converterDpi(ctms[0])}px`);
-        img.setAttribute('height', `${converterDpi(ctms[3])}px`);
-        img.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+        img.setAttribute('width', `${imgW}px`);
+        img.setAttribute('height', `${imgH}px`);
+        img.setAttribute('transform', `matrix(${ctms[0]/imgW/0.2642} ${ctms[1]/imgW/0.2642} ${ctms[2]/imgH/0.2642} ${ctms[3]/imgH/0.2642} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
     }
     if (compositeObjectBoundary) {
         img.setAttribute('width', '100%');
@@ -543,6 +551,7 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     if (pathObject['@_Stroke'] != 'false') {
         path.setAttribute('stroke', `${defaultStrokeColor}`);
         path.setAttribute('stroke-width', `${defaultLineWith}px`);
+        path.setAttribute('fill', 'none')
         // if (isStrokeAxialShd) {
         //     path.setAttribute('stroke', `url(#${pathObject['@_ID']})`);
         // }
