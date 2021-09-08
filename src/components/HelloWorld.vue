@@ -84,7 +84,7 @@
         </div>
       </div>
       <div class="main-section"
-          id="content" ref="contentDiv" @mousewheel="scrool">
+          id="content" ref="contentDiv" @mousewheel="scrool" v-html="ofdDiv">
       </div>
     </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
@@ -171,7 +171,6 @@
 
 import {parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale} from "@/utils/ofd/ofd";
 import * as JSZipUtils from "jszip-utils";
-
 export default {
   name: 'HelloWorld',
   data() {
@@ -190,6 +189,7 @@ export default {
       dialogFormVisible: false,
       ofdObj: null,
       screenWidth: document.body.clientWidth,
+      ofdDiv: null
     }
   },
 
@@ -215,7 +215,6 @@ export default {
         seal.style.left=(that.docleft+nowleft+this.leftMenu_width)+"px";
       })()
     }
-
   },
 
   methods: {
@@ -625,11 +624,12 @@ export default {
 
     displayOfdDiv(divs) {
       this.scale = getPageScale();
-      let contentDiv = document.getElementById('content');
+      let contentDiv = document.createElement('content1');
       contentDiv.innerHTML = '';
       for (const div of divs) {
         contentDiv.appendChild(div)
       }
+      this.ofdDiv = contentDiv.outerHTML
       for(let ele of document.getElementsByName('seal_img_div')) {
         this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
       }

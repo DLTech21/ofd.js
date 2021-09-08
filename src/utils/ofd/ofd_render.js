@@ -346,16 +346,14 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
     let img = document.createElement('image');
-    let imgW = 1;
-    let imgH = 1;
+    let imgW = w;
+    let imgH = h;
     if (typeof imgSrc === 'object') {
         img.setAttribute('xlink:href', imgSrc.img);
         imgW = imgSrc.width;
         imgH = imgSrc.height;
     } else {
         img.setAttribute('xlink:href', imgSrc);
-        imgW = w;
-        imgH = h;
     }
     img.setAttribute('width', `${imgW}px`);
     img.setAttribute('height', `${imgH}px`);
