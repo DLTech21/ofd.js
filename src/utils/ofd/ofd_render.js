@@ -334,6 +334,11 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid) {
 }
 
 export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid, ctm, compositeObjectBoundary) {
+    const pw = parseFloat(pageWidth.replace('px', ''));
+    const ph = parseFloat(pageHeight.replace('px', ''));
+    const w = boundary.w > pw ? pw : boundary.w;
+    const h = boundary.h > ph ? ph : boundary.h;
+
     let div = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     if (isStampAnnot) {
         div.setAttribute("name", "seal_img_div");
@@ -349,15 +354,13 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         imgH = imgSrc.height;
     } else {
         img.setAttribute('xlink:href', imgSrc);
+        imgW = w;
+        imgH = h;
     }
-    if (isStampAnnot) {
-        img.setAttribute('width', '100%');
-        img.setAttribute('height', '100%');
-    }
+    img.setAttribute('width', `${imgW}px`);
+    img.setAttribute('height', `${imgH}px`);
     if (ctm) {
         const ctms = parseCtm(ctm);
-        img.setAttribute('width', `${imgW}px`);
-        img.setAttribute('height', `${imgH}px`);
         img.setAttribute('transform', `matrix(${ctms[0]/imgW/0.2642} ${ctms[1]/imgW/0.2642} ${ctms[2]/imgH/0.2642} ${ctms[3]/imgH/0.2642} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
     }
     if (compositeObjectBoundary) {
@@ -366,10 +369,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         img.removeAttribute('transform');
     }
     div.appendChild(img);
-    const pw = parseFloat(pageWidth.replace('px', ''));
-    const ph = parseFloat(pageHeight.replace('px', ''));
-    const w = boundary.w > pw ? pw : boundary.w;
-    const h = boundary.h > ph ? ph : boundary.h;
+
     let c = '';
     if (clip) {
         clip = converterBox(clip);
