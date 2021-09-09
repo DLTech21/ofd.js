@@ -2,7 +2,9 @@
 
 ### 获取帮助
 
-如需可以加qq 541815852，备注ofd.js
+如需可以扫码加入我的星球，可以提供帮助
+
+![示例](./zs.png)
 
 ### 在使用ofd.js前请务必悉知  [《ofd.js免责声明》](https://github.com/DLTech21/ofd.js/blob/master/%E5%85%8D%E8%B4%A3%E5%A3%B0%E6%98%8E.md)
 

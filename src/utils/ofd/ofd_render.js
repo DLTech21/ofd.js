@@ -139,12 +139,14 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
             }
         }
     }
-    const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    let array = [];
-    array = array.concat(contentLayers);
-    for (let contentLayer of array) {
-        if (contentLayer) {
-            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
+    if (page[pageId]['json']['ofd:Content']) {
+        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        let array = [];
+        array = array.concat(contentLayers);
+        for (let contentLayer of array) {
+            if (contentLayer) {
+                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
+            }
         }
     }
     if (page[pageId].stamp) {
@@ -303,6 +305,7 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
     let boundary = parseStBox(imageObject['@_Boundary']);
     boundary = converterBox(boundary);
     const resId = imageObject['@_ResourceID'];
+    console.log(multiMediaResObj[resId].format)
     if (multiMediaResObj[resId].format === 'gbig2') {
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
