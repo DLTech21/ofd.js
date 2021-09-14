@@ -348,15 +348,17 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
-    let img = document.createElement('image');
+    let img = document.createElementNS('http://www.w3.org/2000/svg',    'image');
     let imgW = w;
     let imgH = h;
     if (typeof imgSrc === 'object') {
         img.setAttribute('xlink:href', imgSrc.img);
+        img.href.baseVal = imgSrc.img
         imgW = imgSrc.width;
         imgH = imgSrc.height;
     } else {
         img.setAttribute('xlink:href', imgSrc);
+        img.href.baseVal = imgSrc
     }
     img.setAttribute('width', `${imgW}px`);
     img.setAttribute('height', `${imgH}px`);

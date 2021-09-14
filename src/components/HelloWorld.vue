@@ -624,12 +624,11 @@ export default {
 
     displayOfdDiv(divs) {
       this.scale = getPageScale();
-      let contentDiv = document.createElement('content1');
+      let contentDiv = document.getElementById('content');
       contentDiv.innerHTML = '';
       for (const div of divs) {
         contentDiv.appendChild(div)
       }
-      this.ofdDiv = contentDiv.outerHTML
       for(let ele of document.getElementsByName('seal_img_div')) {
         this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
       }
