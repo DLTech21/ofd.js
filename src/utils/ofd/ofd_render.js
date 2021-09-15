@@ -172,11 +172,11 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
 
 const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, fixIndex) {
     let div = document.createElement('div');
-    div.setAttribute('style', `overflow: hidden;z-index:${annotation['@_ID'] + fixIndex};position:relative;`)
+    div.setAttribute('style', `overflow: hidden;z-index:0;position:relative;`)
     let boundary = annotation['appearance']['@_Boundary'];
     if (boundary) {
         let divBoundary = converterBox(parseStBox(boundary));
-        div.setAttribute('style', `overflow: hidden;z-index:${annotation['@_ID'] + fixIndex};position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+        div.setAttribute('style', `overflow: hidden;z-index:0;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
     }
     const contentLayer = annotation['appearance'];
     renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
