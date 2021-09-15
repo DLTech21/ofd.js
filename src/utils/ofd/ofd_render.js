@@ -521,6 +521,9 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         if (fillColor['@_Value']) {
             defaultFillColor = parseColor(fillColor['@_Value'])
         }
+        if (fillColor['@_Alpha'] && fillColor['@_Alpha'] == 0) {
+            defaultFillColor = 'none'
+        }
         const AxialShd = fillColor['ofd:AxialShd'];
         if (AxialShd) {
             isFillAxialShd = true;
@@ -558,6 +561,10 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         // if (isStrokeAxialShd) {
         //     path.setAttribute('stroke', `url(#${pathObject['@_ID']})`);
         // }
+    }
+    // eslint-disable-next-line no-prototype-builtins
+    if (!pathObject.hasOwnProperty('@_Fill')) {
+        defaultFillColor = 'none'
     }
     if (pathObject['@_Fill'] != 'false') {
         path.setAttribute('fill', `${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'}`);
