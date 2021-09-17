@@ -4,12 +4,12 @@
 
 如需可以扫码加入我的星球，可以提供帮助
 <div align=center>
-<img height="200" src="https://github.com/DLTech21/ofd.js/blob/master/zs.png"/>
+<img height="300" src="https://github.com/DLTech21/ofd.js/blob/master/zs.png"/>
 </div>
 
 ### 微信小程序体验OFD
 <div align=center>
-<img height="200" src="https://github.com/DLTech21/ofd.js/blob/master/zs.png"/>
+<img height="200" src="https://github.com/DLTech21/ofd.js/blob/master/gh_6711026c0ea7_258.jpg"/>
 </div>
 
 
