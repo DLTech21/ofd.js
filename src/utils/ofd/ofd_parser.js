@@ -21,6 +21,7 @@
 import {pipeline} from "@/utils/ofd/pipeline";
 import JsZip from "jszip";
 import {parseStBox, getExtensionByPath, replaceFirstSlash} from "@/utils/ofd/ofd_util";
+
 let parser = require('ofd-xml-parser');
 import {Jbig2Image} from '../jbig2/jbig2';
 import {parseSesSignature} from "@/utils/ofd/ses_signature_parser";
@@ -80,19 +81,26 @@ export const doGetDocRoot = async function (zip, docbody) {
                     }
                     stampAnnotArray[stamp.stampAnnot['@_PageRef']].push({type: 'ofd', obj: stampObj, stamp});
                 }
-            } else if (stamp.sealObj.type === 'png') {
+            } else if (stamp.sealObj.type === 'png' || stamp.sealObj.type === 'gif' || stamp.sealObj.type === 'jpg' || stamp.sealObj.type === 'jpeg') {
                 let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
                 let stampArray = [];
                 stampArray = stampArray.concat(stamp.stampAnnot);
                 for (const annot of stampArray) {
                     if (annot) {
-                        const stampObj = {img, pageId: annot['@_PageRef'], 'boundary': parseStBox(annot['@_Boundary']), 'clip': parseStBox(annot['@_Clip'])};
+                        const stampObj = {
+                            img,
+                            pageId: annot['@_PageRef'],
+                            'boundary': parseStBox(annot['@_Boundary']),
+                            'clip': parseStBox(annot['@_Clip'])
+                        };
                         if (!stampAnnotArray[annot['@_PageRef']]) {
                             stampAnnotArray[annot['@_PageRef']] = [];
                         }
                         stampAnnotArray[annot['@_PageRef']].push({type: 'png', obj: stampObj, stamp});
                     }
                 }
+            } else {
+                console.log(stamp.sealObj.type)
             }
         }
     }
@@ -150,7 +158,7 @@ const getAnnotations = async function (annoBase, annotations, doc, zip) {
                     continue
                 }
                 const type = annot['@_Type'];
-                const visible = annot['@_Visible'] ? annot['@_Visible']:true;
+                const visible = annot['@_Visible'] ? annot['@_Visible'] : true;
                 const appearance = annot['ofd:Appearance'];
                 let appearanceObj = {type, appearance, visible};
                 annotationObjs[pageId].push(appearanceObj);
@@ -294,7 +302,15 @@ const getMultiMediaRes = async function (zip, res, doc) {
     let multiMediaResObj = {};
     if (multiMedias) {
         let array = [];
-        array = array.concat(multiMedias['ofd:MultiMedia']);
+        if (multiMedias instanceof Array) {
+            for (var item of multiMedias) {
+                if (item) {
+                    array.push(item['ofd:MultiMedia']);
+                }
+            }
+        } else {
+            array = array.concat(multiMedias['ofd:MultiMedia']);
+        }
         for (const item of array) {
             if (item) {
                 let file = item['ofd:MediaFile'];
@@ -382,7 +398,7 @@ const getSignature = async function (zip, signatures, doc) {
     return stampAnnot;
 }
 
-const getFileData = async function (zip, name){
+const getFileData = async function (zip, name) {
     return zip.files[name].async('uint8array');
 }
 
@@ -394,28 +410,29 @@ const getSignatureData = async function (zip, signature, signatureID) {
         signedValue = `${signature.substring(0, signature.lastIndexOf('/'))}/${signedValue}`
     }
     let sealObj = await parseSesSignature(zip, signedValue);
+    console.log(sealObj)
     const checkMethod = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['@_CheckMethod'];
     global.toBeChecked = new Map();
     let arr = new Array();
-    data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'].forEach(async reference=>{
-        if(Object.keys(reference).length==0 || Object.keys(reference['@_FileRef']).length==0){
+    data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'].forEach(async reference => {
+        if (Object.keys(reference).length == 0 || Object.keys(reference['@_FileRef']).length == 0) {
             return true;
         }
         const hashed = reference['ofd:CheckValue'];
-        const key = reference['@_FileRef'].replace('/','');
+        const key = reference['@_FileRef'].replace('/', '');
         let fileData = await getFileData(zip, key);
-        arr.push({fileData,hashed,checkMethod});
+        arr.push({fileData, hashed, checkMethod});
     });
     global.toBeChecked.set(signatureID, arr);
     return {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
         'sealObj': sealObj,
-        'signedInfo':{
+        'signedInfo': {
             'signatureID': signatureID,
-            'VerifyRet':sealObj.verifyRet,
-            'Provider':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
-            'SignatureMethod':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
-            'SignatureDateTime':data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],
+            'VerifyRet': sealObj.verifyRet,
+            'Provider': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
+            'SignatureMethod': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
+            'SignatureDateTime': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],
         },
     };
 }
@@ -466,7 +483,17 @@ const parseOtherImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
             const img = 'data:image/png;base64,' + bytes;
-            resolve(img);
+
+            let imgSize = new Image()
+            imgSize.src = img
+            imgSize.onload = function () {
+                resolve({
+                    width: imgSize.width,
+                    height: imgSize.height,
+                    img
+                })
+            }
+            // resolve(img);
         }, function error(e) {
             reject(e);
         })

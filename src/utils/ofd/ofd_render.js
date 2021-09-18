@@ -27,7 +27,7 @@ import {
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox, setMaxPageScal,
+    converterBox, setMaxPageScal, getImageSize,
 } from "@/utils/ofd/ofd_util";
 
 export const renderPageBox = function (screenWidth, pages, document) {
@@ -139,12 +139,14 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
             }
         }
     }
-    const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-    let array = [];
-    array = array.concat(contentLayers);
-    for (let contentLayer of array) {
-        if (contentLayer) {
-            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
+    if (page[pageId]['json']['ofd:Content']) {
+        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+        let array = [];
+        array = array.concat(contentLayers);
+        for (let contentLayer of array) {
+            if (contentLayer) {
+                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
+            }
         }
     }
     if (page[pageId].stamp) {
@@ -170,11 +172,11 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
 
 const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, fixIndex) {
     let div = document.createElement('div');
-    div.setAttribute('style', `overflow: hidden;z-index:${annotation['@_ID'] + fixIndex};position:relative;`)
+    div.setAttribute('style', `overflow: hidden;z-index:0;position:relative;`)
     let boundary = annotation['appearance']['@_Boundary'];
     if (boundary) {
         let divBoundary = converterBox(parseStBox(boundary));
-        div.setAttribute('style', `overflow: hidden;z-index:${annotation['@_ID'] + fixIndex};position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+        div.setAttribute('style', `overflow: hidden;z-index:0;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
     }
     const contentLayer = annotation['appearance'];
     renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
@@ -303,6 +305,7 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
     let boundary = parseStBox(imageObject['@_Boundary']);
     boundary = converterBox(boundary);
     const resId = imageObject['@_ResourceID'];
+    console.log(multiMediaResObj[resId].format)
     if (multiMediaResObj[resId].format === 'gbig2') {
         const img = multiMediaResObj[resId].img;
         const width = multiMediaResObj[resId].width;
@@ -334,23 +337,34 @@ const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid) {
 }
 
 export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid, ctm, compositeObjectBoundary) {
-    let div = document.createElement('div');
+    const pw = parseFloat(pageWidth.replace('px', ''));
+    const ph = parseFloat(pageHeight.replace('px', ''));
+    const w = boundary.w > pw ? pw : boundary.w;
+    const h = boundary.h > ph ? ph : boundary.h;
+
+    let div = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     if (isStampAnnot) {
         div.setAttribute("name", "seal_img_div");
         div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
         div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
     }
-    let img = document.createElement('img');
-    img.src = imgSrc;
-    if (isStampAnnot) {
-        img.setAttribute('width', '100%');
-        img.setAttribute('height', '100%');
+    let img = document.createElementNS('http://www.w3.org/2000/svg',    'image');
+    let imgW = w;
+    let imgH = h;
+    if (typeof imgSrc === 'object') {
+        img.setAttribute('xlink:href', imgSrc.img);
+        img.href.baseVal = imgSrc.img
+        imgW = imgSrc.width;
+        imgH = imgSrc.height;
+    } else {
+        img.setAttribute('xlink:href', imgSrc);
+        img.href.baseVal = imgSrc
     }
+    img.setAttribute('width', `${imgW}px`);
+    img.setAttribute('height', `${imgH}px`);
     if (ctm) {
         const ctms = parseCtm(ctm);
-        img.setAttribute('width', `${converterDpi(ctms[0])}px`);
-        img.setAttribute('height', `${converterDpi(ctms[3])}px`);
-        img.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+        img.setAttribute('transform', `matrix(${ctms[0]/imgW/0.2642} ${ctms[1]/imgW/0.2642} ${ctms[2]/imgH/0.2642} ${ctms[3]/imgH/0.2642} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
     }
     if (compositeObjectBoundary) {
         img.setAttribute('width', '100%');
@@ -358,10 +372,7 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         img.removeAttribute('transform');
     }
     div.appendChild(img);
-    const pw = parseFloat(pageWidth.replace('px', ''));
-    const ph = parseFloat(pageHeight.replace('px', ''));
-    const w = boundary.w > pw ? pw : boundary.w;
-    const h = boundary.h > ph ? ph : boundary.h;
+
     let c = '';
     if (clip) {
         clip = converterBox(clip);
@@ -510,6 +521,9 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         if (fillColor['@_Value']) {
             defaultFillColor = parseColor(fillColor['@_Value'])
         }
+        if (fillColor['@_Alpha'] && fillColor['@_Alpha'] == 0) {
+            defaultFillColor = 'none'
+        }
         const AxialShd = fillColor['ofd:AxialShd'];
         if (AxialShd) {
             isFillAxialShd = true;
@@ -543,9 +557,14 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     if (pathObject['@_Stroke'] != 'false') {
         path.setAttribute('stroke', `${defaultStrokeColor}`);
         path.setAttribute('stroke-width', `${defaultLineWith}px`);
+        path.setAttribute('fill', 'none')
         // if (isStrokeAxialShd) {
         //     path.setAttribute('stroke', `url(#${pathObject['@_ID']})`);
         // }
+    }
+    // eslint-disable-next-line no-prototype-builtins
+    if (!pathObject.hasOwnProperty('@_Fill')) {
+        defaultFillColor = 'none'
     }
     if (pathObject['@_Fill'] != 'false') {
         path.setAttribute('fill', `${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'}`);
