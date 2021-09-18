@@ -6,7 +6,10 @@
 
 ![示例](./zs.png)
 
-### 在使用ofd.js前请务必悉知  [《ofd.js免责声明》](https://github.com/DLTech21/ofd.js/blob/master/%E5%85%8D%E8%B4%A3%E5%A3%B0%E6%98%8E.md)
+### 微信小程序体验OFD
+
+![示例](./gh_6711026c0ea7_258.jpg)
+
 
 ![-](https://img.shields.io/badge/language-js-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
