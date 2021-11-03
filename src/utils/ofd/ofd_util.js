@@ -316,7 +316,11 @@ let FONT_FAMILY = {
     'courier new': 'Courier New',
 };
 
-export const getFontFamily = function (font) {
+export const getFontFamily = function (fontObj) {
+    let font = fontObj.FamilyName
+    if (!font) {
+        font = fontObj.FontName
+    }
     if (FONT_FAMILY[font.toLowerCase()]) {
         font = FONT_FAMILY[font.toLowerCase()];
     }

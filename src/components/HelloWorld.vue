@@ -512,8 +512,6 @@ export default {
     },
 
     uploadFile() {
-      let cont = document.getElementById("fontcontent");
-      cont.innerHTML = "";
       this.isFont = false
       this.file = null;
       this.$refs.file.click();

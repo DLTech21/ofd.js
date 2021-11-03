@@ -193,19 +193,31 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, a
 export const getPublicRes = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits]) {
     let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
     if (publicResPath) {
-        if (publicResPath.indexOf(doc) == -1) {
-            publicResPath = `${doc}/${publicResPath}`;
+        let publicResPaths = []
+        if (publicResPath instanceof Array) {
+            for (const item of publicResPath) {
+                if (item) {
+                    publicResPaths.push(item)
+                }
+            }
+        } else {
+            publicResPaths.push(publicResPath)
         }
-        if (zip.files[publicResPath]) {
-            const data = await getJsonFromXmlContent(zip, publicResPath);
-            const publicResObj = data['json']['ofd:Res'];
-            let fontObj = await getFont(publicResObj);
-            fontResObj = Object.assign(fontResObj, fontObj);
-            let drawParamObj = await getDrawParam(publicResObj);
-            drawParamResObj = Object.assign(drawParamResObj, drawParamObj);
-            let multiMediaObj = await getMultiMediaRes(zip, publicResObj, doc);
-            multiMediaResObj = Object.assign(multiMediaResObj, multiMediaObj);
-            compositeGraphicUnits = compositeGraphicUnits.concat(getCompositeObject(publicResObj))
+        for (let p of publicResPaths) {
+            if (p.indexOf(doc) == -1) {
+                p = `${doc}/${p}`;
+            }
+            if (zip.files[p]) {
+                const data = await getJsonFromXmlContent(zip, p);
+                const publicResObj = data['json']['ofd:Res'];
+                let fontObj = await getFont(publicResObj);
+                fontResObj = Object.assign(fontResObj, fontObj);
+                let drawParamObj = await getDrawParam(publicResObj);
+                drawParamResObj = Object.assign(drawParamResObj, drawParamObj);
+                let multiMediaObj = await getMultiMediaRes(zip, publicResObj, doc);
+                multiMediaResObj = Object.assign(multiMediaResObj, multiMediaObj);
+                compositeGraphicUnits = compositeGraphicUnits.concat(getCompositeObject(publicResObj))
+            }
         }
     }
     return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits];
@@ -266,11 +278,7 @@ const getFont = async function (res) {
         fontArray = fontArray.concat(fonts['ofd:Font']);
         for (const font of fontArray) {
             if (font) {
-                if (font['@_FamilyName']) {
-                    fontResObj[font['@_ID']] = font['@_FamilyName'];
-                } else {
-                    fontResObj[font['@_ID']] = font['@_FontName'];
-                }
+                fontResObj[font['@_ID']] = {FamilyName: font['@_FamilyName'], FontName: font['@_FontName'], FontFile: font['ofd:FontFile']}
             }
         }
     }
