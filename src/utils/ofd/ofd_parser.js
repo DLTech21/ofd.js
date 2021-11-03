@@ -181,7 +181,7 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, a
         if (zip.files[documentResPath]) {
             const data = await getJsonFromXmlContent(zip, documentResPath);
             const documentResObj = data['json']['ofd:Res'];
-            fontResObj = await getFont(documentResObj);
+            fontResObj = await getFont(documentResObj, zip, doc);
             drawParamResObj = await getDrawParam(documentResObj);
             multiMediaResObj = await getMultiMediaRes(zip, documentResObj, doc);
             compositeGraphicUnits = getCompositeObject(documentResObj);
@@ -210,7 +210,7 @@ export const getPublicRes = async function ([zip, doc, Document, stampAnnot, ann
             if (zip.files[p]) {
                 const data = await getJsonFromXmlContent(zip, p);
                 const publicResObj = data['json']['ofd:Res'];
-                let fontObj = await getFont(publicResObj);
+                let fontObj = await getFont(publicResObj, zip, doc);
                 fontResObj = Object.assign(fontResObj, fontObj);
                 let drawParamObj = await getDrawParam(publicResObj);
                 drawParamResObj = Object.assign(drawParamResObj, drawParamObj);
@@ -270,7 +270,7 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
     };
 }
 
-const getFont = async function (res) {
+const getFont = async function (res, zip, doc) {
     const fonts = res['ofd:Fonts'];
     let fontResObj = {};
     if (fonts) {
@@ -278,7 +278,20 @@ const getFont = async function (res) {
         fontArray = fontArray.concat(fonts['ofd:Font']);
         for (const font of fontArray) {
             if (font) {
-                fontResObj[font['@_ID']] = {FamilyName: font['@_FamilyName'], FontName: font['@_FontName'], FontFile: font['ofd:FontFile']}
+                let fontByte = null
+                if (font['ofd:FontFile']) {
+                    let file = font['ofd:FontFile']
+                    if (res['@_BaseLoc']) {
+                        if (file.indexOf(res['@_BaseLoc']) === -1) {
+                            file = `${res['@_BaseLoc']}/${file}`
+                        }
+                    }
+                    if (file.indexOf(doc) === -1) {
+                        file = `${doc}/${file}`
+                    }
+                    fontByte = await parseFontFileFromZip(zip, file);
+                }
+                fontResObj[font['@_ID']] = {familyName: font['@_FamilyName'], fontName: font['@_FontName'], fontByte}
             }
         }
     }
@@ -418,7 +431,6 @@ const getSignatureData = async function (zip, signature, signatureID) {
         signedValue = `${signature.substring(0, signature.lastIndexOf('/'))}/${signedValue}`
     }
     let sealObj = await parseSesSignature(zip, signedValue);
-    console.log(sealObj)
     const checkMethod = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['@_CheckMethod'];
     global.toBeChecked = new Map();
     let arr = new Array();
@@ -502,6 +514,17 @@ const parseOtherImageFromZip = async function (zip, name) {
                 })
             }
             // resolve(img);
+        }, function error(e) {
+            reject(e);
+        })
+    });
+}
+
+
+const parseFontFileFromZip = async function (zip, name) {
+    return new Promise((resolve, reject) => {
+        zip.files[name].async('arraybuffer').then(function (bytes) {
+            resolve(bytes);
         }, function error(e) {
             reject(e);
         })

@@ -204,7 +204,7 @@ export const deltaFormatter = function (delta) {
     }
 }
 
-export const calTextPoint = function (textCodes) {
+export const calTextPoint = function (textCodes, CGTransform) {
     let x = 0;
     let y = 0;
     let textCodePointList = [];
@@ -248,6 +248,21 @@ export const calTextPoint = function (textCodes) {
                 let text = textStr.substring(i, i + 1);
                 let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
                 textCodePointList.push(textCodePoint);
+            }
+        }
+    }
+    if (textCodePointList.length > 0) {
+        for (const cgTransform of CGTransform) {
+            const pos = cgTransform['@_CodePosition'] ?  cgTransform['@_CodePosition'] - 0 : 0
+            const glyphCount = cgTransform['@_GlyphCount'] ? cgTransform['@_GlyphCount'] - 0 : 1
+            // const codeCount = cgTransform['@_CodeCount']
+            for (let i = pos; i < glyphCount + pos; i++) {
+                if (textCodePointList.length <= i) {
+                    const glyphs = `${textCodePointList[textCodePointList.length - 1].glyph} ${(cgTransform['ofd:Glyphs'].split(' '))[i - pos]}`
+                    textCodePointList[textCodePointList.length - 1].glyph = glyphs;
+                } else {
+                    textCodePointList[i].glyph = (cgTransform['ofd:Glyphs'].split(' '))[i - pos]
+                }
             }
         }
     }
@@ -317,9 +332,9 @@ let FONT_FAMILY = {
 };
 
 export const getFontFamily = function (fontObj) {
-    let font = fontObj.FamilyName
+    let font = fontObj.familyName
     if (!font) {
-        font = fontObj.FontName
+        font = fontObj.fontName
     }
     if (FONT_FAMILY[font.toLowerCase()]) {
         font = FONT_FAMILY[font.toLowerCase()];
