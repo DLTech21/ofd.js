@@ -8,13 +8,6 @@
                @change="fileChanged">
       </div>
 
-      <div class="upload-icon" @click="uploadFontFile">
-        <div class="upload-icon">选择字体</div>
-        <font-awesome-icon icon="cloud-upload-alt"/>
-        <input type="file" ref="fontfile" class="hidden" accept=".ttf, .otf"
-               @change="fontFileChanged">
-      </div>
-
       <div class="upload-icon" @click="uploadPdfFile">
         <div class="upload-icon">PDF2OFD</div>
         <font-awesome-icon icon="cloud-upload-alt"/>
@@ -90,9 +83,7 @@
           <p>多页文档</p>
         </div>
       </div>
-      <div class="main-section" id="content" ref="contentDiv" @mousewheel="scrool" v-html="ofdDiv" v-if="!isFont">
-      </div>
-      <div class="main-section-font" id="fontcontent" ref="fontcontentDiv" @mousewheel="scrool" v-html="ofdDiv" v-if="isFont">
+      <div class="main-section" id="content" ref="contentDiv" @mousewheel="scrool" v-html="ofdDiv">
       </div>
     </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
@@ -599,10 +590,11 @@ export default {
       let that = this;
       let t = new Date().getTime();
       this.loading = true;
+      let contentDiv = document.getElementById('content');
+      contentDiv.innerHTML = '';
       parseOfdDocument({
         ofd: file,
         success(res) {
-          console.log(res)
           let t1 = new Date().getTime();
           console.log('解析ofd',t1 - t);
           that.ofdObj = res[0];
@@ -694,88 +686,6 @@ export default {
         div.setAttribute('class', 'gray');
       }
     },
-
-    //font
-
-    getDPR() {
-      return window["devicePixelRatio"] || 1;
-    },
-    uploadFontFile() {
-      this.isFont = true
-      this.file = null;
-      this.$refs.fontfile.click();
-    },
-    fontFileChanged() {
-      this.file = this.$refs.fontfile.files[0];
-      let ext = this.file.name.replace(/.+\./, "");
-      if (["otf", "ttf"].indexOf(ext) === -1) {
-        return;
-      }
-      let that = this;
-      let reader = new FileReader();
-      reader.readAsDataURL(this.file);
-      reader.onload = function (e) {
-        that.parseFont(e.target.result.split(',')[1])
-      }
-      this.$refs.fontfile.value = null;
-    },
-
-    parseFont(fontBase64) {
-      this.$axios({
-        method: "post",
-        url: "https://51shouzu.xyz/api/ofd/parseFont",
-        data: {
-          fontBase64,
-        }
-      }).then(response => {
-        let cont = document.getElementById("fontcontent");
-        cont.innerHTML = "";
-        response.data.data.forEach(item => {
-          this.draw(item)
-        })
-      }).catch(error => {
-        console.log(error, "error")
-      });
-    },
-
-    draw(path) {
-      let scale = 32 * this.getDPR() / path.unitsPerEM;
-      let cont = document.getElementById("fontcontent");
-      var cnv = document.createElement("canvas");
-      cnv.width = Math.floor(this.getDPR() * 40);
-      cnv.height = Math.floor(this.getDPR() * 60);  //scaleCnv(cnv);
-      var ctx = cnv.getContext("2d");
-      ctx.translate(10 * this.getDPR(), Math.round(36 * this.getDPR()));
-
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(0, 0, cnv.width, 1);
-      ctx.fillStyle = "#333333";
-      ctx.scale(scale, scale);
-      let cmds = path.path.split(' ');
-      ctx.beginPath();
-      for (var j = 0; j < cmds.length; j++) {
-        var cmd = cmds[j];
-        if (cmd == "M") {
-          ctx.moveTo(cmds[j + 1], cmds[j + 2]);
-          j += 2;
-        } else if (cmd == "L") {
-          ctx.lineTo(cmds[j + 1], cmds[j + 2]);
-          j += 2;
-        } else if (cmd == "C") {
-          ctx.bezierCurveTo(cmds[j + 1], cmds[j + 1 + 1], cmds[j + 1 + 2], cmds[j + 1 + 3], cmds[j + 1 + 4], cmds[j + 1 + 5]);
-          j += 6;
-        } else if (cmd == "Q") {
-          ctx.quadraticCurveTo(cmds[j + 1], cmds[j + 1 + 1], cmds[j + 1 + 2], cmds[j + 1 + 3]);
-          j += 4;
-        }
-      }
-      ctx.fill();
-
-      let img = document.createElement("img");
-      img.setAttribute("style", "width:" + (cnv.width / this.getDPR()) + "px; height:" + (cnv.height / this.getDPR()) + "px");
-      img.src = cnv.toDataURL();
-      cont.appendChild(img);
-    }
 
   }
 }
