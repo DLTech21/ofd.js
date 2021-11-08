@@ -1,18 +1,5 @@
 # ofd.js
 
-### 获取帮助
-
-如需获取帮助可以扫码加微信或者知识星球
-
-![示例](./wx.jpg)
-
-![示例](./zs.png)
-
-### 微信小程序体验OFD
-
-![示例](./gh_6711026c0ea7_258.jpg)
-
-
 ![-](https://img.shields.io/badge/language-js-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
 目前方案采用：svg及canvas渲染实现，百分百纯前端渲染
@@ -53,6 +40,18 @@ parseOfdDocument({
 
 ## 愿景
 希望能做到pdf.js的高度
+
+### 获取帮助
+
+如需获取帮助可以扫码加微信或者知识星球
+
+![示例](./wx.jpg)
+
+![示例](./zs.png)
+
+### 微信小程序体验OFD
+
+![示例](./gh_6711026c0ea7_258.jpg)
 
 ## ofd推荐项目
 [OFD Reader & Writer](https://github.com/Trisia/ofdrw)
