@@ -231,7 +231,9 @@ export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, 
     for (const templatePage of array) {
         if (templatePage) {
             let pageObj = await parsePage(zip, templatePage, doc);
-            tpls[Object.keys(pageObj)[0]] = pageObj[Object.keys(pageObj)[0]];
+            if (pageObj) {
+                tpls[Object.keys(pageObj)[0]] = pageObj[Object.keys(pageObj)[0]];
+            }
         }
     }
     return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits];
@@ -245,16 +247,18 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
     for (const page of array) {
         if (page) {
             let pageObj = await parsePage(zip, page, doc);
-            const pageId = Object.keys(pageObj)[0];
-            const currentPageStamp = stampAnnot[pageId];
-            if (currentPageStamp) {
-                pageObj[pageId].stamp = currentPageStamp;
+            if (pageObj) {
+                const pageId = Object.keys(pageObj)[0];
+                const currentPageStamp = stampAnnot[pageId];
+                if (currentPageStamp) {
+                    pageObj[pageId].stamp = currentPageStamp;
+                }
+                const annotationObj = annotationObjs[pageId];
+                if (annotationObj) {
+                    pageObj[pageId].annotation = annotationObj;
+                }
+                res.push(pageObj);
             }
-            const annotationObj = annotationObjs[pageId];
-            if (annotationObj) {
-                pageObj[pageId].annotation = annotationObj;
-            }
-            res.push(pageObj);
         }
     }
     return {
@@ -381,6 +385,9 @@ const parsePage = async function (zip, obj, doc) {
     let pagePath = obj['@_BaseLoc'];
     if (pagePath.indexOf(doc) == -1) {
         pagePath = `${doc}/${pagePath}`;
+    }
+    if (!zip.files[pagePath]) {
+        return null
     }
     const data = await getJsonFromXmlContent(zip, pagePath);
     let pageObj = {};
