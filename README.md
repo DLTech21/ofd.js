@@ -2,9 +2,11 @@
 
 ![-](https://img.shields.io/badge/language-js-orange.svg) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
-目前方案采用wasm实现ofd解析，百分百纯前端渲染，不支持IE
+目前方案采用wasm实现ofd解析、渲染、验签，不支持IE
 
 另外可以提供各平台（Android及iOS）静态\动态库、wasm
+
+
 
 效果： 
 ![示例](./ofd.jpg)
