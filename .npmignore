@@ -2,5 +2,9 @@
 /package-lock.json
 .DS_Store
 /.idea
+/dist
 /src
 /public
+/*.js
+/assets
+*.zip
