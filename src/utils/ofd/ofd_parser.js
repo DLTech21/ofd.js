@@ -81,7 +81,7 @@ export const doGetDocRoot = async function (zip, docbody) {
                     }
                     stampAnnotArray[stamp.stampAnnot['@_PageRef']].push({type: 'ofd', obj: stampObj, stamp});
                 }
-            } else if (stamp.sealObj.type === 'png' || stamp.sealObj.type === 'gif' || stamp.sealObj.type === 'jpg' || stamp.sealObj.type === 'jpeg') {
+            } else if (stamp.sealObj.type === 'png' || stamp.sealObj.type === 'gif' || stamp.sealObj.type === 'jpg' || stamp.sealObj.type === 'jpeg' || stamp.sealObj.type === 'bmp') {
                 let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
                 let stampArray = [];
                 stampArray = stampArray.concat(stamp.stampAnnot);
