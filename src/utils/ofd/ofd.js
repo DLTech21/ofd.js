@@ -19,61 +19,55 @@
  */
 
 import {calPageBox, calPageBoxScale, renderPage} from "@/utils/ofd/ofd_render";
-import {pipeline} from "@/utils/ofd/pipeline";
-import {
-    getDocRoots,
-    parseSingleDoc,
-    unzipOfd
-} from "@/utils/ofd/ofd_parser";
-import {digestCheckProcess} from "@/utils/ofd/ses_signature_parser"
 import {getPageScal, setPageScal} from "@/utils/ofd/ofd_util";
-import * as JSZipUtils from "jszip-utils";
+import {CreateLibrary, JSBase64ByHashFile, readOFD} from "./Fonts";
+
+export const hashOfdDocument = function (options) {
+    if (options.ofd instanceof File) {
+        var reader = new FileReader();
+        // 读取这四个字节
+        reader.readAsArrayBuffer(options.ofd);
+        reader.onload = function () {
+            if (options.success) {
+                options.success(JSBase64ByHashFile(reader.result, options.list, options.method))
+            }
+        }
+    } else if (options.ofd instanceof ArrayBuffer) {
+        if (options.success) {
+            options.success(JSBase64ByHashFile(options.ofd, options.list, options.method))
+        }
+    }
+}
 
 export const parseOfdDocument = function (options) {
-    if (options.ofd instanceof File || options.ofd instanceof ArrayBuffer) {
-        doParseOFD(options);
-    } else {
-        JSZipUtils.getBinaryContent(options.ofd, function (err, data) {
-            if (err) {
-                if (options.fail) {
-                    options.fail(err);
-                }
-            } else {
-                options.ofd = data;
-                doParseOFD(options);
+    CreateLibrary();
+    if (options.ofd instanceof File) {
+        var reader = new FileReader();
+        // 读取这四个字节
+        reader.readAsArrayBuffer(options.ofd);
+        reader.onload = function () {
+            if (options.success) {
+                options.success(readOFD(reader.result))
             }
-        });
+        }
+    } else if (options.ofd instanceof ArrayBuffer) {
+        if (options.success) {
+            options.success(readOFD(options.ofd))
+        }
     }
 }
 
-const doParseOFD = function (options) {
-    global.xmlParseFlag = 0;
-    pipeline.call(this, async () => await unzipOfd(options.ofd), getDocRoots, parseSingleDoc)
-        .then(res => {
-            if (options.success) {
-                options.success(res);
-            }
-        })
-        .catch(res => {
-            console.log(res)
-            if (options.fail) {
-                options.fail(res);
-            }
-        });
-}
-
-export const renderOfd = function (screenWidth, ofd) {
+export const renderOfd = function (screenWidth, ofdDocument) {
     let divArray = [];
-    if (!ofd) {
+    if (!ofdDocument) {
         return divArray;
     }
-    for (const page of ofd.pages) {
-        let box = calPageBox(screenWidth, ofd.document, page);
-        const pageId = Object.keys(page)[0];
+    for (let i = 0; i < ofdDocument.Pages.length; i++) {
+        const page = ofdDocument.Pages[i];
+        let box = calPageBox(screenWidth, ofdDocument, page);
         let pageDiv = document.createElement('div');
-        pageDiv.id = pageId;
-        pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
-        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj, ofd.compositeGraphicUnits);
+        pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;overflow: hidden`)
+        renderPage(pageDiv, page, ofdDocument);
         divArray.push(pageDiv);
     }
     return divArray;
@@ -97,12 +91,6 @@ export const renderOfdByScale = function (ofd) {
 }
 
 export const digestCheck = function (options) {
-    // pipeline.call(this, async () => await digestCheckProcess(options.arr))
-    //     .then(res => {
-    //         if (options.success) {
-    //             options.success(res);
-    //         }
-    //     });
     return digestCheckProcess(options)
 }
 

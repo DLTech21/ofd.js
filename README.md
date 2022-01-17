@@ -64,6 +64,8 @@ parseOfdDocument({
 ## ofd 推荐项目
 [OFD Reader & Writer](https://github.com/Trisia/ofdrw)
 
+[ofd.android](https://github.com/DLTech21/ofd.android)
+
 ## 参与贡献
 发挥人人为我，我为人人的优良传统，多做 pr~~~
 

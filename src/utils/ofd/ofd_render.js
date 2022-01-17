@@ -19,16 +19,21 @@
  */
 
 import {
-    calPathPoint,
     calTextPoint,
-    converterDpi, convertPathAbbreviatedDatatoPoint,
+    converterDpi,
     getFontFamily,
     parseColor,
     parseCtm,
     parseStBox,
     setPageScal,
-    converterBox, setMaxPageScal, getImageSize,
+    converterBox, setMaxPageScal, ctmImageScale,
 } from "@/utils/ofd/ofd_util";
+
+import {
+    base64DecodeToUint8Array, base64EncodeByByte,
+    FT_Glyph_Get_Measure, JSConvertJb2InfoByBase64, JSGetImageInfoByBase64,
+    loadFaceInfo,
+} from "@/utils/ofd/Fonts";
 
 export const renderPageBox = function (screenWidth, pages, document) {
     let pageBoxs = [];
@@ -42,345 +47,327 @@ export const renderPageBox = function (screenWidth, pages, document) {
 }
 
 export const calPageBox = function (screenWidth, document, page) {
-    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    const area = page['Page']['Area'];
     let box;
     if (area) {
-        const physicalBox = area['ofd:PhysicalBox']
+        const physicalBox = area['PhysicalBox']
         if (physicalBox) {
-            box = (physicalBox);
+            box = physicalBox;
         } else {
-            const applicationBox = area['ofd:ApplicationBox']
+            const applicationBox = area['ApplicationBox']
             if (applicationBox) {
-                box = (applicationBox);
+                box = applicationBox;
             } else {
-                const contentBox = area['ofd:ContentBox']
+                const contentBox = area['ContentBox']
                 if (contentBox) {
-                    box = (contentBox);
+                    box = contentBox;
                 }
             }
         }
     } else {
-        let documentArea = document['ofd:CommonData']['ofd:PageArea']
-        const physicalBox = documentArea['ofd:PhysicalBox']
+        let documentArea = document['CommonData']['PageArea']
+        const physicalBox = documentArea['PhysicalBox']
         if (physicalBox) {
             box = (physicalBox);
         } else {
-            const applicationBox = documentArea['ofd:ApplicationBox']
+            const applicationBox = documentArea['ApplicationBox']
             if (applicationBox) {
                 box = (applicationBox);
             } else {
-                const contentBox = documentArea['ofd:ContentBox']
+                const contentBox = documentArea['ContentBox']
                 if (contentBox) {
                     box = (contentBox);
                 }
             }
         }
     }
-    let array = box.split(' ');
-    const scale = ((screenWidth - 10) / parseFloat(array[2])).toFixed(1);
+    const scale = ((screenWidth - 10) / parseFloat(box.w)).toFixed(1);
     setMaxPageScal(scale);
     setPageScal(scale);
-    box = parseStBox(box);
     box = converterBox(box)
     return box;
 }
 
 export const calPageBoxScale = function (document, page) {
-    const area = page[Object.keys(page)[0]]['json']['ofd:Area'];
+    const area = page[Object.keys(page)[0]]['Area'];
     let box;
     if (area) {
-        const physicalBox = area['ofd:PhysicalBox']
+        const physicalBox = area['PhysicalBox']
         if (physicalBox) {
             box = (physicalBox);
         } else {
-            const applicationBox = area['ofd:ApplicationBox']
+            const applicationBox = area['ApplicationBox']
             if (applicationBox) {
                 box = (applicationBox);
             } else {
-                const contentBox = area['ofd:ContentBox']
+                const contentBox = area['ContentBox']
                 if (contentBox) {
                     box = (contentBox);
                 }
             }
         }
     } else {
-        let documentArea = document['ofd:CommonData']['ofd:PageArea']
-        const physicalBox = documentArea['ofd:PhysicalBox']
+        let documentArea = document['CommonData']['PageArea']
+        const physicalBox = documentArea['PhysicalBox']
         if (physicalBox) {
             box = (physicalBox);
         } else {
-            const applicationBox = documentArea['ofd:ApplicationBox']
+            const applicationBox = documentArea['ApplicationBox']
             if (applicationBox) {
                 box = (applicationBox);
             } else {
-                const contentBox = documentArea['ofd:ContentBox']
+                const contentBox = documentArea['ContentBox']
                 if (contentBox) {
                     box = (contentBox);
                 }
             }
         }
     }
-    box = parseStBox(box);
     box = converterBox(box)
     return box;
 }
 
-
-export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits) {
-    const pageId = Object.keys(page)[0];
-    const template = page[pageId]['json']['ofd:Template'];
-    if (template) {
-        let array = [];
-        const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        array = array.concat(layers);
-        for (let layer of array) {
-            if (layer) {
-                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, layer, false);
-            }
-        }
-    }
-    if (page[pageId]['json']['ofd:Content']) {
-        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        let array = [];
-        array = array.concat(contentLayers);
-        for (let contentLayer of array) {
-            if (contentLayer) {
-                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
-            }
-        }
-    }
-    if (page[pageId].stamp) {
-        const fixIndex = page[pageId].json.pfIndex;
-        for (const stamp of page[pageId].stamp) {
-            if (stamp.type === 'ofd') {
-                renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj, compositeGraphicUnits, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo, fixIndex);
-            } else if (stamp.type === 'png') {
-                let sealBoundary = converterBox(stamp.obj.boundary);
-                const oid = (Array.isArray(stamp.stamp.stampAnnot) ? stamp.stamp.stampAnnot[0]['@_ID'] : stamp.stamp.stampAnnot['@_ID']) + fixIndex;
-                let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, sealBoundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo, oid);
-                pageDiv.appendChild(element);
-            }
-        }
-    }
-    if (page[pageId].annotation) {
-        const fixIndex = page[pageId].json.pfIndex;
-        for (const annotation of page[pageId].annotation) {
-            renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, fixIndex);
+const getFont = function (Fonts, resId) {
+    for (let font of Fonts) {
+        if (font.ID == resId) {
+            return font
         }
     }
 }
 
-const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, fixIndex) {
-    let div = document.createElement('div');
-    div.setAttribute('style', `overflow: hidden;z-index:0;position:relative;`)
-    let boundary = annotation['appearance']['@_Boundary'];
-    if (boundary) {
-        let divBoundary = converterBox(parseStBox(boundary));
-        div.setAttribute('style', `overflow: hidden;z-index:0;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
-    } else {
-        div.setAttribute('style', `overflow: visible;z-index:${annotation['@_ID'] + fixIndex};position:absolute; left: 0px; top: 0px; width: 1px; height: 1px`)
+const getMultiMedia = function (MultiMedias, resId) {
+    for (let media of MultiMedias) {
+        if (media.ID == resId) {
+            return media
+        }
     }
-    const contentLayer = annotation['appearance'];
+}
+
+const getDrawParam = function (DrawParams, resId) {
+    for (let drawparam of DrawParams) {
+        if (drawparam.ID == resId) {
+            return drawparam
+        }
+    }
+}
+
+export const renderPage = function (pageDiv, page, ofdDocument) {
+    const template = page.Page.Template;
+    const Annotations = ofdDocument['Annotations'];
+    const TemplatePage = ofdDocument['CommonData']['TemplatePage'];
+    const Signatures = ofdDocument['Signatures']['Signature'];
+    // const documentResArray = ofdDocument['CommonData']['DocumentRes'];
+    // const publicResArray = ofdDocument['CommonData']['PublicRes'];
+    let Fonts = ofdDocument['CommonData']['Res']['Fonts'];
+    let DrawParams = ofdDocument['CommonData']['Res']['DrawParams'];
+    let ColorSpaces = ofdDocument['CommonData']['Res']['ColorSpaces'];
+    let CompositeGraphicUnits = ofdDocument['CommonData']['Res']['CompositeGraphicUnits'];
+    let MultiMedias = ofdDocument['CommonData']['Res']['MultiMedias'];
+    if (template) {
+        for (let t of template) {
+            for (let ct of TemplatePage) {
+                if (ct.ID == t['TemplateID']) {
+                    if (ct['Page']['Content']) {
+                        const contentLayers = ct['Page']['Content']['Layer'];
+                        for (let contentLayer of contentLayers) {
+                            renderLayer(pageDiv, Fonts, DrawParams, MultiMedias, CompositeGraphicUnits, contentLayer, false);
+                        }
+                    }
+                    break
+                }
+            }
+        }
+    }
+
+    if (page['Page']['Content']) {
+        const contentLayers = page['Page']['Content']['Layer'];
+        for (let contentLayer of contentLayers) {
+            renderLayer(pageDiv, Fonts, DrawParams, MultiMedias, CompositeGraphicUnits, contentLayer, false);
+        }
+    }
+
+    for (let sign of Signatures) {
+        for (let stamp of sign['Signature']['SignedInfo']['StampAnnot']) {
+            const pageRef = stamp['PageRef'];
+            if (page.ID == pageRef) {
+                const boundary = stamp['Boundary'];
+                if (sign.Signature.PicType === 'ofd') {
+                    let sealOfd = sign.Signature.ofd.Document[0];
+                    for (let i = 0; i < sealOfd.Pages.length; i++) {
+                        const sealPage = sealOfd.Pages[i];
+                        renderSealPage(pageDiv, sealPage, sealOfd, true, boundary, pageRef, stamp.ID);
+                    }
+                } else {
+                    let sealBoundary = converterBox(boundary);
+                    let img = `data:image/${sign.Signature.picType};base64,${sign.Signature.PicValue}`;
+                    let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, img, sealBoundary.w, sealBoundary.h, sealBoundary, stamp.Clip, true, pageRef, stamp.ID);
+                    pageDiv.appendChild(element);
+                }
+                break
+            }
+        }
+    }
+
+    for (let pageAnnot of Annotations) {
+        if (page.ID == pageAnnot.PageID) {
+            for (let anno of pageAnnot.PageAnnot.Annot) {
+                // console.log(anno)
+                renderAnnotation(pageDiv, anno, Fonts, DrawParams, MultiMedias, CompositeGraphicUnits);
+            }
+            break
+        }
+    }
+}
+
+const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits) {
+    let div = document.createElement('div');
+    div.setAttribute('style', `overflow: hidden;;position:relative;`)
+    let boundary = annotation['Appearance']['Boundary'];
+    if (boundary) {
+        let divBoundary = converterBox(boundary);
+        div.setAttribute('style', `overflow: hidden;position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
+    } else {
+        div.setAttribute('style', `overflow: visible;position:absolute; left: 0px; top: 0px; width: 1px; height: 1px`)
+    }
+    const contentLayer = annotation['Appearance'];
     renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, false);
     pageDiv.appendChild(div);
 
 }
 
-const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, SES_Signature, signedInfo, fixIndex) {
-    for (const page of pages) {
-        const pageId = Object.keys(page)[0];
-        let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
-        if (isStampAnnot && stampAnnot) {
-            stampAnnotBoundary = stampAnnot.boundary;
-        }
-        let divBoundary = converterBox(stampAnnotBoundary);
-        let div = document.createElement('div');
-        div.setAttribute("name", "seal_img_div");
-        div.setAttribute('style', `z-index:${fixIndex + 10000};cursor: pointer; position:relative; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
-        div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
-        div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
-        const template = page[pageId]['json']['ofd:Template'];
-        if (template) {
-            const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-            let array = [];
-            array = array.concat(layers);
-            for (let layer of array) {
-                if (layer) {
-                    renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, layer, isStampAnnot);
-                }
-            }
-        }
-        const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
-        let array = [];
-        array = array.concat(contentLayers);
-        for (let contentLayer of array) {
-            if (contentLayer) {
-                renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, contentLayer, isStampAnnot);
-            }
-        }
-        pageDiv.appendChild(div);
+const renderSealPage = function (pageDiv, page, ofdDocument, isStampAnnot, boundary, PageRef, StampId) {
+    let stampAnnotBoundary = {x: 0, y: 0, w: 0, h: 0};
+    if (isStampAnnot) {
+        stampAnnotBoundary = boundary;
     }
+    let divBoundary = converterBox(stampAnnotBoundary);
+    let div = document.createElement('div');
+    div.setAttribute("name", "seal_img_div");
+    div.setAttribute('style', `cursor: pointer; position:relative; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px;overflow:hidden`)
+    div.setAttribute('data-signature-id', StampId);
+    div.setAttribute('data-page-ref', PageRef);
+    renderPage(div, page, ofdDocument);
+    pageDiv.appendChild(div);
 }
 
-const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, layer, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM) {
+const renderLayer = function (pageDiv, Fonts, DrawParams, MultiMedias, CompositeGraphicUnits, layer, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM) {
     let fillColor = null;
     let strokeColor = null;
     let lineWith = converterDpi(0.353);
-    let drawParam = layer['@_DrawParam'];
-    if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-        if (drawParamResObj[drawParam]['relative']) {
-            drawParam = drawParamResObj[drawParam]['relative'];
-            if (drawParamResObj[drawParam]['FillColor']) {
-                fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
-            }
-            if (drawParamResObj[drawParam]['StrokeColor']) {
-                strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
-            }
-            if (drawParamResObj[drawParam]['LineWidth']) {
-                lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
-            }
+    let drawParam = layer['DrawParam'];
+    if (drawParam && getDrawParam(DrawParams, drawParam)) {
+        let currentDrawParam = getDrawParam(DrawParams, drawParam);
+        if (getDrawParam(DrawParams, currentDrawParam['Relative'])) {
+            currentDrawParam = getDrawParam(DrawParams, currentDrawParam['Relative'])
         }
-        if (drawParamResObj[drawParam]['FillColor']) {
-            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        if (currentDrawParam['FillColor']) {
+            fillColor = parseColor(currentDrawParam['FillColor']['Value']);
         }
-        if (drawParamResObj[drawParam]['StrokeColor']) {
-            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        if (currentDrawParam['StrokeColor']) {
+            fillColor = parseColor(currentDrawParam['StrokeColor']['Value']);
         }
-        if (drawParamResObj[drawParam]['LineWidth']) {
-            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        if (currentDrawParam['LineWidth']) {
+            lineWith = converterDpi(currentDrawParam['LineWidth']);
         }
     }
-    const imageObjects = layer['ofd:ImageObject'];
-    let imageObjectArray = [];
-    imageObjectArray = imageObjectArray.concat(imageObjects);
-    for (const imageObject of imageObjectArray) {
-        if (imageObject) {
-            let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, multiMediaResObj, imageObject, isStampAnnot, compositeObjectBoundary)
+    const pageBlock = layer['PageBlock'];
+    for (let block of pageBlock) {
+        if (block['Type'] == 'ImageObject') {
+            let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, MultiMedias, block, isStampAnnot, compositeObjectBoundary, compositeObjectCTM)
             pageDiv.appendChild(element);
-        }
-    }
-    const pathObjects = layer['ofd:PathObject'];
-    let pathObjectArray = [];
-    pathObjectArray = pathObjectArray.concat(pathObjects);
-    for (const pathObject of pathObjectArray) {
-        if (pathObject) {
-            let svg = renderPathObject(drawParamResObj, pathObject, fillColor, strokeColor, lineWith, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM)
+        } else if (block['Type'] == 'PathObject') {
+            let svg = renderPathObject(DrawParams, block, fillColor, strokeColor, lineWith, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM)
             pageDiv.appendChild(svg);
-        }
-    }
-    const textObjects = layer['ofd:TextObject'];
-    let textObjectArray = [];
-    textObjectArray = textObjectArray.concat(textObjects);
-    for (const textObject of textObjectArray) {
-        if (textObject) {
-            let svg = renderTextObject(fontResObj, textObject, fillColor, strokeColor, drawParamResObj);
-            pageDiv.appendChild(svg);
-        }
-    }
-    const compositeObjects = layer['ofd:CompositeObject'];
-    let compositeObjectArray = [];
-    compositeObjectArray = compositeObjectArray.concat(compositeObjects);
-    for (const compositeObject of compositeObjectArray) {
-        if (compositeObject) {
-            for (const compositeGraphicUnit of compositeGraphicUnits) {
-                if (compositeGraphicUnit['@_ID'] === compositeObject['@_ResourceID']) {
-                    const currentCompositeObjectAlpha = compositeObject['@_Alpha'];
-                    const currentCompositeObjectBoundary = compositeObject['@_Boundary'];
-                    const currentCompositeObjectCTM = compositeObject['@_CTM'];
-                    if (currentCompositeObjectBoundary) {
-                        let divBoundary = converterBox(parseStBox(currentCompositeObjectBoundary));
-                        let div = document.createElement("div");
-                        div.setAttribute('style', `position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
-                        pageDiv.appendChild(div);
-                        renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, compositeGraphicUnit['ofd:Content'], false, currentCompositeObjectAlpha, null, currentCompositeObjectCTM);
-                    } else {
-                        renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, compositeGraphicUnit['ofd:Content'], false, currentCompositeObjectAlpha, currentCompositeObjectBoundary, currentCompositeObjectCTM);
-                    }
+        } else if (block['Type'] == 'TextObject') {
+            let svg = renderTextObject(pageDiv, Fonts, block, fillColor, strokeColor, DrawParams, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM);
+            if (svg.childElementCount > 0) {
+                pageDiv.appendChild(svg);
+            }
+        } else if (block['Type'] == 'CompositeObject') {
+            for (const compositeGraphicUnit of CompositeGraphicUnits) {
+                if (compositeGraphicUnit['ID'] === block['ResourceID']) {
+                    const currentCompositeObjectAlpha = block['Alpha'];
+                    const currentCompositeObjectBoundary = block['Boundary'];
+                    const currentCompositeObjectCTM = block['CTM'];
+                    renderLayer(pageDiv, Fonts, DrawParams, MultiMedias, CompositeGraphicUnits, compositeGraphicUnit, false, currentCompositeObjectAlpha, currentCompositeObjectBoundary, currentCompositeObjectCTM);
                     break;
                 }
             }
         }
     }
-    const pageBlocks = layer['ofd:PageBlock'];
-    let pageBlockArray = [];
-    pageBlockArray = pageBlockArray.concat(pageBlocks);
-    for (const pageBlock of pageBlockArray) {
-        if (pageBlock) {
-            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, compositeGraphicUnits, pageBlock, isStampAnnot);
-        }
-    }
 }
 
-export const renderImageObject = function (pageWidth, pageHeight, multiMediaResObj, imageObject, isStampAnnot, compositeObjectBoundary) {
-    let boundary = parseStBox(imageObject['@_Boundary']);
+export const renderImageObject = function (pageWidth, pageHeight, MultiMedias, imageObject, isStampAnnot, compositeObjectBoundary, compositeObjectCTM) {
+    let boundary = imageObject['Boundary'];
     boundary = converterBox(boundary);
-    const resId = imageObject['@_ResourceID'];
-    console.log(multiMediaResObj[resId].format)
-    if (multiMediaResObj[resId].format === 'gbig2') {
-        const img = multiMediaResObj[resId].img;
-        const width = multiMediaResObj[resId].width;
-        const height = multiMediaResObj[resId].height;
-        return renderImageOnCanvas(img, width, height, boundary, imageObject['@_ID']);
-    } else {
-        const ctm = imageObject['@_CTM'];
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, isStampAnnot, null, null, imageObject['@_ID'], ctm, compositeObjectBoundary);
+    const resId = imageObject['ResourceID'];
+    const media = getMultiMedia(MultiMedias, resId);
+    if (!(media.width > 0 || media.height > 0)) {
+        const res = JSGetImageInfoByBase64(media.FileBase64);
+
+        media.width = res.width;
+        media.height = res.height;
+        media.FileBase64 = res.fileBase64;
+
     }
+    const ctm = imageObject['CTM'];
+    return renderImageOnDiv(pageWidth, pageHeight, media.FileBase64, media.width, media.height, boundary, false, isStampAnnot, null, null, ctm, compositeObjectBoundary, compositeObjectCTM);
 }
 
-const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary, oid) {
-    const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
-    for (var i = 0; i < img.length; i++) {
-        arr[4 * i] = img[i];
-        arr[4 * i + 1] = img[i];
-        arr[4 * i + 2] = img[i];
-        arr[4 * i + 3] = 255;
-    }
-    let imageData = new ImageData(arr, imgWidth, imgHeight);
-    let canvas = document.createElement('canvas');
-    canvas.width = imgWidth;
-    canvas.height = imgHeight;
-    let context = canvas.getContext('2d');
-    context.putImageData(imageData, 0, 0);
-    canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px;z-index: ${oid}`)
-    canvas.style.position = 'absolute';
-    return canvas;
-}
+// const renderImageOnCanvas = function (img, imgWidth, imgHeight, boundary) {
+//     const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
+//     for (var i = 0; i < img.length; i++) {
+//         arr[4 * i] = img[i];
+//         arr[4 * i + 1] = img[i];
+//         arr[4 * i + 2] = img[i];
+//         arr[4 * i + 3] = 255;
+//     }
+//     let imageData = new ImageData(arr, imgWidth, imgHeight);
+//     let canvas = document.createElement('canvas');
+//     canvas.width = imgWidth;
+//     canvas.height = imgHeight;
+//     let context = canvas.getContext('2d');
+//     context.putImageData(imageData, 0, 0);
+//     canvas.setAttribute('style', `left: ${boundary.x}px; top: ${boundary.y}px; width: ${boundary.w}px; height: ${boundary.h}px;`)
+//     canvas.style.position = 'absolute';
+//     return canvas;
+// }
 
-export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid, ctm, compositeObjectBoundary) {
+export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, imgWidth, imgHeight, boundary, clip, isStampAnnot, PageRef, StampId, ctm, compositeObjectBoundary, compositeObjectCTM) {
     const pw = parseFloat(pageWidth.replace('px', ''));
     const ph = parseFloat(pageHeight.replace('px', ''));
     const w = boundary.w > pw ? pw : boundary.w;
     const h = boundary.h > ph ? ph : boundary.h;
 
     let div = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    let img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
     if (isStampAnnot) {
+        div.setAttribute("viewbox", `0 0 ${w} ${h}`)
         div.setAttribute("name", "seal_img_div");
-        div.setAttribute('data-ses-signature', `${JSON.stringify(SES_Signature)}`);
-        div.setAttribute('data-signed-info', `${JSON.stringify(signedInfo)}`);
+        div.setAttribute('data-signature-id', StampId);
+        div.setAttribute('data-page-ref', PageRef);
+        img.setAttribute("preserveAspectRatio", 'none slice')
     }
-    let img = document.createElementNS('http://www.w3.org/2000/svg',    'image');
-    let imgW = w;
-    let imgH = h;
-    if (typeof imgSrc === 'object') {
-        img.setAttribute('xlink:href', imgSrc.img);
-        img.href.baseVal = imgSrc.img
-        imgW = imgSrc.width;
-        imgH = imgSrc.height;
-    } else {
-        img.setAttribute('xlink:href', imgSrc);
-        img.href.baseVal = imgSrc
-    }
+
+    let imgW = imgWidth;
+    let imgH = imgHeight;
+    img.setAttribute('xlink:href', imgSrc);
+    img.href.baseVal = imgSrc
     img.setAttribute('width', `${imgW}px`);
     img.setAttribute('height', `${imgH}px`);
+    let transform = '';
     if (ctm) {
-        const ctms = parseCtm(ctm);
-        img.setAttribute('transform', `matrix(${ctms[0]/imgW/0.2642} ${ctms[1]/imgW/0.2642} ${ctms[2]/imgH/0.2642} ${ctms[3]/imgH/0.2642} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+        // if (ctm.b == 0 && ctm.c == 0) {
+        //     img.setAttribute('width', `${w}px`);
+        //     img.setAttribute('height', `${h}px`);
+        // } else {
+        transform = `matrix(${ctm.a / imgW / ctmImageScale()} ${ctm.b / imgW / ctmImageScale()} ${ctm.c / imgH / ctmImageScale()} ${ctm.d / imgH / ctmImageScale()} ${converterDpi(ctm.e)} ${converterDpi(ctm.f)})`;
+        // }
     }
-    if (compositeObjectBoundary) {
-        img.setAttribute('width', '100%');
-        img.setAttribute('height', '100%');
-        img.removeAttribute('transform');
+    if (compositeObjectCTM) {
+        transform = `${transform} matrix(${compositeObjectCTM.a} ${compositeObjectCTM.b} ${compositeObjectCTM.c} ${compositeObjectCTM.d} ${converterDpi(compositeObjectCTM.e)} ${converterDpi(compositeObjectCTM.f)})`;
     }
+    img.setAttribute('transform', transform)
     div.appendChild(img);
 
     let c = '';
@@ -388,47 +375,63 @@ export const renderImageOnDiv = function (pageWidth, pageHeight, imgSrc, boundar
         clip = converterBox(clip);
         c = `clip: rect(${clip.y}px, ${clip.w + clip.x}px, ${clip.h + clip.y}px, ${clip.x}px)`
     }
-    div.setAttribute('style', `cursor: pointer; overflow: hidden; position: absolute; left: ${c ? boundary.x : boundary.x < 0 ? 0 : boundary.x}px; top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px; width: ${w}px; height: ${h}px; ${c};z-index: ${oid}`)
+    let left = boundary.x;
+    let top = boundary.y;
+    if (compositeObjectCTM) {
+        const a = compositeObjectCTM.a;
+        const b = compositeObjectCTM.b;
+        const c = compositeObjectCTM.c;
+        const d = compositeObjectCTM.d;
+        const sx = a > 0 ? Math.sign(a) * Math.sqrt(a * a + c * c) : Math.sqrt(a * a + c * c);
+        const sy = d > 0 ? Math.sign(d) * Math.sqrt(b * b + d * d) : Math.sqrt(b * b + d * d);
+        const angel = Math.atan2(-b, d);
+        if (!(angel == 0 && a != 0 && d == 1)) {
+            top *= sy;
+            left *= sx;
+        }
+    }
+    div.setAttribute('style', `cursor: pointer; overflow: visible; position: absolute; left: ${left}px; top: ${top}px; width: ${w}px; height: ${h}px; ${c};`)
     return div;
 }
 
-export const renderTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, drawParamResObj) {
+export const renderTextObject = function (pageDiv, Fonts, textObject, defaultFillColor, defaultStrokeColor, DrawParams, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM) {
     let defaultFillOpacity = 1;
-    let boundary = parseStBox(textObject['@_Boundary']);
+    let boundary = textObject['Boundary'];
     boundary = converterBox(boundary);
-    const ctm = textObject['@_CTM'];
-    const hScale = textObject['@_HScale'];
-    const font = textObject['@_Font'];
-    const weight = textObject['@_Weight'];
-    const size = converterDpi(parseFloat(textObject['@_Size']));
-    let array = [];
-    array = array.concat(textObject['ofd:TextCode']);
-    const textCodePointList = calTextPoint(array);
+    const ctm = textObject['CTM'];
+    let hScale = textObject['HScale'];
+    const font = textObject['Font'];
+    const weight = textObject['Weight'];
+    let size = converterDpi(parseFloat(textObject['Size']));
+
+    const textCodePointList = calTextPoint(textObject['TextCode'], textObject['CGTransform'], ctm, textObject['Boundary'], compositeObjectBoundary, compositeObjectCTM);
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
-    const fillColor = textObject['ofd:FillColor'];
+
+    const fillColor = textObject['FillColor'];
     let isAxialShd = false;
 
-    let drawParam = textObject['@_DrawParam'];
-    if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
-        if (drawParamResObj[drawParam]['FillColor']) {
-            defaultFillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+    let drawParam = textObject['DrawParam'];
+    if (drawParam) {
+        let dp = getDrawParam(DrawParams, drawParam)
+        if (dp['FillColor']) {
+            defaultFillColor = parseColor(dp['FillColor']);
         }
     }
 
     if (fillColor) {
-        if (fillColor['@_Value']) {
-            defaultFillColor = parseColor(fillColor['@_Value']);
+        if (fillColor['Value']) {
+            defaultFillColor = parseColor(fillColor['Value']);
         }
-        let alpha = fillColor['@_Alpha'];
+        let alpha = fillColor['Alpha'];
         if (alpha) {
             defaultFillOpacity = alpha > 1 ? alpha / 255 : alpha;
         }
-        const AxialShd = fillColor['ofd:AxialShd'];
+        const AxialShd = fillColor['AxialShd'];
         if (AxialShd) {
             isAxialShd = true;
             let linearGradient = document.createElement('linearGradient');
-            linearGradient.setAttribute('id', `${textObject['@_ID']}`);
+            linearGradient.setAttribute('id', `${textObject['ID']}`);
             linearGradient.setAttribute('x1', '0%');
             linearGradient.setAttribute('y1', '0%');
             linearGradient.setAttribute('x2', '100%');
@@ -436,7 +439,7 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
             for (const segment of AxialShd['ofd:Segment']) {
                 if (segment) {
                     let stop = document.createElement('stop');
-                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
+                    stop.setAttribute('offset', `${segment['@_Position'] * 100}%`);
                     stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
                     linearGradient.appendChild(stop);
                     defaultFillColor = parseColor(segment['ofd:Color']['@_Value']);
@@ -446,77 +449,137 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
 
         }
     }
-    for (const textCodePoint of textCodePointList) {
-        if (textCodePoint && !isNaN(textCodePoint.x)) {
-            let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', textCodePoint.x);
-            text.setAttribute('y', textCodePoint.y);
-            text.innerHTML = textCodePoint.text;
-            if (ctm) {
-                const ctms = parseCtm(ctm);
-                text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
-            }
-            if (hScale) {
-                text.setAttribute('transform', `matrix(${hScale}, 0, 0, 1, ${(1 - hScale) * textCodePoint.x}, 0)`)
-                // text.setAttribute('transform-origin', `${textCodePoint.x}`);
-            }
-            if (isAxialShd) {
-                text.setAttribute('fill', defaultFillColor);
-            } else {
-                text.setAttribute('fill', defaultStrokeColor);
-                text.setAttribute('fill', defaultFillColor);
-                text.setAttribute('fill-opacity', defaultFillOpacity);
-            }
-            text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
-            svg.appendChild(text);
-        }
 
+    if (!textObject['Fill']) {
+        defaultFillOpacity = 0;
     }
     let width = boundary.w;
     let height = boundary.h;
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['@_ID']}`);
+    let xsize = size
+    let ysize = size
+    if (ctm) {
+        const a = ctm.a;
+        const b = ctm.b;
+        const c = ctm.c;
+        const d = ctm.d;
+        const sx = a > 0 ? Math.sign(a) * Math.sqrt(a * a + c * c) : Math.sqrt(a * a + c * c);
+        const sy = d > 0 ? Math.sign(d) * Math.sqrt(b * b + d * d) : Math.sqrt(b * b + d * d);
+        const angel = Math.atan2(-b, d);
+        if (!(angel == 0 && a != 0 && d == 1)) {
+            xsize = (xsize * sx);
+            ysize = (ysize * sy);
+        }
+        if (angel == 0) {
+            hScale = a / d
+            if (hScale > 0) {
+                xsize = xsize * hScale
+            }
+        }
+    }
+    if (compositeObjectCTM) {
+        const a = compositeObjectCTM.a;
+        const b = compositeObjectCTM.b;
+        const c = compositeObjectCTM.c;
+        const d = compositeObjectCTM.d;
+        const sx = a > 0 ? Math.sign(a) * Math.sqrt(a * a + c * c) : Math.sqrt(a * a + c * c);
+        const sy = d > 0 ? Math.sign(d) * Math.sqrt(b * b + d * d) : Math.sqrt(b * b + d * d);
+        const angel = Math.atan2(-b, d);
+        if (!(angel == 0 && a != 0 && d == 1)) {
+            xsize = (xsize * sx);
+            ysize = (ysize * sy);
+            top *= sy;
+            left *= sx;
+            width *= sx;
+            height *= sy;
+        }
+    }
+    const fontObj = getFont(Fonts, font);
+    for (const textCodePoint of textCodePointList) {
+        if (textCodePoint && !isNaN(textCodePoint.x)) {
+            if (textCodePoint.glyph) {
+                // 如果内置字体通过canvas画图
+                if (fontObj && !!fontObj['face']) {
+                    let m_pFaceInfo = loadFaceInfo(fontObj['face'])
+                    const glyphMetrics = FT_Glyph_Get_Measure(fontObj['face'], textCodePoint.glyph)
+                    const imgObj = drawGlyph(glyphMetrics.glyphPath, glyphMetrics.horiUnderlinePosition, m_pFaceInfo.units_per_EM, xsize, ysize, defaultStrokeColor ? defaultStrokeColor : defaultFillColor, defaultFillOpacity)
+                    imgObj.img.setAttribute('style', `position:absolute; left: ${Math.ceil(textCodePoint.cx)}px; top: ${textCodePoint.cy - imgObj.yScale * (glyphMetrics.horiUnderlinePosition) - ysize}px;width: ${Math.ceil(xsize)}px; height:${Math.ceil(ysize)}px`)
+                    pageDiv.appendChild(imgObj.img);
+                }
+            } else {
+                let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', textCodePoint.x);
+                text.setAttribute('y', textCodePoint.y);
+                text.innerHTML = textCodePoint.text;
+                let transform = ''
+                if (ctm) {
+                    transform = `matrix(${ctm.a} ${ctm.b} ${ctm.c} ${ctm.d} ${converterDpi(ctm.e)} ${converterDpi(ctm.f)})`;
+                }
+                if (compositeObjectCTM) {
+                    transform = `${transform} matrix(${compositeObjectCTM.a} ${compositeObjectCTM.b} ${compositeObjectCTM.c} ${compositeObjectCTM.d} ${converterDpi(compositeObjectCTM.e)} ${converterDpi(compositeObjectCTM.f)})`;
+                }
+                if (hScale) {
+                    transform = `${transform} matrix(${hScale}, 0, 0, 1, ${(1 - hScale) * textCodePoint.x}, 0)`;
+                }
+                text.setAttribute('transform', transform)
+                if (isAxialShd) {
+                    text.setAttribute('fill', defaultFillColor);
+                } else {
+                    text.setAttribute('fill', defaultStrokeColor);
+                    text.setAttribute('fill', defaultFillColor);
+                    text.setAttribute('fill-opacity', defaultFillOpacity);
+                }
+                text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontObj)};`)
+                svg.appendChild(text);
+            }
+
+        }
+
+    }
+
+    svg.setAttribute('style', `overflow:hidden;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;`);
     return svg;
 }
 
-export const renderPathObject = function (drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM) {
+export const renderPathObject = function (DrawParams, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM) {
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('version', '1.1');
-    let boundary = parseStBox(pathObject['@_Boundary']);
+    let boundary = pathObject['Boundary'];
     if (!boundary)
         return svg;
     boundary = converterBox(boundary);
-    let lineWidth = pathObject['@_LineWidth'];
-    const abbreviatedData = pathObject['ofd:AbbreviatedData'];
-    const points = calPathPoint(convertPathAbbreviatedDatatoPoint(abbreviatedData));
-    const ctm =  pathObject['@_CTM'];
+    let lineWidth = pathObject['LineWidth'];
+    const abbreviatedData = pathObject['AbbreviatedData'];
+    // console.log(abbreviatedData)
+    // const points = calPathPoint(abbreviatedData);
+    const ctm = pathObject['CTM'];
     let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     if (lineWidth) {
         defaultLineWith = converterDpi(lineWidth);
     }
-    const drawParam = pathObject['@_DrawParam'];
+    const drawParam = pathObject['DrawParam'];
     if (drawParam) {
-        lineWidth = drawParamResObj[drawParam].LineWidth;
+        let dp = getDrawParam(DrawParams, drawParam)
+        lineWidth = dp.LineWidth;
         if (lineWidth) {
             defaultLineWith = converterDpi(lineWidth);
         }
     }
     if (ctm) {
-        const ctms = parseCtm(ctm);
-        path.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+        path.setAttribute('transform', `matrix(${ctm.a} ${ctm.b} ${ctm.c} ${ctm.d} ${converterDpi(ctm.e)} ${converterDpi(ctm.f)})`)
     }
-    const strokeColor = pathObject['ofd:StrokeColor'];
+    const strokeColor = pathObject['StrokeColor'];
     let isStrokeAxialShd = false;
     if (strokeColor) {
-        if (strokeColor['@_Value']) {
-            defaultStrokeColor = parseColor(strokeColor['@_Value'])
+        if (strokeColor['Value']) {
+            defaultStrokeColor = parseColor(strokeColor['Value'])
         }
-        const AxialShd = strokeColor['ofd:AxialShd'];
+        const AxialShd = strokeColor['AxialShd'];
         if (AxialShd) {
             isStrokeAxialShd = true;
             let linearGradient = document.createElement('linearGradient');
-            linearGradient.setAttribute('id', `${pathObject['@_ID']}`);
+            linearGradient.setAttribute('id', `${pathObject['ID']}`);
             linearGradient.setAttribute('x1', '0%');
             linearGradient.setAttribute('y1', '0%');
             linearGradient.setAttribute('x2', '100%');
@@ -524,8 +587,8 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             for (const segment of AxialShd['ofd:Segment']) {
                 if (segment) {
                     let stop = document.createElement('stop');
-                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
-                    stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
+                    stop.setAttribute('offset', `${segment['Position'] * 100}%`);
+                    stop.setAttribute('style', `stop-color:${parseColor(segment['Color']['Value'])};stop-opacity:1`);
                     linearGradient.appendChild(stop);
                     defaultStrokeColor = parseColor(segment['ofd:Color']['@_Value']);
                 }
@@ -533,16 +596,17 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             svg.appendChild(linearGradient);
         }
     }
-    const fillColor = pathObject['ofd:FillColor'];
+    const fillColor = pathObject['FillColor'];
     let isFillAxialShd = false;
     if (fillColor) {
-        if (fillColor['@_Value']) {
-            defaultFillColor = parseColor(fillColor['@_Value'])
+
+        if (fillColor['Value']) {
+            defaultFillColor = parseColor(fillColor['Value'])
         }
-        if (fillColor['@_Alpha'] && fillColor['@_Alpha'] == 0) {
+        if (fillColor['Alpha'] && fillColor['Alpha'] == 0) {
             defaultFillColor = 'none'
         }
-        const AxialShd = fillColor['ofd:AxialShd'];
+        const AxialShd = fillColor['AxialShd'];
         if (AxialShd) {
             isFillAxialShd = true;
             let linearGradient = document.createElement('linearGradient');
@@ -554,8 +618,8 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
             for (const segment of AxialShd['ofd:Segment']) {
                 if (segment) {
                     let stop = document.createElement('stop');
-                    stop.setAttribute('offset', `${segment['@_Position']*100}%`);
-                    stop.setAttribute('style', `stop-color:${parseColor(segment['ofd:Color']['@_Value'])};stop-opacity:1`);
+                    stop.setAttribute('offset', `${segment['Position'] * 100}%`);
+                    stop.setAttribute('style', `stop-color:${parseColor(segment['Color']['Value'])};stop-opacity:1`);
                     linearGradient.appendChild(stop);
                     defaultFillColor = parseColor(segment['ofd:Color']['@_Value']);
                 }
@@ -572,53 +636,47 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     if (compositeObjectAlpha) {
         path.setAttribute('fill-opacity', `${compositeObjectAlpha / 255}`);
     }
-    if (pathObject['@_Stroke'] != 'false') {
+    if (pathObject['Stroke']) {
         path.setAttribute('stroke', `${defaultStrokeColor}`);
         path.setAttribute('stroke-width', `${defaultLineWith}px`);
+    }
+    if (!pathObject['Fill']) {
         path.setAttribute('fill', 'none')
-        // if (isStrokeAxialShd) {
-        //     path.setAttribute('stroke', `url(#${pathObject['@_ID']})`);
-        // }
-    }
-    // eslint-disable-next-line no-prototype-builtins
-    if (!pathObject.hasOwnProperty('@_Fill')) {
-        defaultFillColor = 'none'
-    }
-    if (pathObject['@_Fill'] != 'false') {
+    } else {
         path.setAttribute('fill', `${isStampAnnot ? 'none' : defaultFillColor ? defaultFillColor : 'none'}`);
         // if (isFillAxialShd) {
         //     path.setAttribute('fill', `url(#${pathObject['@_ID']})`);
         // }
     }
-    if (pathObject['@_Join']) {
+    if (pathObject['Join']) {
         path.setAttribute('stroke-linejoin', `${pathObject['@_Join']}`);
     }
-    if (pathObject['@_Cap']) {
+    if (pathObject['Cap']) {
         path.setAttribute('stroke-linecap', `${pathObject['@_Cap']}`);
     }
-    if (pathObject['@_DashPattern']) {
-        let dash = pathObject['@_DashPattern'];
+    if (pathObject['DashPattern']) {
+        let dash = pathObject['DashPattern'];
         const dashs = parseCtm(dash);
         let offset = 0;
-        if (pathObject['@_DashOffset']) {
-            offset = pathObject['@_DashOffset'];
+        if (pathObject['DashOffset']) {
+            offset = pathObject['DashOffset'];
         }
         path.setAttribute('stroke-dasharray', `${converterDpi(dashs[0])},${converterDpi(dashs[1])}`);
         path.setAttribute('stroke-dashoffset', `${converterDpi(offset)}px`);
     }
     let d = '';
-    for (const point of points) {
-        if (point.type === 'M') {
-            d += `M${point.x} ${point.y} `;
-        } else if (point.type === 'L') {
-            d += `L${point.x} ${point.y} `;
-        } else if (point.type === 'B') {
-            d += `C${point.x1} ${point.y1} ${point.x2} ${point.y2} ${point.x3} ${point.y3} `;
-        } else if (point.type === 'Q') {
-            d += `Q${point.x1} ${point.y1} ${point.x2} ${point.y2} `;
-        } else if (point.type === 'A') {
-            d += `A${point.rx},${point.ry} ${point.rotation} ${point.arc},${point.sweep} ${point.x},${point.y}`;
-        } else if (point.type === 'C') {
+    for (const point of abbreviatedData) {
+        if (point.cmd === 'M' || point.cmd === 'S') {
+            d += `M ${converterDpi(point.crds[0])} ${converterDpi(point.crds[1])} `;
+        } else if (point.cmd === 'L') {
+            d += `L ${converterDpi(point.crds[0])} ${converterDpi(point.crds[1])} `;
+        } else if (point.cmd === 'B') {
+            d += `C ${converterDpi(point.crds[0])} ${converterDpi(point.crds[1])} ${converterDpi(point.crds[2])} ${converterDpi(point.crds[3])} ${converterDpi(point.crds[4])} ${converterDpi(point.crds[5])} `;
+        } else if (point.cmd === 'Q') {
+            d += `Q ${converterDpi(point.crds[0])} ${converterDpi(point.crds[1])} ${converterDpi(point.crds[2])} ${converterDpi(point.crds[3])} `;
+        } else if (point.cmd === 'A') {
+            d += `A ${converterDpi(point.crds[0])},${converterDpi(point.crds[1])} ${converterDpi(point.crds[2])} ${converterDpi(point.crds[3])},${converterDpi(point.crds[4])} ${converterDpi(point.crds[5])},${converterDpi(point.crds[6])}`;
+        } else if (point.cmd === 'C') {
             d += `Z`;
         }
     }
@@ -628,7 +686,7 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
     let height = isStampAnnot ? boundary.h : Math.ceil(boundary.h);
     let left = boundary.x;
     let top = boundary.y;
-    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_ID']}`);
+    svg.setAttribute('style', `overflow:hidden;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;`);
     if (compositeObjectBoundary) {
         let comSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         comSvg.setAttribute('version', '1.1');
@@ -638,7 +696,7 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         let height = Math.ceil(boundary.h);
         let left = boundary.x;
         let top = boundary.y;
-        comSvg.setAttribute('style', `overflow:hidden;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${pathObject['@_ID']}`);
+        comSvg.setAttribute('style', `overflow:hidden;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;`);
         if (compositeObjectCTM) {
             const ctms = parseCtm(compositeObjectCTM);
             svg.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
@@ -647,4 +705,21 @@ export const renderPathObject = function (drawParamResObj, pathObject, defaultFi
         return comSvg;
     }
     return svg;
+}
+
+const drawGlyph = function (path, horiUnderlinePosition, units_per_EM, xsize, ysize, color, defaultFillOpacity) {
+    let xScale = xsize / units_per_EM;
+    let yScale = ysize / units_per_EM;
+
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('version', '1.1');
+    let svgPathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    svgPathElement.setAttribute('transform', `translate(0, ${ysize}) scale(${xScale}, ${-yScale}) translate(0, ${-horiUnderlinePosition})`);
+    svgPathElement.setAttribute('d', path);
+    if (color) {
+        svgPathElement.setAttribute('fill', color);
+    }
+    svgPathElement.setAttribute('fill-opacity', defaultFillOpacity);
+    svg.appendChild(svgPathElement);
+    return {img: svg, yScale};
 }

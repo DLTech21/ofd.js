@@ -18,127 +18,6 @@
  *
  */
 
-
-export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
-    let array = abbreviatedData.split(' ');
-    let pointList = [];
-    let i = 0;
-    while (i < array.length) {
-        if (array[i] === 'M' || array[i] === 'S') {
-            let point = {
-                'type': 'M',
-                'x': parseFloat(array[i + 1]),
-                'y': parseFloat(array[i + 2])
-            }
-            i = i + 3;
-            pointList.push(point);
-        }
-        if (array[i] === 'L') {
-            let point = {
-                'type': 'L',
-                'x': parseFloat(array[i + 1]),
-                'y': parseFloat(array[i + 2])
-            }
-            i = i + 3;
-            pointList.push(point);
-        } else if (array[i] === 'C') {
-            let point = {
-                'type': 'C',
-                'x': 0,
-                'y': 0
-            }
-            pointList.push(point)
-            i++;
-        } else if (array[i] === 'B') {
-            let point = {
-                'type': 'B',
-                'x1': parseFloat(array[i + 1]),
-                'y1': parseFloat(array[i + 2]),
-                'x2': parseFloat(array[i + 3]),
-                'y2': parseFloat(array[i + 4]),
-                'x3': parseFloat(array[i + 5]),
-                'y3': parseFloat(array[i + 6])
-            }
-            i = i + 7;
-            pointList.push(point);
-        } else if (array[i] === 'Q') {
-            let point = {
-                'type': 'Q',
-                'x1': parseFloat(array[i + 1]),
-                'y1': parseFloat(array[i + 2]),
-                'x2': parseFloat(array[i + 3]),
-                'y2': parseFloat(array[i + 4]),
-            }
-            i = i + 5;
-            pointList.push(point);
-        } else if (array[i] === 'A') {
-            let point = {
-                'type': 'A',
-                'rx': parseFloat(array[i + 1]),
-                'ry': parseFloat(array[i + 2]),
-                'rotation': parseFloat(array[i + 3]),
-                'arc': parseFloat(array[i + 4]),
-                'sweep': parseFloat(array[i + 5]),
-                'x': parseFloat(array[i + 6]),
-                'y': parseFloat(array[i + 7]),
-            }
-            i = i + 8;
-            pointList.push(point);
-        } else {
-            i++;
-        }
-    }
-    return pointList;
-}
-
-export const calPathPoint = function (abbreviatedPoint) {
-    let pointList = [];
-
-    for (let i = 0; i < abbreviatedPoint.length; i++) {
-        let point = abbreviatedPoint[i];
-        if (point.type === 'M' || point.type === 'L' || point.type === 'C') {
-            let x = 0, y = 0;
-            x = point.x;
-            y = point.y;
-            point.x = converterDpi(x);
-            point.y = converterDpi(y);
-            pointList.push(point);
-        } else if (point.type === 'B') {
-            let x1 = point.x1, y1 = point.y1;
-            let x2 = point.x2, y2 = point.y2;
-            let x3 = point.x3, y3 = point.y3;
-            let realPoint = {
-                'type': 'B', 'x1': converterDpi(x1), 'y1': converterDpi(y1),
-                'x2': converterDpi(x2), 'y2': converterDpi(y2),
-                'x3': converterDpi(x3), 'y3': converterDpi(y3)
-            }
-            pointList.push(realPoint);
-        } else if (point.type === 'Q') {
-            let x1 = point.x1, y1 = point.y1;
-            let x2 = point.x2, y2 = point.y2;
-            let realPoint = {
-                'type': 'Q', 'x1': converterDpi(x1), 'y1': converterDpi(y1),
-                'x2': converterDpi(x2), 'y2': converterDpi(y2)
-            }
-            pointList.push(realPoint);
-        } else if (point.type === 'A') {
-            let rx = point.rx, ry = point.ry;
-            let rotation = point.rotation;
-            let arc = point.arc;
-            let sweep = point.sweep;
-            let x = point.x;
-            let y = point.y;
-            let realPoint = {
-                'type': 'A', 'rx': converterDpi(rx), 'ry': converterDpi(ry),
-                'rotation': rotation, 'arc': arc,
-                'sweep': sweep, 'x': converterDpi(x), 'y': converterDpi(y)
-            }
-            pointList.push(realPoint);
-        }
-    }
-    return pointList;
-}
-
 const millimetersToPixel = function (mm, dpi) {
     //毫米转像素：mm * dpi / 25.4
     return ((mm * dpi / 25.4));
@@ -166,47 +45,34 @@ export const converterDpi = function (width) {
     return millimetersToPixel(width, Scale * 25.4);
 }
 
-export const deltaFormatter = function (delta) {
-    if (delta.indexOf("g") === -1) {
-        let floatList = [];
-        for (let f of delta.split(' ')) {
-            floatList.push(parseFloat(f));
-        }
-        return floatList;
-    } else {
-        const array = delta.split(' ');
-        let gFlag = false;
-        let gProcessing = false;
-        let gItemCount = 0;
-        let floatList = [];
-        for (const s of array) {
-            if ('g' === s) {
-                gFlag = true;
-            } else {
-                if (!s || s.trim().length == 0) {
-                    continue;
-                }
-                if (gFlag) {
-                    gItemCount = parseInt(s);
-                    gProcessing = true;
-                    gFlag = false;
-                } else if (gProcessing) {
-                    for (let j = 0; j < gItemCount; j++) {
-                        floatList.push(parseFloat(s));
-                    }
-                    gProcessing = false;
-                } else {
-                    floatList.push(parseFloat(s));
-                }
-            }
-        }
-        return floatList;
-    }
+export const ctmImageScale = function () {
+    return 1 / Scale;
 }
 
-export const calTextPoint = function (textCodes) {
+const ctmCalPoint = function (x, y, ctm) {
+    const ctmX = x * ctm.a + y * ctm.c + 1 * ctm.e;
+    const ctmY = x * ctm.b + y * ctm.d + 1 * ctm.f;
+    return {cx:ctmX, cy:ctmY};
+}
+
+const ctmCalDetalPoint = function (x, y, ctm) {
+    const ctmX = x * ctm.a + y * ctm.c;
+    const ctmY = x * ctm.b + y * ctm.d;
+    return {ctmX, ctmY};
+}
+
+const adjustPos = function (x, y, boundary) {
+    const realX = boundary.x + x
+    const realY = boundary.y + y
+    return {cx: realX, cy: realY};
+}
+
+
+export const calTextPoint = function (textCodes, cgTransform, ctm, boundary, compositeObjectBoundary, compositeObjectCTM) {
     let x = 0;
     let y = 0;
+    let cx = 0;
+    let cy = 0;
     let textCodePointList = [];
     if (!textCodes) {
         return textCodePointList;
@@ -215,8 +81,9 @@ export const calTextPoint = function (textCodes) {
         if (!textCode) {
             continue
         }
-        x = parseFloat(textCode['@_X']);
-        y = parseFloat(textCode['@_Y']);
+
+        x = parseFloat(textCode['X']);
+        y = parseFloat(textCode['Y']);
 
         if (isNaN(x)) {
             x = 0;
@@ -224,16 +91,23 @@ export const calTextPoint = function (textCodes) {
         if (isNaN(y)) {
             y = 0;
         }
+        cx = x;
+        cy = y;
+        if (ctm) {
+            const r = ctmCalPoint(cx, cy, ctm)
+            cx = r.cx
+            cy = r.cy
+        }
 
         let deltaXList = [];
         let deltaYList = [];
-        if (textCode['@_DeltaX'] && textCode['@_DeltaX'].length > 0) {
-            deltaXList = deltaFormatter(textCode['@_DeltaX']);
+        if (textCode['DeltaX'] && textCode['DeltaX'].length > 0) {
+            deltaXList = textCode['DeltaX'];
         }
-        if (textCode['@_DeltaY'] && textCode['@_DeltaY'].length > 0) {
-            deltaYList = deltaFormatter(textCode['@_DeltaY']);
+        if (textCode['DeltaY'] && textCode['DeltaY'].length > 0) {
+            deltaYList = textCode['DeltaY'];
         }
-        let textStr = textCode['#text'];
+        let textStr = textCode['text'];
         if (textStr) {
             textStr += '';
             textStr = decodeHtml(textStr);
@@ -241,33 +115,56 @@ export const calTextPoint = function (textCodes) {
             for (let i = 0; i < textStr.length; i++) {
                 if (i > 0 && deltaXList.length > 0) {
                     x += deltaXList[(i - 1)];
+                    if (ctm) {
+                        const r = ctmCalDetalPoint(deltaXList[(i - 1)], 0, ctm)
+                        cx += r.ctmX
+                    } else {
+                        cx = x
+                    }
                 }
                 if (i > 0 && deltaYList.length > 0) {
                     y += deltaYList[(i - 1)];
+                    if (ctm) {
+                        const r = ctmCalDetalPoint(0, deltaYList[(i - 1)], ctm)
+                        cy += r.ctmY
+                    } else {
+                        cy = y
+                    }
+                }
+                let realPos = adjustPos(cx, cy, boundary);
+                if (compositeObjectCTM) {
+                    realPos = ctmCalPoint(realPos.cx, realPos.cy, compositeObjectCTM);
                 }
                 let text = textStr.substring(i, i + 1);
-                let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
+                let textCodePoint = {
+                    'x': converterDpi(x),
+                    'y': converterDpi(y),
+                    'text': text,
+                    cx: converterDpi(realPos.cx),
+                    cy: converterDpi(realPos.cy)
+                };
                 textCodePointList.push(textCodePoint);
+            }
+        }
+    }
+    if (textCodePointList.length > 0) {
+        for (const transform of cgTransform) {
+            // console.log(transform)
+            const pos = transform['CodePosition']
+            const glyphCount = transform['GlyphCount']
+            // const codeCount = transform['CodeCount']
+            for (let i = pos; i < glyphCount + pos; i++) {
+                if (textCodePointList.length <= i) {
+                    const glyphs = `${textCodePointList[textCodePointList.length - 1].glyph} ${transform['Glyphs'][i - pos]}`
+                    textCodePointList[textCodePointList.length - 1].glyph = glyphs;
+                } else {
+                    textCodePointList[i].glyph = transform['Glyphs'][i - pos]
+                }
             }
         }
     }
     return textCodePointList;
 }
-
-export const replaceFirstSlash = function (str) {
-    if (str) {
-        if (str.indexOf('/') === 0) {
-            str = str.replace('/', '');
-        }
-    }
-    return str;
-}
-
-export const getExtensionByPath = function (path) {
-    if (!path && typeof path !== "string") return "";
-    return path.substring(path.lastIndexOf('.') + 1);
-}
-
 
 let REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
 
@@ -317,9 +214,12 @@ let FONT_FAMILY = {
 };
 
 export const getFontFamily = function (fontObj) {
-    let font = fontObj.familyName
+    if (!fontObj) {
+        return FONT_FAMILY['宋体']
+    }
+    let font = fontObj.FamilyName
     if (!font) {
-        font = fontObj.fontName
+        font = fontObj.FontName
     }
     if (FONT_FAMILY[font.toLowerCase()]) {
         font = FONT_FAMILY[font.toLowerCase()];
@@ -350,7 +250,7 @@ export const parseCtm = function (ctm) {
 }
 
 export const parseColor = function (color) {
-    if (color) {
+    if (color && color.length > 0) {
         if (color.indexOf('#') !== -1) {
             color = color.replace(/#/g, '');
             color = color.replace(/ /g, '');
@@ -388,4 +288,47 @@ export const Uint8ArrayToHexString = function (arr) {
     }
 
     return hexChars.join('');
+}
+
+export const replaceFirstSlash = function (str) {
+    if (str) {
+        if (str.indexOf('/') === 0) {
+            str = str.replace('/', '');
+        }
+    }
+    return str;
+}
+
+export const replaceFirstTarget = function (str, target) {
+    if (str) {
+        if (str.indexOf(target) === 0) {
+            str = str.replace(target, '');
+        }
+    }
+    return str;
+}
+
+export const readUTF = function (arr) {
+    if (typeof arr === 'string') {
+        return arr;
+    }
+    var UTF = '', _arr = arr;
+    for (var i = 0; i < _arr.length; i++) {
+        var one = _arr[i].toString(2),
+            v = one.match(/^1+?(?=0)/);
+        if (v && one.length == 8) {
+            var bytesLength = v[0].length;
+            var store = _arr[i].toString(2).slice(7 - bytesLength);
+            for (var st = 1; st < bytesLength; st++) {
+                store += _arr[st + i].toString(2).slice(2)
+            }
+            UTF = `${UTF}${String.fromCharCode(parseInt(store, 2))}`;
+            i += bytesLength - 1
+        }
+        else {
+            // console.log((_arr[i].toString(2).length))
+        //     UTF = `${UTF}${String.fromCharCode(_arr[i])}`
+        }
+    }
+    return UTF
 }
