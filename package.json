@@ -1,6 +1,6 @@
 {
   "name": "ofd.js",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "main": "lib/ofd.umd.min.js",
   "author": "dltech21",
   "description": "ofd渲染",
@@ -24,7 +24,7 @@
     "axios": "^0.20.0",
     "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
-    "ofd-xml-parser": "^0.0.2",
+    "ofd-xml-parser": "^0.0.6",
     "js-md5": "^0.7.3",
     "js-sha1": "^0.6.0",
     "jsrsasign": "^9.1.9",
