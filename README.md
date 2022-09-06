@@ -9,122 +9,13 @@
 效果： 
 ![示例](./ofd.jpg)
 
-[体验地址](https://51shouzu.xyz/ofd/)
+小程序OFD验签示例
 
-## Usage with npm
+![示例](./gh_6711026c0ea7_258.jpg)
 
-```
-npm i ofd.js
-```
+微信
 
-```
-import {parseOfdDocument, renderOfd} from "ofd.js";
-```
-
-```
-其中ofd传入的file支持本地文件、二进制或者url、screenWidth为屏幕宽度
-parseOfdDocument({
-        ofd: file,
-        success(res) {
-          //输出ofd每页的div
-          const divs = renderOfd(screenWidth, res);
-          //获取签章div的信息, 具体看demo
-          for(let ele of document.getElementsByName('seal_img_div')) {
-             this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
-          }
-        },
-        fail(error) {
-          console.log(error)
-        }
-      });
-```
-
-## 服务接口
-
-### OFD转PDF
-
-URL：http://donal-tong.ticp.io/api/ofd/convertPdf
-
-请求方式：POST
-
-报文格式：Content-Type: application/json
-
-请求参数：
-
-| 参数        | 说明                                                         | 类型    | 是否必填 |
-| ----------- | ------------------------------------------------------------ | ------- | -------- |
-| ofdBase64   | 待转换的OFD版式文件，BASE64编码的字符串                  | String  | 是       |
-
-
-请求参数示例：
-
-```json
-{
-    "ofdBase64":"{{ofdBase64}}"
-}
-```
-
-返回数据：
-
-| 数据    | 说明                                                   |
-| ------- | ------------------------------------------------------ |
-| code    | 返回码。"0"表示成功，其余表示失败，失败原因参考message |
-| message | 请求结果信息                                           |
-| data    | 转后的pdf文件，BASE64编码的字符串            |
-
-返回数据示例：
-
-```json
-{
-	"code": "0",
-	"data": "xxx",
-	"message": "成功"
-}
-```
-
-### PDF转OFD
-
-URL：http://donal-tong.ticp.io/api/ofd/convertOfd
-
-请求方式：POST
-
-报文格式：Content-Type: application/json
-
-请求参数：
-
-| 参数        | 说明                                                         | 类型    | 是否必填 |
-| ----------- | ------------------------------------------------------------ | ------- | -------- |
-| pdfBase64   | 待转换的Pdf，BASE64编码的字符串                  | String  | 是       |
-
-
-请求参数示例：
-
-```json
-{
-    "pdfBase64":"{{pdfBase64}}"
-}
-```
-
-返回数据：
-
-| 数据    | 说明                                                   |
-| ------- | ------------------------------------------------------ |
-| code    | 返回码。"0"表示成功，其余表示失败，失败原因参考message |
-| message | 请求结果信息                                           |
-| data    | 转后的ofd文件，BASE64编码的字符串            |
-
-返回数据示例：
-
-```json
-{
-	"code": "0",
-	"data": "xxx",
-	"message": "成功"
-}
-```
-
-## 愿景
-希望能做到pdf.js的高度
+![示例](./wx.jpg)
 
 ## ofd推荐项目
 [OFD Reader & Writer](https://github.com/Trisia/ofdrw)
