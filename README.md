@@ -17,6 +17,11 @@
 
 ![示例](./wx.jpg)
 
+
+```md
+npm i ofd.js
+```
+
 #### 解析OFD文件
 ```
 parseOfdDocument({
