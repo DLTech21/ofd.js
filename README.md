@@ -17,6 +17,48 @@
 
 ![示例](./wx.jpg)
 
+#### 解析OFD文件
+```
+parseOfdDocument({
+        ofd: ofdFile,
+        success() {
+            
+        },
+        fail(error){
+            console.log(error)
+        }
+    })
+```
+
+#### 一次性渲染OFD对应文档的所有页，适合页数少
+**此方法需要在parseOfdDocument success回调后使用**
+
+| 参数        | 说明                                                           | 是否必填 |
+| ----------- | ------------------------------------------------------------ | -------- |
+| documentIndex   | ofd文档中document的索引，默认从0开始                              | 是       |
+| width   | 预期渲染的宽度，像素值 ，如800                             | 否       |
+
+```
+renderOfd(documentIndex, width).then(divs=>{
+    // do something
+})
+```
+
+#### 渲染OFD对应文档的对应页
+**此方法需要在parseOfdDocument success回调后使用**
+
+| 参数        | 说明                                                           | 是否必填 |
+| ----------- | ------------------------------------------------------------ | -------- |
+| documentIndex   | ofd文档中document的索引，默认从0开始                              | 是       |
+| pageIndex   | ofd文档中页码，默认从0开始                              | 是       |
+| width   | 预期渲染的宽度，像素值 ，如800                             | 否       |
+
+```
+renderOfdByIndex(documentIndex, pageIndex, width).then(div => {
+    // do something
+}})
+```
+
 ## ofd推荐项目
 [OFD Reader & Writer](https://github.com/Trisia/ofdrw)
 
