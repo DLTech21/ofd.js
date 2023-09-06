@@ -114,3 +114,5 @@ export const getPageScale = function () {
     return getPageScal();
 }
 
+export { calPageBox, calPageBoxScale, renderPage }
+
