@@ -140,7 +140,8 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
             }
         }
     }
-    const contentLayers = page[pageId]['json']['ofd:Content']['ofd:Layer'];
+  
+    const contentLayers = page[pageId]?.json?.['ofd:Content']?.['ofd:Layer'];
     let array = [];
     array = array.concat(contentLayers);
     for (let contentLayer of array) {
@@ -170,7 +171,7 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
 const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
     let div = document.createElement('div');
     div.setAttribute('style', `overflow: hidden;z-index:${annotation['pfIndex']};position:relative;`)
-    let boundary = annotation['appearance']['@_Boundary'];
+    let boundary = annotation['appearance']?.['@_Boundary'];
     if (boundary) {
         let divBoundary = converterBox(parseStBox(boundary));
         div.setAttribute('style', `overflow: hidden;z-index:${annotation['pfIndex']};position:absolute; left: ${divBoundary.x}px; top: ${divBoundary.y}px; width: ${divBoundary.w}px; height: ${divBoundary.h}px`)
@@ -221,7 +222,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
     let fillColor = null;
     let strokeColor = null;
     let lineWith = converterDpi(0.353);
-    let drawParam = layer['@_DrawParam'];
+    let drawParam = layer?.['@_DrawParam'];
     if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
         if (drawParamResObj[drawParam]['relative']) {
             drawParam = drawParamResObj[drawParam]['relative'];
@@ -245,7 +246,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
             lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
         }
     }
-    const imageObjects = layer['ofd:ImageObject'];
+    const imageObjects = layer?.['ofd:ImageObject'];
     let imageObjectArray = [];
     imageObjectArray = imageObjectArray.concat(imageObjects);
     for (const imageObject of imageObjectArray) {
@@ -254,7 +255,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
             pageDiv.appendChild(element);
         }
     }
-    const pathObjects = layer['ofd:PathObject'];
+    const pathObjects = layer?.['ofd:PathObject'];
     let pathObjectArray = [];
     pathObjectArray = pathObjectArray.concat(pathObjects);
     for (const pathObject of pathObjectArray) {
@@ -263,7 +264,7 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
             pageDiv.appendChild(svg);
         }
     }
-    const textObjects = layer['ofd:TextObject'];
+    const textObjects = layer?.['ofd:TextObject'];
     let textObjectArray = [];
     textObjectArray = textObjectArray.concat(textObjects);
     for (const textObject of textObjectArray) {
