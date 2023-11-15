@@ -24,7 +24,7 @@ export const convertPathAbbreviatedDatatoPoint = abbreviatedData => {
     let pointList = [];
     let i = 0;
     while (i < array.length) {
-        if (array[i] === 'M'|| array[i] === 'S') {
+        if (array[i] === 'M' || array[i] === 'S') {
             let point = {
                 'type': 'M',
                 'x': parseFloat(array[i + 1]),
@@ -102,7 +102,7 @@ const millimetersToPixel = function (mm, dpi) {
 
 let MaxScale = 10;
 
-let Scale = MaxScale ;
+let Scale = MaxScale;
 
 export const setMaxPageScal = function (scale) {
     MaxScale = scale > 5 ? 5 : scale;
@@ -110,8 +110,8 @@ export const setMaxPageScal = function (scale) {
 
 export const setPageScal = function (scale) {
     // scale = Math.ceil(scale);
-    Scale = scale > 1 ? scale: 1;
-    Scale = Scale > MaxScale ? MaxScale: Scale;
+    Scale = scale > 1 ? scale : 1;
+    Scale = Scale > MaxScale ? MaxScale : Scale;
 }
 
 export const getPageScal = function () {
@@ -119,11 +119,11 @@ export const getPageScal = function () {
 }
 
 export const converterDpi = function (width) {
-    return millimetersToPixel(width, Scale*25.4);
+    return millimetersToPixel(width, Scale * 25.4);
 }
 
 export const deltaFormatter = function (delta) {
-    if(delta.indexOf("g") === -1) {
+    if (delta.indexOf("g") === -1) {
         let floatList = [];
         for (let f of delta.split(' ')) {
             floatList.push(parseFloat(f));
@@ -202,8 +202,15 @@ export const calTextPoint = function (textCodes) {
                     y += deltaYList[(i - 1)];
                 }
                 let text = textStr.substring(i, i + 1);
-                let textCodePoint = {'x': converterDpi(x), 'y': converterDpi(y), 'text': text};
-                textCodePointList.push(textCodePoint);
+                let filterPointY = textCodePointList.filter((textCodePoint) => {
+                    return textCodePoint.y == converterDpi(y)
+                });
+                if (filterPointY && filterPointY.length) { // Y坐标相同，无需再创建text标签
+                    filterPointY[0].text += text;
+                } else {
+                    let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text };
+                    textCodePointList.push(textCodePoint);
+                }
             }
         }
     }
@@ -228,9 +235,9 @@ export const getExtensionByPath = function (path) {
 let REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
 
 let HTML_DECODE = {
-    "&lt;" : "<",
-    "&gt;" : ">",
-    "&amp;" : "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&amp;": "&",
     "&nbsp;": " ",
     "&quot;": "\"",
     "&copy;": "",
@@ -238,17 +245,17 @@ let HTML_DECODE = {
     // Add more
 };
 
-export const decodeHtml = function(s){
+export const decodeHtml = function (s) {
     s = (s != undefined) ? s : this.toString();
     return (typeof s != "string") ? s :
         s.replace(REGX_HTML_DECODE,
-            function($0, $1){
+            function ($0, $1) {
                 var c = HTML_DECODE[$0];
-                if(c == undefined){
+                if (c == undefined) {
                     // Maybe is Entity Number
-                    if(!isNaN($1)){
-                        c = String.fromCharCode(($1 == 160) ? 32:$1);
-                    }else{
+                    if (!isNaN($1)) {
+                        c = String.fromCharCode(($1 == 160) ? 32 : $1);
+                    } else {
                         c = $0;
                     }
                 }
