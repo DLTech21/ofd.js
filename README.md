@@ -44,9 +44,8 @@ parseOfdDocument({
 | width   | 预期渲染的宽度，像素值 ，如800                             | 否       |
 
 ```
-renderOfd(documentIndex, width).then(divs=>{
-    // do something
-})
+const divs = renderOfd(documentIndex, width)
+// do something
 ```
 
 #### 渲染OFD对应文档的对应页
@@ -59,9 +58,9 @@ renderOfd(documentIndex, width).then(divs=>{
 | width   | 预期渲染的宽度，像素值 ，如800                             | 否       |
 
 ```
-renderOfdByIndex(documentIndex, pageIndex, width).then(div => {
-    // do something
-}})
+const div = renderOfdByIndex(documentIndex, pageIndex, width)
+// do something
+
 ```
 
 ## ofd推荐项目
