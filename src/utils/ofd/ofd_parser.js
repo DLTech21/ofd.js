@@ -415,20 +415,39 @@ const getSealDocumentObj = function (stampAnnot) {
 
 const getJsonFromXmlContent = async function (zip, xmlName) {
     return new Promise((resolve, reject) => {
-        zip.files[xmlName].async('string').then(function (content) {
-            let ops = {
-                attributeNamePrefix: "@_",
-                ignoreAttributes: false,
-                parseNodeValue: false,
-                trimValues: false
-            };
-            let jsonObj = parser.parse(content, ops);
-            let result = {'xml': content, 'json': jsonObj};
-            resolve(result);
-        }, function error(e) {
-            reject(e);
-        })
-    });
+        try {
+            let xmlObj = zip.files[xmlName]
+            if (!xmlObj) {
+                let upperXmlName = xmlName.toUpperCase()
+                for (const key in zip.files) {
+                    let upperKey = key.toUpperCase()
+                    if (upperKey === upperXmlName) {
+                        xmlObj = zip.files[key]
+                        break
+                    }
+                }
+            }
+
+            xmlObj.async('string').then(
+              function (content) {
+                  let ops = {
+                      attributeNamePrefix: '@_',
+                      ignoreAttributes: false,
+                      parseNodeValue: false,
+                      trimValues: false
+                  }
+                  let jsonObj = parser.parse(content, ops)
+                  let result = { xml: content, json: jsonObj }
+                  resolve(result)
+              },
+              function error(e) {
+                  reject(e)
+              }
+            )
+        } catch (error) {
+            reject(error)
+        }
+    })
 }
 
 const parseJbig2ImageFromZip = async function (zip, name) {
