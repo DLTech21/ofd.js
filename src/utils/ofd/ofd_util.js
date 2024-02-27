@@ -191,30 +191,46 @@ export const calTextPoint = function (textCodes) {
         }
         let textStr = textCode['#text'];
         if (textStr) {
-            textStr += '';
+            textStr += "";
             textStr = decodeHtml(textStr);
             textStr = textStr.replace(/&#x20;/g, ' ');
+            let lastXDeltaIndex = 0;
+            let lastYDeltaIndex = 0;
             for (let i = 0; i < textStr.length; i++) {
                 if (i > 0 && deltaXList.length > 0) {
-                    x += deltaXList[(i - 1)];
+                    let deltaX = deltaXList[i - 1];
+                    if (deltaX || deltaX === 0) {
+                        x += deltaX;
+                        lastXDeltaIndex = i - 1;
+                    } else {
+                        deltaX = deltaXList[lastXDeltaIndex];
+                        x += deltaX;
+                    }
                 }
                 if (i > 0 && deltaYList.length > 0) {
-                    y += deltaYList[(i - 1)];
+                    let deltaY = deltaYList[i - 1];
+                    if (deltaY || deltaY === 0) {
+                        y += deltaY;
+                        lastYDeltaIndex = i - 1;
+                    } else {
+                        deltaY = deltaYList[lastYDeltaIndex];
+                        y += 0;
+                    }
                 }
-                let text = textStr.substring(i, i + 1);
-                let filterPointY = textCodePointList.filter((textCodePoint) => {
-                    return textCodePoint.y == converterDpi(y)
-                });
-                if (filterPointY && filterPointY.length) { // Y坐标相同，无需再创建text标签
-                    filterPointY[0].text += text;
-                } else {
-                    let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text };
-                    textCodePointList.push(textCodePoint);
+                if (isNaN(x)) {
+                    x = 0;
                 }
+                if (isNaN(y)) {
+                    y = 0;
+                }
+                let text = textStr.substring(i, i + 1)
+
+                let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text }
+                textCodePointList.push(textCodePoint)
             }
         }
     }
-    return textCodePointList;
+    return textCodePointList
 }
 
 export const replaceFirstSlash = function (str) {
@@ -271,8 +287,8 @@ let FONT_FAMILY = {
     '宋体': 'SimSun, simsun, Songti SC',
     '黑体': 'SimHei, STHeiti, simhei',
     '仿宋': 'FangSong, STFangsong, simfang',
-    '小标宋体': 'sSun',
-    '方正小标宋_gbk': 'sSun',
+    '小标宋体': '小标仿宋简体, sSun',
+    '方正小标宋_gbk': '小标仿宋简体, sSun',
     '仿宋_gb2312': 'FangSong, STFangsong, simfang',
     '楷体_gb2312': '楷体, KaiTi, Kai, simkai',
     'couriernew': 'Courier New',
