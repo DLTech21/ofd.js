@@ -66,11 +66,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/DLTech21/ofd.js"
+    "url": "https://github.com/xxss0903/ofd.js"
   },
-  "license": "Apache-2.0",
-  "funding": {
-    "type": "paypal",
-    "url": "https://paypal.me/donaltong"
-  }
+  "license": "Apache-2.0"
 }
