@@ -1,12 +1,12 @@
 {
-  "name": "ofd.js",
-  "version": "0.2.6",
+  "name": "liteofd.js",
+  "version": "0.2.7",
   "main": "lib/ofd.umd.min.js",
-  "author": "dltech21",
-  "description": "ofd渲染",
+  "author": "xxss0903",
+  "description": "based on ofd.js",
   "keywords": [
-    "ofd",
-    "ofd.js",
+    "liteofd",
+    "liteofd.js",
     "ofd渲染"
   ],
   "private": false,
