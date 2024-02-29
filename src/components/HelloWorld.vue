@@ -48,7 +48,10 @@
           <font-awesome-icon icon="step-forward"/>
         </div>
       </div>
-
+      <div style="display: flex; flex-direction: row">
+        <input ref="keywordRef" type="text">
+        <div class="upload-icon" @click="handleSearchClick">搜索</div>
+      </div>
     </el-header>
     <el-main style="height: auto;background: #808080;;padding: 0" v-loading="loading">
       <div id="leftMenu"
@@ -68,10 +71,17 @@
         <div class="text-icon" @click="demo(4)">
           <p>多页文档</p>
         </div>
+        <div style="height: 400px; background-color: #5867dd; width: 100%; margin-top: 20px; overflow-y: auto;">
+          <div v-for="(item, index) in searchTextList" :key="index" @click="handleSearchObjClick(item)">
+            <div style="font-size: 12px; cursor: pointer;margin-top: 4px">{{ item.searchTextObject["ofd:TextCode"]["#text"]}}</div>
+          </div>
+
+        </div>
       </div>
       <div class="main-section"
           id="content" ref="contentDiv" @mousewheel="scrool">
       </div>
+
     </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
       <div class="SealContainer mask" @click="closeSealInfoDialog"></div>
@@ -135,7 +145,7 @@
             <span class="value" id="spSealVersion">[无效的签章结构]</span>
           </div>
         </div>
-        <input style="position:absolute;right:1%;top:1%;" type="button" name="" id="" value="X"
+        <input style="position:absolute;right:1%;top:1%;" type="button" name="ddddddddddd" id="" value="X"
                @click="closeSealInfoDialog()"/>
       </div>
 
@@ -155,8 +165,10 @@
 
 <script>
 
-import {parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale} from "@/utils/ofd/ofd";
+import { parseOfdDocument, renderOfd, renderOfdByScale, digestCheck, getPageScale, setPageScale, renderSinglePage, renderOfdByScaleWithRedraw } from "@/utils/ofd/ofd"
 import * as JSZipUtils from "jszip-utils";
+import { converterDpi } from "@/utils/ofd/ofd_util"
+import { searchKeywordFunc } from "@/utils/ofd/ofd_find_controller"
 
 export default {
   name: 'HelloWorld',
@@ -173,6 +185,8 @@ export default {
       dialogFormVisible: false,
       ofdObj: null,
       screenWidth: document.body.clientWidth,
+      searchTextList: [], // 搜索的内容
+      pageDivs: [] // 渲染的ofd的页面的div结构
     }
   },
 
@@ -320,7 +334,10 @@ export default {
       const divs = renderOfdByScale(this.ofdObj);
       this.displayOfdDiv(divs);
     },
-
+    renderOfdPage(){
+      const divs = renderOfdByScale(this.ofdObj);
+      this.displayOfdDiv(divs);
+    },
     minus() {
       setPageScale(--this.scale);
       const divs = renderOfdByScale(this.ofdObj);
@@ -479,13 +496,15 @@ export default {
           console.log('解析ofd',t1 - t);
           that.ofdObj = res[0];
           that.pageCount = res[0].pages.length;
-          const divs = renderOfd(screenWidth, res[0]);
+          that.pageDivs = renderOfd(screenWidth, res[0]);
           let t2 = new Date().getTime();
-          console.log('xml转svg', t2 - t1)
-          that.displayOfdDiv(divs);
+          console.log('xml转svg', t2 - t1, that.pageDivs)
+          that.displayOfdDiv(that.pageDivs);
           let t3 = new Date().getTime();
           console.log('svg渲染到页面', t3 - t2);
           that.loading = false;
+
+          console.log("page divs ", that.pageDivs)
         },
         fail(error) {
           that.loading = false;
@@ -563,8 +582,65 @@ export default {
       if (!global.VerifyRet) {
         div.setAttribute('class', 'gray');
       }
-    }
+    },
+    handleSearchClick(){
+      console.log("divs ", this.pageDivs)
+      let keyword = this.$refs.keywordRef.value
+      this.searchImpl(keyword)
+    },
+    // ofd文档搜索内容
+    searchImpl(keyword = ""){
+      if ( keyword.replace(/\s+/g,"") ) {
+        this.searchTextList = searchKeywordFunc(this.ofdObj, keyword)
+      } else {
+        this.searchTextList = []
+      }
+      console.log("search text value ", this.searchTextList)
+      if ( this.searchTextList.length > 0 ) {
+        // 分页进行渲染和替换显示，所以可以查找需要的分页进行重新替换
+        this.searchTextList.forEach(value => {
+          let pageDiv = this.pageDivs[value.pageIndex]
+          renderSinglePage(pageDiv, value.page, this.ofdObj, keyword)
+        })
 
+        this.displayOfdDiv(this.pageDivs);
+      } else {
+        console.log("search empty")
+        this.pageDivs = renderOfdByScaleWithRedraw(this.ofdObj)
+        this.displayOfdDiv(this.pageDivs)
+      }
+    },
+    gotoPage(pageIndex){
+      this.pageIndex = pageIndex
+      let contentDiv = document.getElementById('content');
+      let ele = contentDiv.children.item(this.pageIndex);
+      ele?.scrollIntoView(true);
+      ele?this.pageIndex:'';
+    },
+    handleSearchObjClick(item){
+      // 跳转到page
+      this.gotoPage(item.pageIndex)
+
+      // 渲染搜索到的文字的背景色
+      this.markSearchText(item)
+
+    },
+    markSearchText( item ) {
+      let textObject = item.searchTextObject
+
+      // 文本内容
+      let boundary = textObject["@_Boundary"]
+      let position = boundary.split(" ")
+      let xPx = converterDpi(position[0])
+      let yPx = converterDpi(position[1])
+      let widthPx = converterDpi(position[2])
+      let heightPx = converterDpi(position[3])
+
+      console.log("search item ",item.pageIndex, item, boundary, position, xPx, yPx, widthPx, heightPx)
+
+      // 将搜索到的文本的字体颜色修改
+
+    }
   }
 }
 </script>
@@ -703,7 +779,7 @@ export default {
 
 .left-section {
   position: fixed;
-  width: 88px;
+  width: 188px;
   height: 100%;
   background:#F5F5F5;
   border: 1px solid #e8e8e8;
@@ -714,7 +790,7 @@ export default {
 
 .main-section {
   padding-top: 20px;
-  margin-left:88px;
+  margin-left:188px;
   display: flex;
   flex-direction: column;
   align-items: center;
