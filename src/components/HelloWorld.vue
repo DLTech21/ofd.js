@@ -590,12 +590,17 @@ export default {
     },
     // ofd文档搜索内容
     searchImpl(keyword = ""){
+      // 如果有搜索的内容，将搜索的内容先置空
+      if ( this.searchTextList && this.searchTextList.length ) {
+        this.pageDivs = renderOfdByScaleWithRedraw(this.ofdObj)
+        this.displayOfdDiv(this.pageDivs)
+      }
+
       if ( keyword.replace(/\s+/g,"") ) {
         this.searchTextList = searchKeywordFunc(this.ofdObj, keyword)
       } else {
         this.searchTextList = []
       }
-      console.log("search text value ", this.searchTextList)
       if ( this.searchTextList.length > 0 ) {
         // 分页进行渲染和替换显示，所以可以查找需要的分页进行重新替换
         this.searchTextList.forEach(value => {

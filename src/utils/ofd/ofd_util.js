@@ -197,6 +197,8 @@ export const calTextPoint = function (textCodes) {
             let lastXDeltaIndex = 0;
             let lastYDeltaIndex = 0;
             for (let i = 0; i < textStr.length; i++) {
+                let tempDeltaX = 0
+                let tempDeltaY = 0
                 if (i > 0 && deltaXList.length > 0) {
                     let deltaX = deltaXList[i - 1];
                     if (deltaX || deltaX === 0) {
@@ -206,6 +208,8 @@ export const calTextPoint = function (textCodes) {
                         deltaX = deltaXList[lastXDeltaIndex];
                         x += deltaX;
                     }
+
+                    tempDeltaX = deltaX
                 }
                 if (i > 0 && deltaYList.length > 0) {
                     let deltaY = deltaYList[i - 1];
@@ -216,6 +220,8 @@ export const calTextPoint = function (textCodes) {
                         deltaY = deltaYList[lastYDeltaIndex];
                         y += 0;
                     }
+
+                    tempDeltaY = deltaY
                 }
                 if (isNaN(x)) {
                     x = 0;
@@ -225,7 +231,7 @@ export const calTextPoint = function (textCodes) {
                 }
                 let text = textStr.substring(i, i + 1)
 
-                let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text }
+                let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text, deltaX: tempDeltaX, deltaY: tempDeltaY  }
                 textCodePointList.push(textCodePoint)
             }
         }

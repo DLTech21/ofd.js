@@ -512,10 +512,8 @@ export const renderContentTextObject = function (fontResObj, textObject, default
     let currentText = textCodeObj["#text"]
     let addSearchRect = false
     let keywordIndex = -1
-    let wordLength = 0
     if ( keyword && keyword.length) {
         keywordIndex = currentText.indexOf(keyword)
-        wordLength = keyword.length
         if ( keywordIndex >= 0 ) {
             addSearchRect = true
         }
@@ -538,9 +536,22 @@ export const renderContentTextObject = function (fontResObj, textObject, default
         // 添加选中的背景颜色，这里是所有的文本都被添加了背景颜色，需要除去背景的layer的文本，只在内容文本上添加
         let rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         let startWord = textCodePointList[keywordIndex]
+        let endWordIndex = keywordIndex + keyword.length - 1
+        let endWord = textCodePointList[endWordIndex]
+        let wordWidth = 0
+        if ( endWordIndex < currentText.length - 1) {
+            // 如果不是最后一个字符
+            endWord = textCodePointList[endWordIndex + 1]
+            wordWidth = endWord.x - startWord.x
+        } else {
+            let tempIndex = endWordIndex
+            // 是最后一个字符，添加最后一个字符的宽度
+            wordWidth = textCodePointList[tempIndex].x - startWord.x + size
+        }
+
         rect.setAttribute("x", startWord.x);
         rect.setAttribute("y", startWord.y - size);
-        rect.setAttribute("width", size * wordLength);
+        rect.setAttribute("width", wordWidth);
         rect.setAttribute("height", size);
         rect.setAttribute("fill", "yellow");
         svg.appendChild(rect);
