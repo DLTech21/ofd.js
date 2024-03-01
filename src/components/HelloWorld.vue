@@ -84,7 +84,6 @@
 
     </el-main>
     <div class="SealContainer" id="sealInfoDiv" hidden="hidden" ref="sealInfoDiv">
-      <div class="SealContainer mask" @click="closeSealInfoDialog"></div>
       <div class="SealContainer-layout">
         <div class="SealContainer-content">
           <p class="content-title">签章信息</p>
@@ -148,7 +147,6 @@
         <input style="position:absolute;right:1%;top:1%;" type="button" name="ddddddddddd" id="" value="X"
                @click="closeSealInfoDialog()"/>
       </div>
-
     </div>
 
 
@@ -532,34 +530,45 @@ export default {
         this.addEventOnSealDiv(ele, JSON.parse(ele.dataset.sesSignature), JSON.parse(ele.dataset.signedInfo));
       }
     },
+    async checkDigest(signedInfo){
+      return Promise.resolve(signedInfo)
+      .then(res => {
+        const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
+        global.HashRet = digestCheck(global.toBeChecked.get(res.signatureID));
+        const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
+        document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
+      })
 
+    },
     addEventOnSealDiv(div, SES_Signature, signedInfo) {
       try {
         global.HashRet=null;
         global.VerifyRet=signedInfo.VerifyRet;
+        let that = this;
         div.addEventListener("click",function(){
           document.getElementById('sealInfoDiv').hidden = false;
           document.getElementById('sealInfoDiv').setAttribute('style', 'display:flex;align-items: center;justify-content: center;');
+          console.log("signature data ", SES_Signature)
           if(SES_Signature.realVersion<4){
-            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'];
+            document.getElementById('spSigner').innerText = SES_Signature.toSign.cert['commonName'].str;
             document.getElementById('spProvider').innerText = signedInfo.Provider['@_ProviderName'];
             document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
             document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
             document.getElementById('spSignMethod').innerText = SES_Signature.toSign.signatureAlgorithm.replace(/\n/g,'');
-            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
-            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID.str;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name.str;
+            document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type.str;
             document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
             document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
             document.getElementById('spSealVersion').innerText = SES_Signature.toSign.eseal.esealInfo.header.version;
           }else{
-            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'];
+            document.getElementById('spSigner').innerText = SES_Signature.cert['commonName'].str;
             document.getElementById('spProvider').innerText = signedInfo.Provider['@_ProviderName'];
             document.getElementById('spHashedValue').innerText = SES_Signature.toSign.dataHash.replace(/\n/g,'');
             document.getElementById('spSignedValue').innerText = SES_Signature.signature.replace(/\n/g,'');
             document.getElementById('spSignMethod').innerText = SES_Signature.signatureAlgID.replace(/\n/g,'');
-            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID;
-            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name;
+            document.getElementById('spSealID').innerText = SES_Signature.toSign.eseal.esealInfo.esID.str;
+            document.getElementById('spSealName').innerText = SES_Signature.toSign.eseal.esealInfo.property.name.str;
             document.getElementById('spSealType').innerText = SES_Signature.toSign.eseal.esealInfo.property.type;
             document.getElementById('spSealAuthTime').innerText = "从 "+SES_Signature.toSign.eseal.esealInfo.property.validStart+" 到 "+SES_Signature.toSign.eseal.esealInfo.property.validEnd;
             document.getElementById('spSealMakeTime').innerText = SES_Signature.toSign.eseal.esealInfo.property.createDate;
@@ -569,10 +578,11 @@ export default {
           document.getElementById('VerifyRet').innerText = "文件摘要值后台验证中，请稍等... "+(global.VerifyRet?"签名值验证成功":"签名值验证失败");
           if(global.HashRet==null||global.HashRet==undefined||Object.keys(global.HashRet).length <= 0){
             setTimeout(function(){
-              const signRetStr = global.VerifyRet?"签名值验证成功":"签名值验证失败";
-              global.HashRet = digestCheck(global.toBeChecked.get(signedInfo.signatureID));
-              const hashRetStr = global.HashRet?"文件摘要值验证成功":"文件摘要值验证失败";
-              document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
+              that.checkDigest(signedInfo)
+              // const signRetStr = global.VerifyRet?"签名值验证成功1":"签名值验证失败2";
+              // global.HashRet = digestCheck(global.toBeChecked.get(signedInfo.signatureID));
+              // const hashRetStr = global.HashRet?"文件摘要值验证成功3":"文件摘要值验证失败4";
+              // document.getElementById('VerifyRet').innerText = hashRetStr+" "+signRetStr;
             },1000);
           }
         });

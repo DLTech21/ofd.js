@@ -39,9 +39,12 @@ export const parseSesSignature = async function (zip, name) {
 
 export const digestCheckProcess = function (arr){
     let ret = true;
-    for (const val of arr) {
-        const value = digestByteArray(val.fileData, val.hashed, val.checkMethod);
-        ret = ret && value;
+    console.log("digest check ", arr)
+    if ( arr ) {
+        for (const val of arr) {
+            const value = digestByteArray(val.fileData, val.hashed, val.checkMethod);
+            ret = ret && value;
+        }
     }
     return ret;
 }
