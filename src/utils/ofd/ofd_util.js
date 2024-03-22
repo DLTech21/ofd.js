@@ -239,12 +239,22 @@ export const calTextPoint = function (textCodes) {
     return textCodePointList
 }
 
+// 替换object的第一个splash，拿到文档的路径
 export const replaceFirstSlash = function (str) {
     if (str) {
-        if (str.indexOf('/') === 0) {
-            str = str.replace('/', '');
+        if ( typeof str === 'string') {
+            if (str.indexOf('/') === 0) {
+                str = str.replace('/', '');
+            }
+        } else if ( typeof str === 'object' && str['#text']) {
+            let tempStr = str['#text']
+            if (tempStr.indexOf('/') === 0) {
+                tempStr = tempStr.replace('/', '');
+            }
+            str = tempStr
         }
     }
+
     return str;
 }
 
