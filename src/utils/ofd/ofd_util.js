@@ -263,38 +263,21 @@ export const getExtensionByPath = function (path) {
     return path.substring(path.lastIndexOf('.') + 1);
 }
 
+const domParser = new DOMParser()
 
-let REGX_HTML_DECODE = /&\w+;|&#(?:x([0-9A-Fa-f]+)|(\d+));/g
-
-let HTML_DECODE = {
-    "&lt;": "<",
-    "&gt;": ">",
-    "&amp;": "&",
-    "&nbsp;": " ",
-    "&quot;": "\"",
-    "&copy;": "",
-    "&apos;": "'",
-    // 添加unicode的码
-    "&#x0020;": " "
-};
+function decodeHTML(html) {
+    const doc = domParser.parseFromString(html, "text/html");
+    return doc.documentElement.textContent;
+}
 
 // decode unicode and ascii to string character
 export const decodeHtml = function (s) {
     s = (s != undefined) ? s : this.toString();
-    return (typeof s != "string") ? s :
-        s.replace(REGX_HTML_DECODE,
-            function ($0, $1) {
-                var c = HTML_DECODE[$0];
-                if (c == undefined) {
-                    // Maybe is Entity Number
-                    if (!isNaN($1)) {
-                        c = String.fromCharCode(($1 == 160) ? 32 : $1);
-                    } else {
-                        c = $0;
-                    }
-                }
-                return c;
-            });
+    if ( typeof s == "string") {
+        return decodeHTML(s)
+    } else {
+        return s
+    }
 };
 
 let FONT_FAMILY = {
