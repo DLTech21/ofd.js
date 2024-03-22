@@ -264,7 +264,7 @@ export const getExtensionByPath = function (path) {
 }
 
 
-let REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
+let REGX_HTML_DECODE = /&\w+;|&#(?:x([0-9A-Fa-f]+)|(\d+));/g
 
 let HTML_DECODE = {
     "&lt;": "<",
@@ -274,9 +274,11 @@ let HTML_DECODE = {
     "&quot;": "\"",
     "&copy;": "",
     "&apos;": "'",
-    // Add more
+    // 添加unicode的码
+    "&#x0020;": " "
 };
 
+// decode unicode and ascii to string character
 export const decodeHtml = function (s) {
     s = (s != undefined) ? s : this.toString();
     return (typeof s != "string") ? s :
