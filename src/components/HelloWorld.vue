@@ -77,6 +77,12 @@
           </div>
 
         </div>
+        <div style="height: 400px; background-color: #5867dd; width: 100%; margin-top: 20px; overflow-y: auto;">
+          <div v-for="(item, index) in ofdOutlines" :key="index" @click="handleOutlineClick(item)">
+            <div style="font-size: 12px; cursor: pointer;margin-top: 4px">{{ (typeof item) === "object" ? item["@_Title"] : ""}}</div>
+          </div>
+
+        </div>
       </div>
       <div class="main-section"
           id="content" ref="contentDiv" @mousewheel="scrool">
@@ -184,7 +190,8 @@ export default {
       ofdObj: null,
       screenWidth: document.body.clientWidth,
       searchTextList: [], // 搜索的内容
-      pageDivs: [] // 渲染的ofd的页面的div结构
+      pageDivs: [], // 渲染的ofd的页面的div结构
+      ofdOutlines: [] // 大纲
     }
   },
 
@@ -493,6 +500,11 @@ export default {
           let t1 = new Date().getTime();
           console.log('解析ofd',t1 - t);
           that.ofdObj = res[0];
+          // 获取大纲
+          let outlines = that.ofdObj.document["ofd:Outlines"]
+          if ( outlines ) {
+            that.ofdOutlines = outlines["ofd:OutlineElem"]
+          }
           that.pageCount = res[0].pages.length;
           that.pageDivs = renderOfd(screenWidth, res[0]);
           let t2 = new Date().getTime();
@@ -633,6 +645,14 @@ export default {
       ele?this.pageIndex:'';
     },
     handleSearchObjClick(item){
+      // 跳转到page
+      this.gotoPage(item.pageIndex)
+
+      // 渲染搜索到的文字的背景色
+      this.markSearchText(item)
+
+    },
+    handleOutlineClick(item){
       // 跳转到page
       this.gotoPage(item.pageIndex)
 
