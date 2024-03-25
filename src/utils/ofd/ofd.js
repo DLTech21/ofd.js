@@ -18,7 +18,7 @@
  *
  */
 
-import {calPageBox, calPageBoxScale, renderPage} from "@/utils/ofd/ofd_render";
+import { calPageBox, calPageBoxScale, renderPage, renderPageImpl } from "@/utils/ofd/ofd_render"
 import {pipeline} from "@/utils/ofd/pipeline";
 import {
     getDocRoots,
@@ -74,9 +74,16 @@ export const renderOfd = function (screenWidth, ofd) {
         pageDiv.id = pageId;
         pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
         renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        // renderSinglePage(pageDiv, page, ofd)
+
         divArray.push(pageDiv);
     }
     return divArray;
+}
+
+export const renderSinglePage = (pageDiv, pageObj, pageOfdData, word = "") => {
+    pageDiv.innerHTML = ""
+    renderPageImpl(pageDiv, pageObj, pageOfdData.tpls, pageOfdData.fontResObj, pageOfdData.drawParamResObj, pageOfdData.multiMediaResObj, word);
 }
 
 export const renderOfdByScale = function (ofd) {
@@ -84,6 +91,20 @@ export const renderOfdByScale = function (ofd) {
     if (!ofd) {
         return divArray;
     }
+    for (const page of ofd.pages) {
+        let box = calPageBoxScale(ofd.document, page);
+        const pageId = Object.keys(page)[0];
+        let pageDiv = document.createElement('div');
+        pageDiv.id = pageId;
+        pageDiv.setAttribute('style', `margin-bottom: 20px;position: relative;width:${box.w}px;height:${box.h}px;background: white;`)
+        renderPage(pageDiv, page, ofd.tpls, ofd.fontResObj, ofd.drawParamResObj, ofd.multiMediaResObj);
+        divArray.push(pageDiv);
+    }
+    return divArray;
+}
+
+export const renderOfdByScaleWithRedraw = function (ofd) {
+    let divArray = [];
     for (const page of ofd.pages) {
         let box = calPageBoxScale(ofd.document, page);
         const pageId = Object.keys(page)[0];

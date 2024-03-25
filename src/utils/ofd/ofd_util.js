@@ -197,6 +197,8 @@ export const calTextPoint = function (textCodes) {
             let lastXDeltaIndex = 0;
             let lastYDeltaIndex = 0;
             for (let i = 0; i < textStr.length; i++) {
+                let tempDeltaX = 0
+                let tempDeltaY = 0
                 if (i > 0 && deltaXList.length > 0) {
                     let deltaX = deltaXList[i - 1];
                     if (deltaX || deltaX === 0) {
@@ -206,6 +208,8 @@ export const calTextPoint = function (textCodes) {
                         deltaX = deltaXList[lastXDeltaIndex];
                         x += deltaX;
                     }
+
+                    tempDeltaX = deltaX
                 }
                 if (i > 0 && deltaYList.length > 0) {
                     let deltaY = deltaYList[i - 1];
@@ -216,6 +220,8 @@ export const calTextPoint = function (textCodes) {
                         deltaY = deltaYList[lastYDeltaIndex];
                         y += 0;
                     }
+
+                    tempDeltaY = deltaY
                 }
                 if (isNaN(x)) {
                     x = 0;
@@ -225,7 +231,7 @@ export const calTextPoint = function (textCodes) {
                 }
                 let text = textStr.substring(i, i + 1)
 
-                let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text }
+                let textCodePoint = { 'x': converterDpi(x), 'y': converterDpi(y), 'text': text, deltaX: tempDeltaX, deltaY: tempDeltaY  }
                 textCodePointList.push(textCodePoint)
             }
         }
@@ -233,12 +239,22 @@ export const calTextPoint = function (textCodes) {
     return textCodePointList
 }
 
+// 替换object的第一个splash，拿到文档的路径
 export const replaceFirstSlash = function (str) {
     if (str) {
-        if (str.indexOf('/') === 0) {
-            str = str.replace('/', '');
+        if ( typeof str === 'string') {
+            if (str.indexOf('/') === 0) {
+                str = str.replace('/', '');
+            }
+        } else if ( typeof str === 'object' && str['#text']) {
+            let tempStr = str['#text']
+            if (tempStr.indexOf('/') === 0) {
+                tempStr = tempStr.replace('/', '');
+            }
+            str = tempStr
         }
     }
+
     return str;
 }
 
@@ -247,36 +263,21 @@ export const getExtensionByPath = function (path) {
     return path.substring(path.lastIndexOf('.') + 1);
 }
 
+const domParser = new DOMParser()
 
-let REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
+function decodeHTML(html) {
+    const doc = domParser.parseFromString(html, "text/html");
+    return doc.documentElement.textContent;
+}
 
-let HTML_DECODE = {
-    "&lt;": "<",
-    "&gt;": ">",
-    "&amp;": "&",
-    "&nbsp;": " ",
-    "&quot;": "\"",
-    "&copy;": "",
-    "&apos;": "'",
-    // Add more
-};
-
+// decode unicode and ascii to string character
 export const decodeHtml = function (s) {
     s = (s != undefined) ? s : this.toString();
-    return (typeof s != "string") ? s :
-        s.replace(REGX_HTML_DECODE,
-            function ($0, $1) {
-                var c = HTML_DECODE[$0];
-                if (c == undefined) {
-                    // Maybe is Entity Number
-                    if (!isNaN($1)) {
-                        c = String.fromCharCode(($1 == 160) ? 32 : $1);
-                    } else {
-                        c = $0;
-                    }
-                }
-                return c;
-            });
+    if ( typeof s == "string") {
+        return decodeHTML(s)
+    } else {
+        return s
+    }
 };
 
 let FONT_FAMILY = {
