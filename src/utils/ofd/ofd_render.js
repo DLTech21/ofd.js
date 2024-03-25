@@ -125,11 +125,26 @@ export const calPageBoxScale = function (document, page) {
     return box;
 }
 
-
-
-export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
+/**
+ * 渲染页面
+ * @param pageDiv 页面的组件div
+ * @param page 当前页面的数据
+ * @param tpls
+ * @param fontResObj
+ * @param drawParamResObj
+ * @param multiMediaResObj 多媒体资源
+ * @param keyword
+ */
+export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj, keyword = "") {
     const pageId = Object.keys(page)[0];
-    const template = page[pageId]['json']['ofd:Template'];
+    let pageData = page[pageId]
+    renderPageImpl(pageDiv, pageData, tpls, fontResObj, drawParamResObj, multiMediaResObj, keyword)
+}
+
+
+export const renderPageImpl = function (pageDiv, pageData, tpls, fontResObj, drawParamResObj, multiMediaResObj, keyword = "") {
+    // 渲染模板层
+    const template = pageData['json']['ofd:Template'];
     if (template) {
         let array = [];
         const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
@@ -140,33 +155,39 @@ export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamRe
             }
         }
     }
-  
-    const contentLayers = page[pageId]?.json?.['ofd:Content']?.['ofd:Layer'];
+
+    // 内容层
+    const contentLayers = pageData?.json?.['ofd:Content']?.['ofd:Layer'];
     let array = [];
     array = array.concat(contentLayers);
     for (let contentLayer of array) {
         if (contentLayer) {
-            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
+            renderContentLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false, keyword);
         }
     }
-    if (page[pageId].stamp) {
-        for (const stamp of page[pageId].stamp) {
-          if (stamp.type === 'ofd') {
-            renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
-          } else if (stamp.type === 'png') {
-              let sealBoundary = converterBox(stamp.obj.boundary);
-              const oid = Array.isArray(stamp.stamp.stampAnnot)?stamp.stamp.stampAnnot[0]['pfIndex']:stamp.stamp.stampAnnot['pfIndex'];
-              let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, sealBoundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo,oid);
-              pageDiv.appendChild(element);
-          }
+
+    // 印章
+    if (pageData.stamp) {
+        for (const stamp of pageData.stamp) {
+            if (stamp.type === 'ofd') {
+                renderSealPage(pageDiv, stamp.obj.pages, stamp.obj.tpls, true, stamp.stamp.stampAnnot, stamp.obj.fontResObj, stamp.obj.drawParamResObj, stamp.obj.multiMediaResObj, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo);
+            } else if (stamp.type === 'png') {
+                let sealBoundary = converterBox(stamp.obj.boundary);
+                const oid = Array.isArray(stamp.stamp.stampAnnot)?stamp.stamp.stampAnnot[0]['pfIndex']:stamp.stamp.stampAnnot['pfIndex'];
+                let element = renderImageOnDiv(pageDiv.style.width, pageDiv.style.height, stamp.obj.img, sealBoundary, stamp.obj.clip, true, stamp.stamp.sealObj.SES_Signature, stamp.stamp.signedInfo,oid);
+                pageDiv.appendChild(element);
+            }
         }
     }
-    if (page[pageId].annotation) {
-        for (const annotation of page[pageId].annotation) {
+
+    // 注释
+    if (pageData.annotation) {
+        for (const annotation of pageData.annotation) {
             renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj);
         }
     }
 }
+
 
 const renderAnnotation = function (pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
     let div = document.createElement('div');
@@ -218,6 +239,16 @@ const renderSealPage = function (pageDiv, pages, tpls, isStampAnnot, stampAnnot,
     }
 }
 
+//
+/**
+ * 分层渲染，分为底层、文本层、注释层等
+ * @param pageDiv 当前页面的引用
+ * @param fontResObj
+ * @param drawParamResObj
+ * @param multiMediaResObj
+ * @param layer
+ * @param isStampAnnot 是否是印章和注释
+ */
 const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
     let fillColor = null;
     let strokeColor = null;
@@ -274,6 +305,75 @@ const renderLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaRe
         }
     }
 }
+
+/**
+ * 单独渲染内容层，为了选择的底色进行修改
+ * @param pageDiv
+ * @param fontResObj
+ * @param drawParamResObj
+ * @param multiMediaResObj
+ * @param layer
+ * @param isStampAnnot
+ * @param keyword
+ */
+const renderContentLayer = function (pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot, keyword = "") {
+    let fillColor = null;
+    let strokeColor = null;
+    let lineWith = converterDpi(0.353);
+    let drawParam = layer?.['@_DrawParam'];
+    if (drawParam && Object.keys(drawParamResObj).length > 0 && drawParamResObj[drawParam]) {
+        if (drawParamResObj[drawParam]['relative']) {
+            drawParam = drawParamResObj[drawParam]['relative'];
+            if (drawParamResObj[drawParam]['FillColor']) {
+                fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+            }
+            if (drawParamResObj[drawParam]['StrokeColor']) {
+                strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+            }
+            if (drawParamResObj[drawParam]['LineWidth']) {
+                lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+            }
+        }
+        if (drawParamResObj[drawParam]['FillColor']) {
+            fillColor = parseColor(drawParamResObj[drawParam]['FillColor']);
+        }
+        if (drawParamResObj[drawParam]['StrokeColor']) {
+            strokeColor = parseColor(drawParamResObj[drawParam]['StrokeColor']);
+        }
+        if (drawParamResObj[drawParam]['LineWidth']) {
+            lineWith = converterDpi(drawParamResObj[drawParam]['LineWidth']);
+        }
+    }
+    const imageObjects = layer?.['ofd:ImageObject'];
+    let imageObjectArray = [];
+    imageObjectArray = imageObjectArray.concat(imageObjects);
+    for (const imageObject of imageObjectArray) {
+        if (imageObject) {
+            let element = renderImageObject(pageDiv.style.width, pageDiv.style.height, multiMediaResObj, imageObject)
+            pageDiv.appendChild(element);
+        }
+    }
+    const pathObjects = layer?.['ofd:PathObject'];
+    let pathObjectArray = [];
+    pathObjectArray = pathObjectArray.concat(pathObjects);
+    for (const pathObject of pathObjectArray) {
+        if (pathObject) {
+            let svg = renderPathObject(drawParamResObj, pathObject, fillColor, strokeColor, lineWith, isStampAnnot)
+            pageDiv.appendChild(svg);
+        }
+    }
+    const textObjects = layer?.['ofd:TextObject'];
+    let textObjectArray = [];
+    textObjectArray = textObjectArray.concat(textObjects);
+    for (const textObject of textObjectArray) {
+        if (textObject) {
+            let svg = renderContentTextObject(fontResObj, textObject, fillColor, strokeColor, keyword);
+            pageDiv.appendChild(svg);
+        }
+    }
+}
+
+
 
 export const renderImageObject = function (pageWidth, pageHeight, multiMediaResObj, imageObject){
     let boundary = parseStBox(imageObject['@_Boundary']);
@@ -378,6 +478,109 @@ export const renderTextObject = function (fontResObj, textObject, defaultFillCol
         }
 
     }
+    let width = boundary.w;
+    let height = boundary.h;
+    let left = boundary.x;
+    let top = boundary.y;
+    svg.setAttribute('style', `overflow:visible;position:absolute;width:${width}px;height:${height}px;left:${left}px;top:${top}px;z-index:${textObject['pfIndex']}`);
+    return svg;
+}
+
+/**
+ * 渲染内容层的text文本，方便查找之后渲染查找背景
+ * @param fontResObj
+ * @param textObject
+ * @param defaultFillColor
+ * @param defaultStrokeColor
+ * @param keyword 关键字
+ * @returns {SVGSVGElement}
+ */
+export const renderContentTextObject = function (fontResObj, textObject, defaultFillColor, defaultStrokeColor, keyword = "") {
+    let defaultFillOpacity = 1;
+    let boundary = parseStBox(textObject['@_Boundary']);
+    boundary = converterBox(boundary);
+    const ctm = textObject['@_CTM'];
+    const hScale = textObject['@_HScale'];
+    const font = textObject['@_Font'];
+    const weight = textObject['@_Weight'];
+    const size = converterDpi(parseFloat(textObject['@_Size']));
+    let array = [];
+    let textCodeObj = textObject['ofd:TextCode']
+    array = array.concat(textCodeObj);
+    // 获取查找的内容，进行渲染
+    // console.log("content text array ", textCodeObj, "search keyword=", keyword)
+    let currentText = textCodeObj["#text"]
+    let addSearchRect = false
+    let keywordIndex = -1
+    if ( keyword && keyword.length) {
+        keywordIndex = currentText.indexOf(keyword)
+        if ( keywordIndex >= 0 ) {
+            addSearchRect = true
+        }
+    }
+    console.log("show search rect" , addSearchRect, keyword)
+
+    const textCodePointList = calTextPoint(array);
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('version', '1.1');
+    const fillColor = textObject['ofd:FillColor'];
+    if (fillColor) {
+        defaultFillColor = parseColor(fillColor['@_Value']);
+        let alpha = fillColor['@_Alpha'];
+        if (alpha) {
+            defaultFillOpacity = alpha>1? alpha/255:alpha;
+        }
+    }
+
+    if ( addSearchRect ) {
+        // 添加选中的背景颜色，这里是所有的文本都被添加了背景颜色，需要除去背景的layer的文本，只在内容文本上添加
+        let rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        let startWord = textCodePointList[keywordIndex]
+        let endWordIndex = keywordIndex + keyword.length - 1
+        let endWord = textCodePointList[endWordIndex]
+        let wordWidth = 0
+        if ( endWordIndex < currentText.length - 1) {
+            // 如果不是最后一个字符
+            endWord = textCodePointList[endWordIndex + 1]
+            wordWidth = endWord.x - startWord.x
+        } else {
+            let tempIndex = endWordIndex
+            // 是最后一个字符，添加最后一个字符的宽度
+            wordWidth = textCodePointList[tempIndex].x - startWord.x + size
+        }
+
+        rect.setAttribute("x", startWord.x);
+        rect.setAttribute("y", startWord.y - size);
+        rect.setAttribute("width", wordWidth);
+        rect.setAttribute("height", size);
+        rect.setAttribute("fill", "yellow");
+        svg.appendChild(rect);
+    }
+
+    // 单个文字的渲染，将文字作为点来进行渲染位置和内容
+    for (const textCodePoint of textCodePointList) {
+        if (textCodePoint && !isNaN(textCodePoint.x)) {
+            let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', textCodePoint.x);
+            text.setAttribute('y', textCodePoint.y);
+            text.innerHTML = textCodePoint.text;
+            if (ctm) {
+                const ctms = parseCtm(ctm);
+                text.setAttribute('transform', `matrix(${ctms[0]} ${ctms[1]} ${ctms[2]} ${ctms[3]} ${converterDpi(ctms[4])} ${converterDpi(ctms[5])})`)
+            }
+            if (hScale) {
+                text.setAttribute('transform', `matrix(${hScale}, 0, 0, 1, ${(1-hScale)*textCodePoint.x}, 0)`)
+                // text.setAttribute('transform-origin', `${textCodePoint.x}`);
+            }
+            text.setAttribute('fill', defaultStrokeColor);
+            text.setAttribute('fill', defaultFillColor);
+            text.setAttribute( 'fill-opacity', defaultFillOpacity);
+            text.setAttribute('style', `font-weight: ${weight};font-size:${size}px;font-family: ${getFontFamily(fontResObj[font])};`)
+            svg.appendChild(text);
+        }
+
+    }
+
     let width = boundary.w;
     let height = boundary.h;
     let left = boundary.x;
