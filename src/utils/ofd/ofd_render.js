@@ -295,13 +295,18 @@ export const renderImageObject = function (pageWidth, pageHeight, multiMediaResO
     let boundary = parseStBox(imageObject['@_Boundary']);
     boundary = converterBox(boundary);
     const resId = imageObject['@_ResourceID'];
-    if (multiMediaResObj[resId].format === 'gbig2') {
-        const img = multiMediaResObj[resId].img;
-        const width = multiMediaResObj[resId].width;
-        const height = multiMediaResObj[resId].height;
+    const mediaRes = multiMediaResObj[resId];
+    if (!mediaRes) {
+        console.warn(`Image resource not found for ID: ${resId}`);
+        return document.createElement('div');
+    }
+    if (mediaRes.format === 'gbig2') {
+        const img = mediaRes.img;
+        const width = mediaRes.width;
+        const height = mediaRes.height;
         return renderImageOnCanvas(img, width, height, boundary, imageObject['pfIndex']);
     } else {
-        return renderImageOnDiv(pageWidth, pageHeight, multiMediaResObj[resId].img, boundary, false, false, null, null, imageObject['pfIndex']);
+        return renderImageOnDiv(pageWidth, pageHeight, mediaRes.img, boundary, false, false, null, null, imageObject['pfIndex']);
     }
 }
 
