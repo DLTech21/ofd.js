@@ -302,15 +302,23 @@ const getMultiMediaRes = async function (zip, res, doc) {
                 if (file.indexOf(doc) === -1) {
                     file = `${doc}/${file}`
                 }
+                if (!file) {
+                    console.warn(`Empty MediaFile for item ${item['@_ID']}, skipping.`);
+                    continue;
+                }
                 if (item['@_Type'].toLowerCase() === 'image') {
                     const format = item['@_Format'];
                     const ext = getExtensionByPath(file);
                     if ((format && (format.toLowerCase() === 'gbig2' || format.toLowerCase() === 'jb2')) || ext && (ext.toLowerCase() === 'jb2' || ext.toLowerCase() === 'gbig2')) {
                         const jbig2 = await parseJbig2ImageFromZip(zip, file);
-                        multiMediaResObj[item['@_ID']] = jbig2;
+                        if (jbig2) {
+                            multiMediaResObj[item['@_ID']] = jbig2;
+                        }
                     } else {
                         const img = await parseOtherImageFromZip(zip, file);
-                        multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
+                        if (img) {
+                            multiMediaResObj[item['@_ID']] = {img, 'format': 'png'};
+                        }
                     }
                 } else {
                     multiMediaResObj[item['@_ID']] = file;
@@ -364,6 +372,10 @@ const getSignature = async function (zip, signatures, doc) {
 }
 
 const getFileData = async function (zip, name){
+    if (!zip.files[name]) {
+        console.warn(`File not found in zip: ${name}`);
+        return null;
+    }
     return zip.files[name].async('uint8array');
 }
 
@@ -415,6 +427,9 @@ const getSealDocumentObj = function (stampAnnot) {
 
 const getJsonFromXmlContent = async function (zip, xmlName) {
     return new Promise((resolve, reject) => {
+        if (!zip.files[xmlName]) {
+            return reject(new Error(`File not found in zip: ${xmlName}`));
+        }
         zip.files[xmlName].async('string').then(function (content) {
             let ops = {
                 attributeNamePrefix: "@_",
@@ -433,6 +448,10 @@ const getJsonFromXmlContent = async function (zip, xmlName) {
 
 const parseJbig2ImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
+        if (!zip.files[name]) {
+            console.warn(`Image not found in zip: ${name}`);
+            return resolve(null);
+        }
         zip.files[name].async('uint8array').then(function (bytes) {
             let jbig2 = new Jbig2Image();
             const img = jbig2.parse(bytes);
@@ -445,6 +464,10 @@ const parseJbig2ImageFromZip = async function (zip, name) {
 
 const parseOtherImageFromZip = async function (zip, name) {
     return new Promise((resolve, reject) => {
+        if (!zip.files[name]) {
+            console.warn(`Image not found in zip: ${name}`);
+            return resolve(null);
+        }
         zip.files[name].async('base64').then(function (bytes) {
             const img = 'data:image/png;base64,' + bytes;
             resolve(img);

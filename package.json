@@ -14,7 +14,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "lib": "vue-cli-service build --target lib --name ofd --dest lib ./src/utils/ofd/ofd.js"
+    "lib": "vue-cli-service build --target lib --name ofd --dest lib ./src/utils/ofd/ofd.js",
+    "build:umd": "vue-cli-service build --target lib --name OFD --dest dist ./src/umd-entry.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
